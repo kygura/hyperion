@@ -8,7 +8,12 @@ const navItems = [
   { to: '/dashboard/agent', label: 'AGENT' },
 ]
 
-export function TopNav() {
+interface Props {
+  chatOpen: boolean
+  onToggleChat: () => void
+}
+
+export function TopNav({ chatOpen, onToggleChat }: Props) {
   const { mids, connected } = useAllMids()
   const { health, online } = useCoreHealth()
   const btc = mids?.['BTC'] ? Number(mids['BTC']) : null
@@ -54,6 +59,19 @@ export function TopNav() {
             CORE {online ? '●' : '○'}
           </span>
         </div>
+        <button
+          onClick={onToggleChat}
+          className={`flex items-center gap-1.5 transition-colors ${
+            chatOpen ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'
+          }`}
+          title="Toggle agent chat"
+          aria-label="Toggle agent chat"
+        >
+          <span
+            className={`inline-block w-1.5 h-1.5 ${chatOpen ? 'bg-red-accent' : 'bg-text-secondary/40'}`}
+          />
+          CHAT
+        </button>
         <div className="flex items-center gap-1.5">
           <span
             className={`inline-block w-1.5 h-1.5 ${
