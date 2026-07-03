@@ -65,6 +65,12 @@ func NewServer(d Deps) *Server {
 		deps: d,
 		mux:  http.NewServeMux(),
 		state: &serverState{
+			// Seeded from config rather than left to the bus: the daemon's one
+			// Mode-carrying status event fires at startup, before any consumer
+			// (this server included) can guarantee its subscription is live —
+			// a bus miss would otherwise leave mode empty for the process
+			// lifetime. Later StatusConn events still update it if it changes.
+			mode:      d.Cfg.Execution.Mode,
 			digests:   make(map[string]metrics.Digest),
 			wsClients: make(map[*wsClient]struct{}),
 		},

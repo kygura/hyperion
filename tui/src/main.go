@@ -24,6 +24,7 @@ import (
 	"charm.land/lipgloss/v2"
 
 	"github.com/hyperagent/hyperagent/internal/aggregator"
+	"github.com/hyperagent/hyperagent/internal/api"
 	"github.com/hyperagent/hyperagent/internal/batcher"
 	"github.com/hyperagent/hyperagent/internal/bus"
 	"github.com/hyperagent/hyperagent/internal/config"
@@ -41,6 +42,10 @@ import (
 	"github.com/hyperagent/hyperagent/internal/thesis"
 	"github.com/hyperagent/hyperagent/internal/tui"
 )
+
+// version is the daemon build identifier reported by /api/health and the MCP
+// server's initialize response — bump alongside releases.
+const version = "0.1.0"
 
 func main() {
 	loadDotEnv(".env") // before flag defaults: -agent-key reads HL_AGENT_KEY
@@ -190,6 +195,30 @@ func run(cfg config.Config, configPath string, testnet, headless bool, agentKey 
 		})
 		go tg.Mirror(ctx, b)
 		go tg.PollCallbacks(ctx)
+	}
+
+	// --- API server (unified backend core): same deps the TUI model holds,
+	// started for both TUI and headless modes so any frontend attaches to one
+	// process. Constructed (and its status/bus subscriptions live) before the
+	// pipeline goroutines below start publishing, so the initial status event
+	// isn't missed. Runs until ctx is cancelled (SIGINT/SIGTERM or TUI exit).
+	if cfg.API.Enabled {
+		srv := api.NewServer(api.Deps{
+			Bus:     b,
+			Store:   st,
+			Engine:  engine,
+			Exec:    exec,
+			Cfg:     cfg,
+			Version: version,
+		})
+		if headless {
+			fmt.Fprintf(os.Stderr, "hyperagent api: listening on %s\n", cfg.API.Addr)
+		}
+		go func() {
+			if err := srv.ListenAndServe(ctx); err != nil {
+				log.Printf("api server: %v", err)
+			}
+		}()
 	}
 
 	// --- Launch the pipeline goroutines (one per component) ---
