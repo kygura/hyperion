@@ -5,6 +5,7 @@ import './index.css'
 import { AppShell } from './components/shell/AppShell'
 import DashboardPage from './pages/DashboardPage'
 import PortfolioPage from './pages/PortfolioPage'
+import AgentPage from './pages/AgentPage'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/dashboard/portfolio" element={<PortfolioPage />} />
+          <Route path="/dashboard/agent" element={<AgentPage />} />
           <Route
             path="/dashboard/branches"
             element={<Navigate to="/dashboard/portfolio" replace />}

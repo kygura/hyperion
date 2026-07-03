@@ -5,6 +5,7 @@ import { useCoreHealth } from '../../hooks/useCore'
 const navItems = [
   { to: '/dashboard', label: 'DASHBOARD' },
   { to: '/dashboard/portfolio', label: 'PORTFOLIO' },
+  { to: '/dashboard/agent', label: 'AGENT' },
 ]
 
 export function TopNav() {
