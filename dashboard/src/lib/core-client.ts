@@ -140,6 +140,18 @@ export interface CoreJournalEntry {
   verdict?: CoreVerdict
 }
 
+// Mirrors tui/internal/bus/bus.go JournalEvent — the *live* WS `journal` topic
+// payload broadcast in api/server.go's runCaches, which is a different Go
+// type than journal.Entry above: untagged struct, so wire fields are the
+// PascalCase Go names, and there is no Time field at all (the live frame
+// carries no timestamp; consumers stamp arrival time themselves).
+export interface CoreJournalEvent {
+  Coin: string
+  Kind: string
+  Summary: string
+  Verdict?: CoreVerdict
+}
+
 // Mirrors tui/internal/executor/proposals.go Proposal.
 export interface CoreProposal {
   id: string
