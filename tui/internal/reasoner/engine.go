@@ -289,6 +289,11 @@ func (e *Engine) ChatModel() string {
 	return model
 }
 
+// Registry exposes the provider/model registry so callers outside the
+// reasoning loop (the health endpoint's provider display) can read active
+// bindings without the engine needing to mirror every Registry accessor.
+func (e *Engine) Registry() *Registry { return e.registry }
+
 var errNoProvider = &reasonerError{"no chat provider configured"}
 
 type reasonerError struct{ msg string }
