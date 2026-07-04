@@ -11,9 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hyperagent/hyperagent/internal/batcher"
 	"github.com/hyperagent/hyperagent/internal/bus"
 	"github.com/hyperagent/hyperagent/internal/config"
 	"github.com/hyperagent/hyperagent/internal/executor"
+	"github.com/hyperagent/hyperagent/internal/ingestor"
 	"github.com/hyperagent/hyperagent/internal/metrics"
 	"github.com/hyperagent/hyperagent/internal/reasoner"
 	"github.com/hyperagent/hyperagent/internal/store"
@@ -23,12 +25,14 @@ import (
 // holds. Engine and Exec may be nil (no chat provider configured, no signer
 // wired up); handlers that need them degrade to 503 rather than panicking.
 type Deps struct {
-	Bus     *bus.Bus
-	Store   *store.Store
-	Engine  *reasoner.Engine   // nil → chat endpoint returns 503
-	Exec    *executor.Executor // nil → execution endpoints return 503
-	Cfg     config.Config
-	Version string
+	Bus      *bus.Bus
+	Store    *store.Store
+	Engine   *reasoner.Engine   // nil → chat endpoint returns 503
+	Exec     *executor.Executor // nil → execution endpoints return 503
+	Ingestor *ingestor.Ingestor // nil → watchlist subscribe endpoint returns 503
+	Batcher  *batcher.Batcher   // nil → watchlist track/untrack/scan endpoints return 503
+	Cfg      config.Config
+	Version  string
 }
 
 // serverState is the single cache the background goroutine (runCaches) owns:
@@ -96,6 +100,10 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/orders", s.handleOrders)
 	s.mux.HandleFunc("DELETE /api/orders/{coin}/{oid}", s.handleCancelOrder)
 	s.mux.HandleFunc("GET /api/ws", s.handleWS)
+	s.mux.HandleFunc("POST /api/watchlist/subscribe", s.handleWatchlistSubscribe)
+	s.mux.HandleFunc("POST /api/watchlist/track", s.handleWatchlistTrack)
+	s.mux.HandleFunc("POST /api/watchlist/untrack", s.handleWatchlistUntrack)
+	s.mux.HandleFunc("POST /api/watchlist/scan", s.handleWatchlistScan)
 }
 
 // runCaches is the single owner of serverState: it subscribes once per topic
