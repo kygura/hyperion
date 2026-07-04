@@ -1,15 +1,24 @@
 # hyperagent
 
 Autonomous Hyperliquid scanner, reasoning engine and (gated) executor. One Go
-binary: TUI for the operator, MCP server for agents, Telegram for confirmations.
+binary running as a headless daemon: MCP server for agents, Telegram for
+confirmations, HTTP+WS API for any frontend. The terminal UI for the operator
+is a separate standalone binary — see [`tui/`](../tui/README.md).
 Architecture and design rationale: [plan.md](plan.md).
 
 ## Build & run
 
 ```sh
 ./build.sh            # or: go build -o hyperagent ./src
-./hyperagent          # TUI, propose mode, config.toml
-./hyperagent -headless -testnet
+./hyperagent -testnet  # daemon, propose mode, config.toml
+```
+
+The daemon has no built-in UI. For an interactive terminal dashboard, build
+and run `tui/` against it:
+
+```sh
+cd ../tui && go build -o hyperagent-tui ./src
+./hyperagent-tui -core-url http://127.0.0.1:8787
 ```
 
 Provider API keys go in `.env` (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
@@ -62,14 +71,14 @@ journaled like any other candidate.
 
 ## HTTP API
 
-The same core the TUI and MCP server run on — store, digests, verdicts,
-journal, chat, gated execution — is also reachable over HTTP+WS, so any
-frontend (the web dashboard, a script, `curl`) can attach without going
-through a Claude client. Runs in both TUI and headless modes whenever
-`[api] enabled = true`; binds loopback by default.
+The same core the MCP server runs on — store, digests, verdicts, journal,
+chat, gated execution — is also reachable over HTTP+WS, so any frontend
+(the `tui/` client, the web dashboard, a script, `curl`) can attach without
+going through a Claude client. Runs whenever `[api] enabled = true`; binds
+loopback by default.
 
 ```sh
-./hyperagent -headless -testnet &
+./hyperagent -testnet &
 curl -s localhost:8787/api/health
 ```
 
