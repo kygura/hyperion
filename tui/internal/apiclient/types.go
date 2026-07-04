@@ -8,19 +8,43 @@ import "time"
 // Bar mirrors backend/internal/metrics.Bar (untagged Go struct — wire fields
 // are the exported Go names verbatim; Open/CloseTime marshal as RFC3339).
 type Bar struct {
-	Coin        string
-	Timeframe   string
-	OpenTime    time.Time
-	CloseTime   time.Time
+	Coin                   string
+	Timeframe              string
+	OpenTime               time.Time
+	CloseTime              time.Time
 	Open, High, Low, Close float64
-	Volume      float64
-	TradeCount  int
-	Final       bool
+	Volume                 float64
+
+	// Flow.
+	BuyVolume  float64
+	SellVolume float64
+	TradeCount int
+	Final      bool
+	LargePrint bool
+	CVD        float64
+	TradeImbal float64
+
+	// Perp regime (snapshot at bar close).
+	Funding      float64
+	FundingDelta float64
+	OpenInterest float64
+	OIDelta      float64
+	Basis        float64
+	MarkPrice    float64
+
+	// Derived structure.
 	Return      float64
-	Funding     float64
-	OIDelta     float64
+	RealizedVol float64
+	RangePos    float64
+	LiqProx     float64
+
+	// Cross-asset.
+	BTCCorr     float64
 	RelStrength float64
 }
+
+// IsBullish reports whether the bar closed up.
+func (b Bar) IsBullish() bool { return b.Close >= b.Open }
 
 // AssetCtx mirrors backend/internal/metrics.AssetCtx.
 type AssetCtx struct {
@@ -36,12 +60,18 @@ type AssetCtx struct {
 
 // Position mirrors backend/internal/metrics.Position.
 type Position struct {
-	Coin      string
-	Size      float64
-	MarkPrice float64
+	Coin       string
+	Size       float64
+	EntryPrice float64
+	MarkPrice  float64
+	UnrealPnl  float64
+	OpenedAt   time.Time
 }
 
-func (p Position) IsFlat() bool { return p.Size == 0 }
+// IsLong reports the position direction.
+func (p Position) IsLong() bool  { return p.Size > 0 }
+func (p Position) IsShort() bool { return p.Size < 0 }
+func (p Position) IsFlat() bool  { return p.Size == 0 }
 
 // MarketEntry mirrors the marketEntry JSON shape of GET /api/markets
 // (backend/internal/api/read.go).
@@ -53,16 +83,52 @@ type MarketEntry struct {
 	Position Position `json:"position"`
 }
 
+// Action is the discrete decision the reasoner can emit per asset. It mirrors
+// backend/internal/metrics.Action.
+type Action string
+
+const (
+	ActionOpenShort Action = "open_short"
+	ActionOpenLong  Action = "open_long"
+	ActionClose     Action = "close"
+	ActionScale     Action = "scale"
+	ActionHold      Action = "hold"
+	ActionAlertOnly Action = "alert_only"
+)
+
+// Valid reports whether a is a recognized action.
+func (a Action) Valid() bool {
+	switch a {
+	case ActionOpenShort, ActionOpenLong, ActionClose, ActionScale, ActionHold, ActionAlertOnly:
+		return true
+	}
+	return false
+}
+
+// IsTrade reports whether the action would change a position.
+func (a Action) IsTrade() bool {
+	switch a {
+	case ActionOpenShort, ActionOpenLong, ActionClose, ActionScale:
+		return true
+	}
+	return false
+}
+
 // Verdict mirrors backend/internal/metrics.Verdict.
 type Verdict struct {
 	Asset                string
-	Action               string
-	Thesis               string
-	Confidence           float64
+	Timeframe            string
+	Action               Action
 	SizeUSD              float64
-	Stop, TakeProfit     float64
 	Entry                Entry
+	Stop, TakeProfit     float64
+	Thesis               string
+	Reading              string
+	Confidence           float64
 	RequiresConfirmation bool
+
+	At       time.Time
+	Provider string
 }
 
 // Entry mirrors backend/internal/metrics.Entry.
