@@ -14,6 +14,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"maps"
 	"os"
 	"os/signal"
 	"strings"
@@ -212,7 +213,18 @@ func run(cfg config.Config, configPath string, testnet bool, agentKey string) er
 			CfgSnapshot: func() config.Config {
 				cfgMu.Lock()
 				defer cfgMu.Unlock()
-				return cfg
+				snap := cfg
+				// Providers.Custom is a map (reference type): a plain struct
+				// copy under the lock still shares the underlying map with
+				// the live cfg that SaveConfig's apply(&cfg) mutates via
+				// setProviderKey's custom-provider branch. Clone it here,
+				// still under cfgMu, so the returned snapshot's map is
+				// genuinely independent — callers read it lock-free without
+				// racing a concurrent SaveConfig map write.
+				if cfg.Providers.Custom != nil {
+					snap.Providers.Custom = maps.Clone(cfg.Providers.Custom)
+				}
+				return snap
 			},
 			SaveConfig: func(apply func(*config.Config)) error {
 				cfgMu.Lock()

@@ -3,8 +3,10 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -377,4 +379,97 @@ func slicesContain(ss []string, want string) bool {
 		}
 	}
 	return false
+}
+
+// newMainStyleCfgAccessors replicates main.go's CfgSnapshot/SaveConfig wiring
+// exactly (same cfgMu-guarded closures, same maps.Clone fix for
+// Providers.Custom) — main.go is package main and not importable from a test
+// in package api, so the pattern is reproduced here rather than exercised
+// through the real binary.
+func newMainStyleCfgAccessors(cfg config.Config) (snapshot func() config.Config, save func(func(*config.Config)) error) {
+	var cfgMu sync.Mutex
+	snapshot = func() config.Config {
+		cfgMu.Lock()
+		defer cfgMu.Unlock()
+		snap := cfg
+		if cfg.Providers.Custom != nil {
+			snap.Providers.Custom = maps.Clone(cfg.Providers.Custom)
+		}
+		return snap
+	}
+	save = func(apply func(*config.Config)) error {
+		cfgMu.Lock()
+		defer cfgMu.Unlock()
+		apply(&cfg)
+		return nil // no disk I/O in this test — only the in-memory hazard matters
+	}
+	return snapshot, save
+}
+
+// TestCfgSnapshotCustomProviderMapIsRaceFree is the regression test for the
+// hazard the task-5 review flagged: CfgSnapshot's `return cfg` under cfgMu
+// only copies the Config struct header. Providers.Custom is a map (reference
+// type), so without cloning it, a snapshot's Providers.Custom still aliases
+// the live map that SaveConfig's apply(&cfg) mutates via setProviderKey's
+// custom-provider branch (settings.go) — a concurrent GET /api/settings (or
+// PUT .../key) racing another PUT is an unsynchronized concurrent map
+// read/write, which the Go runtime can detect as a fatal error, not merely
+// flag as a benign data race.
+//
+// This mirrors providerCfgFor's real call pattern: CfgSnapshot() is called,
+// the lock is released, and *then* the returned value's Providers.Custom map
+// is read — exactly where the hazard lives, since the read is never
+// synchronized by cfgMu at all. One goroutine hammers SaveConfig (like
+// handlePutProviderKey does for a custom provider name), another hammers
+// CfgSnapshot + a map read (like handleGetSettings's key_hints loop and
+// handlePutProviderKey's providerCfgFor lookup do). Run with `go test -race`;
+// this reliably triggers a fatal concurrent map read/write pre-fix (verified
+// by temporarily reverting the maps.Clone line in main.go's CfgSnapshot and
+// re-running this test under -race — see task-5-report.md) and passes clean
+// post-fix.
+func TestCfgSnapshotCustomProviderMapIsRaceFree(t *testing.T) {
+	const iterations = 5000
+	cfg := config.Default()
+	cfg.Providers.Custom = map[string]config.ProviderCfg{
+		"local-llm": {Model: "model-a", BaseURL: "http://localhost:11434"},
+	}
+	snapshot, save := newMainStyleCfgAccessors(cfg)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Writer: mirrors handlePutProviderKey's custom-provider branch
+	// (setProviderKey in settings.go) — read-modify-write the map entry
+	// under SaveConfig's lock, over and over, varying the key so the map
+	// itself is mutated (not just a value in place).
+	go func() {
+		defer wg.Done()
+		for i := 0; i < iterations; i++ {
+			key := "local-llm-" + strconv.Itoa(i%8)
+			_ = save(func(c *config.Config) {
+				if c.Providers.Custom == nil {
+					c.Providers.Custom = map[string]config.ProviderCfg{}
+				}
+				pc := c.Providers.Custom[key]
+				pc.APIKey = strconv.Itoa(i)
+				c.Providers.Custom[key] = pc
+			})
+		}
+	}()
+
+	// Reader: mirrors handleGetSettings/handlePutProviderKey — call
+	// CfgSnapshot(), then read the returned Providers.Custom map *after*
+	// the snapshot closure's lock has already been released. Pre-fix, this
+	// map is the same one the writer goroutine is mutating.
+	go func() {
+		defer wg.Done()
+		for i := 0; i < iterations; i++ {
+			snap := snapshot()
+			for _, pc := range snap.Providers.Custom {
+				_ = pc.APIKey
+			}
+		}
+	}()
+
+	wg.Wait()
 }

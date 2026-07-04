@@ -51,6 +51,19 @@ type Deps struct {
 	// provider-key lookups in settings.go — must go through CfgSnapshot
 	// instead so they don't serve a stale pre-mutation copy. May be nil in
 	// tests that never touch those paths.
+	//
+	// A plain `return cfg` under the lock only copies the struct header:
+	// reference-type fields (e.g. Providers.Custom, a map) would still alias
+	// the live cfg that SaveConfig mutates, letting a reader touch that map
+	// after the lock is released while a concurrent SaveConfig writes it —
+	// an unsynchronized concurrent map access, which Go can detect at
+	// runtime as a fatal error, not just a data race. main.go's
+	// implementation closes this by deep-copying Providers.Custom while
+	// still holding the lock, so the returned snapshot is safe to read
+	// without holding any lock. This is a property of that specific
+	// implementation, not a guarantee the config.Config type itself
+	// enforces — a future reference-type field added to Config (or a new
+	// call site reading one through CfgSnapshot) needs the same treatment.
 	CfgSnapshot func() config.Config
 }
 
