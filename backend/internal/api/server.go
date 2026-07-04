@@ -33,6 +33,12 @@ type Deps struct {
 	Batcher  *batcher.Batcher   // nil → watchlist track/untrack/scan endpoints return 503
 	Cfg      config.Config
 	Version  string
+
+	// SaveConfig persists a mutation to config.toml under the caller's own
+	// guard (mutex + atomic write); nil disables persistence (settings still
+	// apply live, just don't survive a restart). Settings/mode/key handlers
+	// call it best-effort after applying the change in memory.
+	SaveConfig func(apply func(*config.Config)) error
 }
 
 // serverState is the single cache the background goroutine (runCaches) owns:
@@ -104,6 +110,10 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/watchlist/track", s.handleWatchlistTrack)
 	s.mux.HandleFunc("POST /api/watchlist/untrack", s.handleWatchlistUntrack)
 	s.mux.HandleFunc("POST /api/watchlist/scan", s.handleWatchlistScan)
+	s.mux.HandleFunc("GET /api/settings", s.handleGetSettings)
+	s.mux.HandleFunc("PUT /api/settings", s.handlePutSettings)
+	s.mux.HandleFunc("PUT /api/execution/mode", s.handlePutMode)
+	s.mux.HandleFunc("PUT /api/providers/{name}/key", s.handlePutProviderKey)
 }
 
 // runCaches is the single owner of serverState: it subscribes once per topic

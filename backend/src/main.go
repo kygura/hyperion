@@ -315,61 +315,6 @@ func buildControls(cfg config.Config, configPath string, in *ingestor.Ingestor, 
 	return c
 }
 
-// providerCfgFor resolves a provider name to its config block, covering the
-// three named providers and any custom entry.
-func providerCfgFor(cfg config.Config, name string) (config.ProviderCfg, bool) {
-	switch name {
-	case "anthropic":
-		return cfg.Providers.Anthropic, true
-	case "openai":
-		return cfg.Providers.OpenAI, true
-	case "deepseek":
-		return cfg.Providers.Deepseek, true
-	}
-	pc, ok := cfg.Providers.Custom[name]
-	return pc, ok
-}
-
-// setProviderKey writes a key into the right provider block of the config.
-func setProviderKey(c *config.Config, name, key string) {
-	switch name {
-	case "anthropic":
-		c.Providers.Anthropic.APIKey = key
-	case "openai":
-		c.Providers.OpenAI.APIKey = key
-	case "deepseek":
-		c.Providers.Deepseek.APIKey = key
-	default:
-		if c.Providers.Custom == nil {
-			c.Providers.Custom = map[string]config.ProviderCfg{}
-		}
-		pc := c.Providers.Custom[name]
-		pc.APIKey = key
-		c.Providers.Custom[name] = pc
-	}
-}
-
-// buildProvider constructs the right adapter for a provider name + config with
-// an explicit key — the live half of SetAPIKey.
-func buildProvider(name string, pc config.ProviderCfg, key string) reasoner.Provider {
-	if name == "anthropic" || pc.Kind == "anthropic" {
-		return reasoner.NewAnthropic(key, pc.Model, pc.BaseURL)
-	}
-	return reasoner.NewOpenAICompatible(name, key, pc.Model, pc.BaseURL)
-}
-
-// maskKey reduces a secret to a display hint: enough to recognize, never enough
-// to leak ("sk-ant-…h2Qx"). Empty in → empty out (rendered as "not set").
-func maskKey(k string) string {
-	if k == "" {
-		return ""
-	}
-	if len(k) <= 8 {
-		return "•••"
-	}
-	return k[:6] + "…" + k[len(k)-4:]
-}
-
 // buildTimeframes returns, per visualized coin, the timeframes the aggregator
 // should fold: always the display set plus the tracked decision timeframe.
 func buildTimeframes(cfg config.Config) map[string][]aggregator.Timeframe {
