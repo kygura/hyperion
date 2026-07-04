@@ -220,10 +220,14 @@ function TimeframeChip({
   )
 }
 
-const BAR_H = 8    // px
+const BAR_H = 16   // px — total height; bars grow up/down from a zero baseline
 const BAR_GAP = 3  // px
 const MIN_BAR_W = 8 // px — cap how many bars show
+const MIN_BAR_H = 1.5 // px — floor so a small trade still reads as a sliver
 
+// BarSparkline renders each trade's PnL as a bar rising above or dropping below
+// a zero baseline, sized to |pnl| / max(|pnl|) over the visible window — so a
+// $500 win reads taller than a $5 win, unlike a flat win/loss strip.
 function BarSparkline({ data }: { data: number[] }) {
   const ref = React.useRef<HTMLDivElement>(null)
   const [containerW, setContainerW] = React.useState(300)
@@ -239,6 +243,7 @@ function BarSparkline({ data }: { data: number[] }) {
 
   const maxBars = Math.max(1, Math.floor((containerW + BAR_GAP) / (MIN_BAR_W + BAR_GAP)))
   const visible = data.slice(-maxBars)
+  const maxAbs = Math.max(1e-9, ...visible.map((v) => Math.abs(v)))
 
   return (
     <div
@@ -249,19 +254,37 @@ function BarSparkline({ data }: { data: number[] }) {
         display: 'flex',
         alignItems: 'stretch',
         gap: BAR_GAP,
+        position: 'relative',
       }}
     >
-      {visible.map((v, i) => (
-        <div
-          key={i}
-          style={{
-            flex: 1,
-            height: BAR_H,
-            background: v >= 0 ? 'var(--green)' : 'var(--red)',
-            borderRadius: 999,
-          }}
-        />
-      ))}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: '50%',
+          height: 1,
+          background: 'var(--border)',
+        }}
+      />
+      {visible.map((v, i) => {
+        const h = Math.max(MIN_BAR_H, (Math.abs(v) / maxAbs) * (BAR_H / 2))
+        return (
+          <div key={i} style={{ flex: 1, position: 'relative' }}>
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                height: h,
+                background: v >= 0 ? 'var(--green)' : 'var(--red)',
+                borderRadius: 999,
+                ...(v >= 0 ? { bottom: '50%' } : { top: '50%' }),
+              }}
+            />
+          </div>
+        )
+      })}
     </div>
   )
 }
