@@ -9,8 +9,8 @@ import (
 	"github.com/hyperagent/hyperagent/internal/metrics"
 )
 
-// marketEntry is one tracked coin's snapshot for GET /api/markets: the same
-// three sources the TUI's market panel reads (latest bar, mid, perp context).
+// marketEntry is one visualized coin's snapshot for GET /api/markets: the
+// four sources it carries (latest bar, mid, perp context, position).
 type marketEntry struct {
 	Coin     string           `json:"coin"`
 	Bar      metrics.Bar      `json:"bar"`
