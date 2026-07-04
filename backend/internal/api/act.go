@@ -119,7 +119,7 @@ func (s *Server) handleProposalReject(w http.ResponseWriter, r *http.Request) {
 
 // orderRequest is the wire shape for POST /api/orders — a direct human/agent
 // command, same semantics as the MCP place_order tool (mirrors
-// tui/src/mcp.go's place_order handler).
+// backend/src/mcp.go's place_order handler).
 type orderRequest struct {
 	Coin       string  `json:"coin"`
 	Action     string  `json:"action"`

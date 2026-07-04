@@ -2,8 +2,11 @@ node_modules/
 dist/
 *.env
 .env
-tui/hyperagent
-tui/data/journal/
+
+backend/hyperagent
+backend/data/journal/
 graphify-out/
 
-tui/data/
+backend/data/
+.claude/
+.atl/

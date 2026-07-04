@@ -491,6 +491,10 @@ func firstNonEmpty(xs ...string) string {
 
 // buildExecutor wires the executor. In propose mode no signer is required; in
 // autonomous mode an agent key must be supplied or the daemon stays in propose.
+// The signer itself is built whenever a key is present regardless of mode:
+// propose mode still needs it to sign an order once a human approves a
+// proposal (via Telegram or the API) — only the auto-submit-without-confirmation
+// behavior is gated on mode, not the ability to sign at all.
 func buildExecutor(ctx context.Context, cfg config.Config, b *bus.Bus, st *store.Store, jr *journal.Journal, rest *hlclient.Client, agentKey string, testnet bool) *executor.Executor {
 	risk := executor.RiskConfig{
 		Mode:                cfg.Execution.Mode,
@@ -503,19 +507,17 @@ func buildExecutor(ctx context.Context, cfg config.Config, b *bus.Bus, st *store
 	}
 
 	var signer *signing.Signer
-	if cfg.Execution.Mode == "autonomous" {
-		if agentKey == "" {
-			log.Printf("execution.mode=autonomous but no agent key supplied; forcing propose mode")
-			risk.Mode = "propose"
+	if agentKey != "" {
+		s, err := signing.NewSigner(agentKey)
+		if err != nil {
+			log.Printf("agent key invalid (%v); execution stays unsigned", err)
 		} else {
-			s, err := signing.NewSigner(agentKey)
-			if err != nil {
-				log.Printf("agent key invalid (%v); forcing propose mode", err)
-				risk.Mode = "propose"
-			} else {
-				signer = s
-			}
+			signer = s
 		}
+	}
+	if cfg.Execution.Mode == "autonomous" && signer == nil {
+		log.Printf("execution.mode=autonomous but no valid agent key supplied; forcing propose mode")
+		risk.Mode = "propose"
 	}
 
 	apiURL := hlclient.MainnetAPI

@@ -1,5 +1,5 @@
 // Thin client for the hyperagent daemon's unified backend core
-// (tui/internal/api). The dashboard keeps its direct Hyperliquid link for
+// (backend/internal/api). The dashboard keeps its direct Hyperliquid link for
 // public market data (see hl-client.ts) — this client only reaches for what
 // the daemon uniquely owns: connection/health state and its push stream.
 
@@ -43,7 +43,7 @@ const CHAT_TIMEOUT_MS = 60_000
 // TS types below are hand-derived from the Go JSON producers, not guessed —
 // each comment names the source file/type it mirrors.
 
-// Mirrors tui/internal/metrics/verdict.go Action (string enum).
+// Mirrors backend/internal/metrics/verdict.go Action (string enum).
 export type CoreAction =
   | 'open_short'
   | 'open_long'
@@ -52,13 +52,13 @@ export type CoreAction =
   | 'hold'
   | 'alert_only'
 
-// Mirrors tui/internal/metrics/verdict.go Entry (json tags: type, price,omitempty).
+// Mirrors backend/internal/metrics/verdict.go Entry (json tags: type, price,omitempty).
 export interface CoreEntry {
   type: string
   price?: number
 }
 
-// Mirrors tui/internal/metrics/verdict.go Verdict. At/Provider/RawText carry
+// Mirrors backend/internal/metrics/verdict.go Verdict. At/Provider/RawText carry
 // `json:"-"` in Go and are excluded here — the wire body never has them.
 export interface CoreVerdict {
   asset: string
@@ -74,7 +74,7 @@ export interface CoreVerdict {
   requires_confirmation: boolean
 }
 
-// Mirrors tui/internal/metrics/types.go Bar. Bar has no json tags in Go, so
+// Mirrors backend/internal/metrics/types.go Bar. Bar has no json tags in Go, so
 // field names on the wire are the Go field names verbatim (PascalCase), and
 // the two time.Time fields marshal as RFC3339 strings.
 export interface CoreBar {
@@ -108,7 +108,7 @@ export interface CoreBar {
   RelStrength: number
 }
 
-// Mirrors tui/internal/metrics/types.go AssetCtx — also untagged, PascalCase
+// Mirrors backend/internal/metrics/types.go AssetCtx — also untagged, PascalCase
 // wire fields; Time marshals as RFC3339.
 export interface CoreAssetCtx {
   Coin: string
@@ -121,7 +121,7 @@ export interface CoreAssetCtx {
   Time: string
 }
 
-// Mirrors the unexported marketEntry in tui/internal/api/read.go
+// Mirrors the unexported marketEntry in backend/internal/api/read.go
 // (GET /api/markets): json tags coin/bar/mid/asset_ctx wrapping the untagged
 // Bar/AssetCtx structs above.
 export interface CoreMarket {
@@ -131,7 +131,7 @@ export interface CoreMarket {
   asset_ctx: CoreAssetCtx
 }
 
-// Mirrors tui/internal/journal/journal.go Entry.
+// Mirrors backend/internal/journal/journal.go Entry.
 export interface CoreJournalEntry {
   time: string
   coin: string
@@ -140,7 +140,7 @@ export interface CoreJournalEntry {
   verdict?: CoreVerdict
 }
 
-// Mirrors tui/internal/bus/bus.go JournalEvent — the *live* WS `journal` topic
+// Mirrors backend/internal/bus/bus.go JournalEvent — the *live* WS `journal` topic
 // payload broadcast in api/server.go's runCaches, which is a different Go
 // type than journal.Entry above: untagged struct, so wire fields are the
 // PascalCase Go names, and there is no Time field at all (the live frame
@@ -152,7 +152,7 @@ export interface CoreJournalEvent {
   Verdict?: CoreVerdict
 }
 
-// Mirrors tui/internal/executor/proposals.go Proposal.
+// Mirrors backend/internal/executor/proposals.go Proposal.
 export interface CoreProposal {
   id: string
   verdict: CoreVerdict
@@ -160,7 +160,7 @@ export interface CoreProposal {
   expires: string
 }
 
-// Mirrors the chatTurn wire struct in tui/internal/api/act.go (json tags
+// Mirrors the chatTurn wire struct in backend/internal/api/act.go (json tags
 // role/text).
 export interface ChatTurn {
   role: 'user' | 'assistant'
@@ -168,7 +168,7 @@ export interface ChatTurn {
 }
 
 // Mirrors the map[string]string handleChat writes on success in
-// tui/internal/api/act.go (reply/provider/model).
+// backend/internal/api/act.go (reply/provider/model).
 export interface ChatReply {
   reply: string
   provider: string
@@ -176,7 +176,7 @@ export interface ChatReply {
 }
 
 // extractError reads the `{"error":"..."}` envelope every non-2xx handler in
-// tui/internal/api writes (see writeErr in server.go). Falls back to the
+// backend/internal/api writes (see writeErr in server.go). Falls back to the
 // status text if the body isn't JSON-shaped as expected.
 async function extractError(res: Response): Promise<string> {
   try {

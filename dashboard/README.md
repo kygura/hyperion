@@ -24,7 +24,7 @@ The page shows, top to bottom:
 All of it, plus the chat drawer, talks to the daemon's unified core API
 instead of Hyperliquid directly. **The daemon must be running** for any of
 this to populate — everything else in the dashboard (prices, portfolio) works
-without it. Start it from the `tui/` directory:
+without it. Start it from the `backend/` directory:
 
 ```sh
 ./hyperagent -headless -testnet
