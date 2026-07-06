@@ -82,6 +82,14 @@ func sleepCtx(ctx context.Context, d time.Duration) bool {
 // at least that long is treated as healthy and backoff resets to base
 // before the next attempt. Blocks until ctx is cancelled.
 //
+// PumpWS also synthesizes its own statusMsg{Kind: statusConn} on dial
+// success and on every connection loss, independent of any statusConn frame
+// forwarded from the daemon (see readLoop's "status" case) — the daemon's
+// frames report its own link to the exchange, whereas these synthesized
+// ones report the TUI's own link to the daemon. Both flow through the same
+// m.connected field, so the header's connection chip means "TUI↔daemon push
+// link is up", not "daemon↔exchange is up".
+//
 // httpBaseURL is the daemon's HTTP base URL (e.g. "http://127.0.0.1:8787"),
 // the same value passed to apiclient.New — PumpWS derives the ws(s)://.../api/ws
 // URL from it via wsURLFrom, since that helper is unexported and callers in
@@ -103,8 +111,10 @@ func PumpWS(ctx context.Context, httpBaseURL string, cache *apiclient.Cache, p *
 			}
 			continue
 		}
+		p.Send(statusMsg{Kind: statusConn, Connected: true})
 		readLoop(ctx, conn, cache, p)
 		conn.Close()
+		p.Send(statusMsg{Kind: statusConn, Connected: false})
 		up := time.Since(dialStart)
 
 		if ctx.Err() != nil {
@@ -180,20 +190,39 @@ func wsURLFrom(httpBaseURL string) string {
 }
 
 // PollMarkets refreshes AssetCtx/Position for the whole visualized watchlist
-// every 5s — there is no WS topic for either today. Blocks until ctx is done.
+// every 5s — there is no WS topic for either today. Blocks until ctx is
+// done. A poll failure is reported as a statusNotice, but rate-limited to
+// the first failure after a success — otherwise a dead daemon floods the
+// journal with one entry every 5s.
 func PollMarkets(ctx context.Context, client *apiclient.Client, cache *apiclient.Cache, p *tea.Program) {
 	t := time.NewTicker(5 * time.Second)
 	defer t.Stop()
+	failing := false
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-t.C:
-			entries, err := client.Markets(ctx)
-			if err == nil {
-				cache.ApplyMarkets(entries)
-				p.Send(barMsg{})
-			}
+			pollMarketsOnce(ctx, client, cache, p, &failing)
 		}
 	}
+}
+
+// pollMarketsOnce runs a single Markets fetch and applies or reports it,
+// updating *failing so PollMarkets only sends one statusNotice per run of
+// consecutive failures (reset to false on the next success). Split out from
+// PollMarkets so the rate-limiting behavior can be unit tested without
+// driving the real 5s ticker.
+func pollMarketsOnce(ctx context.Context, client *apiclient.Client, cache *apiclient.Cache, p *tea.Program, failing *bool) {
+	entries, err := client.Markets(ctx)
+	if err != nil {
+		if !*failing {
+			p.Send(statusMsg{Kind: statusNotice, Detail: "markets poll failed: " + err.Error()})
+			*failing = true
+		}
+		return
+	}
+	*failing = false
+	cache.ApplyMarkets(entries)
+	p.Send(barMsg{})
 }

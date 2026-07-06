@@ -71,7 +71,7 @@ func TestComputeGates(t *testing.T) {
 			want:      gateStates{MaxPosOK: true, ExposureOK: false, ConcurrencyOK: true},
 		},
 		{
-			name:      "max concurrency breach",
+			name:      "zero concurrency cap is uncapped",
 			positions: breachingPos,
 			risk:      apiclient.RiskSettings{MaxConcurrent: 0}, // zero is uncapped, needs a positive cap to breach
 			want:      gateStates{MaxPosOK: true, ExposureOK: true, ConcurrencyOK: true},

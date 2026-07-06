@@ -184,7 +184,7 @@ func (m *Model) cmdTrack(args []string) (string, tea.Cmd) {
 // and is not ported.
 func (m *Model) cmdTimeframe(args []string) string {
 	if len(args) == 0 {
-		return "usage: /tf TIMEFRAME [COIN]  (15m, 1h, 4h, 1d)"
+		return "usage: /tf TIMEFRAME COIN  (15m, 1h, 4h, 1d)"
 	}
 	tf := strings.ToLower(args[0])
 	if !containsStr(tfChoices, tf) {

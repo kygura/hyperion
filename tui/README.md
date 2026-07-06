@@ -36,17 +36,16 @@ go build -o hyperagent-tui ./src
 | `-core-url` | `http://127.0.0.1:8787` | daemon base URL |
 | `-token` | `$HYPERAGENT_TOKEN` | bearer token, only needed if the daemon sets `[api] token` |
 
-On start, the TUI fetches `/api/settings` once to seed provider/model lists,
-watchlist, timeframes and risk limits, then opens `/api/ws` for the live
-push stream (bars, verdicts, journal, status, mids) and polls `/api/markets`
-for the table. If the daemon isn't reachable it fails fast with
+On start, the TUI fetches `/api/settings` once to seed the watchlist,
+timeframes and risk limits, then opens `/api/ws` for the live push stream
+(bars, verdicts, journal, status, mids) and polls `/api/markets` for the
+table. If the daemon isn't reachable it fails fast with
 `could not reach daemon at <url>: ...` instead of drawing a blank UI.
 
-All in-TUI actions — `/watch`, `/track`, `/scan`, settings edits, mode
-toggles, order placement, chat — are just calls through
-`internal/apiclient` onto the daemon's control-plane endpoints; the daemon
-does the actual work (risk gates, journaling, execution) exactly as it does
-for `curl` or the web dashboard.
+All in-TUI actions — `/watch`, `/track`, `/scan`, mode toggles, chat — are
+just calls through `internal/apiclient` onto the daemon's control-plane
+endpoints; the daemon does the actual work (risk gates, journaling,
+execution) exactly as it does for `curl` or the web dashboard.
 
 ## Module layout
 

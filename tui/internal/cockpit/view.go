@@ -294,21 +294,44 @@ func (m *Model) chatView(w, h int) string {
 	return box("AGENT", "esc to close", lines, w, h)
 }
 
-// wordWrap wraps s to at most width characters per line, breaking on spaces.
+// wordWrap wraps s to at most width display cells per line, breaking on
+// spaces. Measures with lipgloss.Width (display cells, not bytes) so
+// multibyte UTF-8 — e.g. CJK, where one rune can render as two cells —
+// wraps at the right column instead of overflowing or wrapping too early.
 func wordWrap(s string, width int) string {
-	if width <= 0 || len(s) <= width {
+	if width <= 0 || lipgloss.Width(s) <= width {
 		return s
 	}
+	runes := []rune(s)
 	var out strings.Builder
-	for len(s) > width {
-		cut := strings.LastIndex(s[:width], " ")
-		if cut <= 0 {
-			cut = width
+	for len(runes) > 0 {
+		if lipgloss.Width(string(runes)) <= width {
+			out.WriteString(string(runes))
+			break
 		}
-		out.WriteString(s[:cut])
+		cut, lastSpace, w := 0, -1, 0
+		for i, r := range runes {
+			rw := lipgloss.Width(string(r))
+			if w+rw > width {
+				break
+			}
+			w += rw
+			cut = i + 1
+			if r == ' ' {
+				lastSpace = i
+			}
+		}
+		if lastSpace > 0 {
+			cut = lastSpace
+		} else if cut == 0 {
+			cut = 1 // a single rune wider than width — still make progress
+		}
+		out.WriteString(string(runes[:cut]))
 		out.WriteByte('\n')
-		s = strings.TrimLeft(s[cut:], " ")
+		runes = runes[cut:]
+		for len(runes) > 0 && runes[0] == ' ' {
+			runes = runes[1:]
+		}
 	}
-	out.WriteString(s)
 	return out.String()
 }

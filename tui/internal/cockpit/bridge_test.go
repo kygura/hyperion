@@ -75,7 +75,11 @@ func waitForCondition(t *testing.T, timeout time.Duration, cond func() bool) {
 // TestPumpWSForwardsBarAndStatusFrames stands up a real httptest.Server with
 // a gorilla/websocket Upgrader that pushes one "bar" frame and one "status"
 // frame, then asserts PumpWS both applies the bar to the cache and forwards
-// both frames as the right tea.Msg types.
+// both frames as the right tea.Msg types. It also proves the fix for the WS
+// link status finding: PumpWS must synthesize its own statusConn{Connected:
+// true} right after a successful dial (distinct from the daemon-forwarded
+// status frame, which carries Mode) and a statusConn{Connected: false} once
+// the server closes the connection.
 func TestPumpWSForwardsBarAndStatusFrames(t *testing.T) {
 	upgrader := websocket.Upgrader{}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +98,8 @@ func TestPumpWSForwardsBarAndStatusFrames(t *testing.T) {
 		_ = conn.WriteMessage(websocket.TextMessage, mustMarshalFrame(t, "status", statusData))
 
 		// Keep the connection open briefly so the client has time to read both
-		// frames before we tear the server down.
+		// frames, then let the deferred conn.Close() drop it — driving the
+		// connected=false assertion below.
 		time.Sleep(200 * time.Millisecond)
 	}))
 	defer srv.Close()
@@ -114,22 +119,30 @@ func TestPumpWSForwardsBarAndStatusFrames(t *testing.T) {
 
 	go PumpWS(ctx, srv.URL, cache, p)
 
-	var gotBar, gotStatus bool
-	deadline := time.After(3 * time.Second)
-	for !gotBar || !gotStatus {
+	var gotBar, gotForwardedStatus, gotConnTrue, gotConnFalse bool
+	deadline := time.After(4 * time.Second)
+	for !gotBar || !gotForwardedStatus || !gotConnTrue || !gotConnFalse {
 		select {
 		case msg := <-msgs:
 			switch m := msg.(type) {
 			case barMsg:
 				gotBar = true
 			case statusMsg:
-				if m.Kind != statusConn || !m.Connected || m.Mode != "propose" {
-					t.Fatalf("unexpected statusMsg: %+v", m)
+				if m.Kind != statusConn {
+					continue
 				}
-				gotStatus = true
+				switch {
+				case m.Connected && m.Mode == "propose":
+					gotForwardedStatus = true
+				case m.Connected:
+					gotConnTrue = true
+				default:
+					gotConnFalse = true
+				}
 			}
 		case <-deadline:
-			t.Fatalf("timed out waiting for frames: gotBar=%v gotStatus=%v", gotBar, gotStatus)
+			t.Fatalf("timed out waiting for frames: gotBar=%v gotForwardedStatus=%v gotConnTrue=%v gotConnFalse=%v",
+				gotBar, gotForwardedStatus, gotConnTrue, gotConnFalse)
 		}
 	}
 
@@ -275,6 +288,64 @@ func TestNextBackoff(t *testing.T) {
 				t.Fatalf("nextBackoff(%s, %s, %s) = %s, want %s", tc.prevBackoff, tc.upDuration, maxBackoff, got, tc.want)
 			}
 		})
+	}
+}
+
+// TestPollMarketsOnceRateLimitsFailureNotice is the fix's proof for the
+// silent-error finding: pollMarketsOnce must report a poll failure as a
+// statusNotice, but only the first time after a success — a dead daemon
+// polled every 5s must not flood the journal with one entry per tick. This
+// drives a fake server that succeeds once then fails twice and asserts
+// exactly one notice reaches the program.
+func TestPollMarketsOnceRateLimitsFailureNotice(t *testing.T) {
+	var mu sync.Mutex
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		calls++
+		n := calls
+		mu.Unlock()
+		if n == 1 {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`[]`))
+			return
+		}
+		http.Error(w, "boom", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	client := apiclient.New(srv.URL, "")
+	cache := apiclient.NewCache()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	p, msgs := newTestProgram(ctx)
+	go func() { _, _ = p.Run() }()
+	defer p.Kill()
+
+	failing := false
+	pollMarketsOnce(ctx, client, cache, p, &failing) // succeeds
+	pollMarketsOnce(ctx, client, cache, p, &failing) // fails -> one notice
+	pollMarketsOnce(ctx, client, cache, p, &failing) // fails again -> rate-limited, no notice
+
+	notices := 0
+	deadline := time.After(500 * time.Millisecond)
+drain:
+	for {
+		select {
+		case msg := <-msgs:
+			if sm, ok := msg.(statusMsg); ok && sm.Kind == statusNotice {
+				notices++
+			}
+		case <-deadline:
+			break drain
+		}
+	}
+	if notices != 1 {
+		t.Errorf("notices = %d, want 1", notices)
+	}
+	if calls != 3 {
+		t.Errorf("server calls = %d, want 3", calls)
 	}
 }
 

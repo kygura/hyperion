@@ -15,7 +15,11 @@ const (
 	// failure). It carries Detail and optionally Provider; it must not touch
 	// connection state.
 	statusNotice statusKind = iota
-	// statusConn asserts the websocket connection state via Connected.
+	// statusConn asserts a websocket connection state via Connected. Two
+	// sources feed it: the daemon's own forwarded frames (its link to the
+	// exchange) and PumpWS's synthesized events (the TUI's own link to the
+	// daemon) — see PumpWS's doc comment. The header's connection chip
+	// reflects whichever arrived most recently.
 	statusConn
 )
 
