@@ -117,8 +117,8 @@ The demo field wants a **URL**, so the plan is: record the TUI with VHS, capture
 **Starter tape** (`docs/demo.tape`, tune sleeps/waits to real render output):
 
 ```tape
-Output demo/hypertrader-tui.mp4
-Output demo/hypertrader-tui.gif
+Output demo/hyperion-tui.mp4
+Output demo/hyperion-tui.gif
 
 Set FontSize 20
 Set Width 1600

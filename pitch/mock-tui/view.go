@@ -61,7 +61,7 @@ func (m model) View() string {
 		return ""
 	}
 	if m.width < minW || m.height < minH {
-		msg := dimStyle.Render(fmt.Sprintf("hypertrader needs at least %d×%d — current %d×%d", minW, minH, m.width, m.height))
+		msg := dimStyle.Render(fmt.Sprintf("hyperion needs at least %d×%d — current %d×%d", minW, minH, m.width, m.height))
 		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, msg)
 	}
 
@@ -82,7 +82,7 @@ func (m model) View() string {
 }
 
 func (m model) headerView() string {
-	left := logoStyle.Render(" HYPERTRADER ") +
+	left := logoStyle.Render(" HYPERION ") +
 		dimStyle.Render("  autonomous trading operator · Hyperliquid mainnet")
 
 	up := time.Since(m.startedAt)

@@ -1,8 +1,6 @@
 # Hyperion
 
-![Hyperion cockpit — connect, read the market, run slash commands, flip execution mode, ask the agent for a live read](pitch/media/hyperion-tui.gif)
-
-*The cockpit end to end: connect to the daemon, watch the market picture and thesis cards fill in live, run `/help` `/watch add` `/tf`, flip propose ↔ autonomous mode, force a `/scan`, then ask the agent directly for a written read on BTC.*
+![Hyperion](pitch/media/hyperion-tui.gif)
 
 Autonomous trading operator on Hyperliquid. Agents state a mandate in plain language — "reach 60/40 ETH–stablecoin, 90 days, max 8% drawdown" — and the system watches, reasons, and executes. Backend daemon ingests markets, runs reasoning loops via LLM agents, executes through hard-coded risk gates. Every decision journaled and inspectable.
 

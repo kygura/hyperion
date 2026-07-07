@@ -19,7 +19,7 @@ the product loop — ingest → reason → execute → journal — on one screen
 ## Run
 
 ```sh
-go build -o hypertrader-mock . && ./hypertrader-mock
+go build -o hyperion-mock . && ./hyperion-mock
 ```
 
 Requires a terminal of at least 96×28. Keys: `h` halt / resume the loop,

@@ -372,7 +372,7 @@
     <p data-hero-anim="2" class="tagline">An autonomous trading operator, built on Hyperliquid.</p>
     <p data-hero-anim="3" class="lead">Hyperion runs a trading desk that never sleeps. It ingests markets continuously, reasons about them in writing, and executes toward long-term financial goals you state in plain language.</p>
     <div data-hero-anim="4" class="cta-row">
-      <a href="PITCH.md" download="hypertrader-pitch.md" class="btn btn-primary" data-magnetic>Download pitch</a>
+      <a href="PITCH.md" download="hyperion-pitch.md" class="btn btn-primary" data-magnetic>Download pitch</a>
       <a href="#thesis" class="btn btn-secondary" data-magnetic>Read the thesis</a>
     </div>
   </div>
@@ -686,7 +686,7 @@
 
 <footer>
   <div class="wrap bar">
-    <span>2026 HYPERTRADER</span>
+    <span>2026 HYPERION</span>
     <span>BUILT ON HYPERLIQUID</span>
     <span>A PROJECT BY @KYGRA</span>
   </div>
@@ -710,10 +710,10 @@
   var canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
   function getStoredTheme() {
-    try { return localStorage.getItem("hypertrader-theme"); } catch (e) { return null; }
+    try { return localStorage.getItem("hyperion-theme"); } catch (e) { return null; }
   }
   function setStoredTheme(t) {
-    try { localStorage.setItem("hypertrader-theme", t); } catch (e) {}
+    try { localStorage.setItem("hyperion-theme", t); } catch (e) {}
   }
   function applyTheme(theme, persist) {
     body.setAttribute("data-theme", theme);
@@ -1251,10 +1251,10 @@
   }
 
   function getStoredView() {
-    try { return localStorage.getItem("hypertrader-view"); } catch (e) { return null; }
+    try { return localStorage.getItem("hyperion-view"); } catch (e) { return null; }
   }
   function setStoredView(v) {
-    try { localStorage.setItem("hypertrader-view", v); } catch (e) {}
+    try { localStorage.setItem("hyperion-view", v); } catch (e) {}
   }
   function applyView(view, persist) {
     var isAgent = view === "agent";
