@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { postChat, type ChatTurn } from '../../lib/core-client'
 import { useCoreHealth } from '../../hooks/useCore'
 
-const STORAGE_KEY = 'hypertrader-chat'
+const STORAGE_KEY = 'hyperion-chat'
 
 interface Props {
   open: boolean
