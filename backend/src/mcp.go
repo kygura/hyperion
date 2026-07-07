@@ -4,7 +4,7 @@
 // cancel orders. No MCP SDK: the protocol is newline-delimited JSON-RPC 2.0 over
 // stdio, which stdlib covers, matching the repo's dependency posture.
 //
-//	claude mcp add hypertrader -- ./hyperagent mcp -address 0xYOURMASTER
+//	claude mcp add hyperion -- ./hyperagent mcp -address 0xYOURMASTER
 //
 // Reads: no key needed. Trading: HL_AGENT_KEY (approve one with
 // `hyperagent approve-agent`) and -address (master account, for exposure gates).
@@ -237,7 +237,7 @@ func (s *mcpServer) dispatch(req rpcRequest) (any, *rpcError) {
 		return map[string]any{
 			"protocolVersion": mcpProtocolVersion,
 			"capabilities":    map[string]any{"tools": map[string]any{}},
-			"serverInfo":      map[string]any{"name": "hypertrader", "version": "0.1.0"},
+			"serverInfo":      map[string]any{"name": "hyperion", "version": "0.1.0"},
 		}, nil
 	case "ping":
 		return map[string]any{}, nil

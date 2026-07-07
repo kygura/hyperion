@@ -27,7 +27,7 @@ func (m *Model) View() tea.View {
 		return tea.NewView("")
 	}
 	if m.width < minW || m.height < minH {
-		msg := dimStyle.Render(fmt.Sprintf("hypertrader needs at least %d×%d — current %d×%d", minW, minH, m.width, m.height))
+		msg := dimStyle.Render(fmt.Sprintf("hyperion needs at least %d×%d — current %d×%d", minW, minH, m.width, m.height))
 		v := tea.NewView(lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, msg))
 		v.AltScreen = true
 		return v

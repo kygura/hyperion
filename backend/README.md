@@ -53,7 +53,7 @@ passes the hard-coded risk gates in `internal/executor`.
 Expose trading as tools to Claude Code / Claude Desktop / any MCP client:
 
 ```sh
-claude mcp add hypertrader -- /path/to/hyperagent mcp -address 0xYOURMASTER
+claude mcp add hyperion -- /path/to/hyperagent mcp -address 0xYOURMASTER
 ```
 
 | Tool | Needs key? | Does |
