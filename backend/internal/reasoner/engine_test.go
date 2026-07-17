@@ -4,18 +4,26 @@ import (
 	"context"
 	"slices"
 	"testing"
+
+	"github.com/hyperagent/hyperagent/internal/bus"
+	"github.com/hyperagent/hyperagent/internal/metrics"
 )
 
-// recordProvider is a fake Provider that records the model id it was asked to use,
-// so we can assert the registry's bound model actually reaches the request.
+// recordProvider is a fake Provider that records the model id and role it was asked
+// to serve, plus a call count, so we can assert the registry's bound model actually
+// reaches the request and that each role hits its own provider.
 type recordProvider struct {
 	name      string
 	lastModel string
+	lastRole  Role
+	calls     int
 }
 
 func (r *recordProvider) Name() string { return r.name }
 func (r *recordProvider) Complete(_ context.Context, req Request) (Response, error) {
 	r.lastModel = req.Model
+	r.lastRole = req.Role
+	r.calls++
 	return Response{Reply: "ok", Model: req.Model}, nil
 }
 
@@ -27,7 +35,7 @@ func TestRegistryModelSwitching(t *testing.T) {
 		"anthropic": {"claude-opus-4-8", "claude-sonnet-4-6"},
 		"deepseek":  {"deepseek-chat", "deepseek-reasoner"},
 	}
-	reg := NewRegistry(providers, models, "deepseek", "deepseek-chat", "anthropic", "claude-opus-4-8")
+	reg := NewRegistry(providers, models, "deepseek", "deepseek-chat", "anthropic", "claude-opus-4-8", "anthropic", "claude-opus-4-8", "deepseek", "deepseek-chat")
 
 	// Initial binding from construction.
 	if p, model := reg.Active(RoleChat); p != "anthropic" || model != "claude-opus-4-8" {
@@ -82,5 +90,60 @@ func TestRegistryModelSwitching(t *testing.T) {
 	// The batch role is independent of chat changes.
 	if p, model := reg.Active(RoleBatch); p != "deepseek" || model != "deepseek-chat" {
 		t.Fatalf("batch binding drifted to %s/%s", p, model)
+	}
+}
+
+// TestForBlankProviderFailsLoud proves a role bound to an empty provider name
+// (e.g. an unset review_provider/trigger_provider) returns ok=false instead of
+// guessing an arbitrary provider — a trading system must not silently reason on a
+// random model for its decision role.
+func TestForBlankProviderFailsLoud(t *testing.T) {
+	providers := map[string]Provider{"deepseek": &recordProvider{name: "deepseek"}}
+	models := map[string][]string{"deepseek": {"deepseek-chat"}}
+	reg := NewRegistry(providers, models,
+		"deepseek", "deepseek-chat", // batch
+		"deepseek", "deepseek-chat", // chat
+		"", "", // review: blank
+		"", "") // trigger: blank
+
+	if _, _, ok := reg.For(RoleReview); ok {
+		t.Fatal("For(review) with blank provider returned ok=true; want fail-loud ok=false")
+	}
+	// A populated role still resolves normally.
+	if _, _, ok := reg.For(RoleBatch); !ok {
+		t.Fatal("For(batch) with populated provider returned ok=false")
+	}
+}
+
+// TestReasonRoutesEachRoleToItsOwnProvider is the regression proof for the
+// hardcoded-RoleBatch bug: reason() must resolve the provider binding for the
+// role it is actually processing, so review and trigger digests hit two
+// different providers. Against the old code — which looked up For(RoleBatch)
+// for every role — a review digest would have hit the batch-bound (trigger)
+// provider and left the review provider with zero calls, failing this test.
+func TestReasonRoutesEachRoleToItsOwnProvider(t *testing.T) {
+	reviewProv := &recordProvider{name: "reviewer"}
+	triggerProv := &recordProvider{name: "trigger"}
+	providers := map[string]Provider{"reviewer": reviewProv, "trigger": triggerProv}
+	models := map[string][]string{"reviewer": {"rm"}, "trigger": {"tm"}}
+	// Batch is deliberately bound to the trigger provider; the old reason() sent
+	// every role through this batch binding, so a review digest would misroute here.
+	reg := NewRegistry(providers, models,
+		"trigger", "tm", // batch
+		"reviewer", "rm", // chat (unused here)
+		"reviewer", "rm", // review
+		"trigger", "tm") // trigger
+	eng := NewEngine(bus.New(), reg, nil, nil)
+
+	eng.reason(context.Background(), metrics.DigestReview,
+		[]metrics.Digest{{Coin: "BTC", Kind: metrics.DigestReview}})
+	eng.reason(context.Background(), metrics.DigestTrigger,
+		[]metrics.Digest{{Coin: "ETH", Kind: metrics.DigestTrigger}})
+
+	if reviewProv.calls != 1 || reviewProv.lastRole != RoleReview {
+		t.Fatalf("review provider: calls=%d lastRole=%q, want exactly 1 call as review", reviewProv.calls, reviewProv.lastRole)
+	}
+	if triggerProv.calls != 1 || triggerProv.lastRole != RoleTrigger {
+		t.Fatalf("trigger provider: calls=%d lastRole=%q, want exactly 1 call as trigger", triggerProv.calls, triggerProv.lastRole)
 	}
 }

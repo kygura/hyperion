@@ -217,7 +217,7 @@ func (p *roleProvider) Complete(_ context.Context, req Request) (Response, error
 func TestEngineRoutesKindsAndAppliesReviews(t *testing.T) {
 	prov := &roleProvider{}
 	reg := NewRegistry(map[string]Provider{"fake": prov}, map[string][]string{"fake": {"m"}},
-		"fake", "m", "fake", "m")
+		"fake", "m", "fake", "m", "fake", "m", "fake", "m")
 	var verdicts []Verdict
 	e := NewEngine(bus.New(), reg, nil, func(v Verdict) { verdicts = append(verdicts, v) })
 	ts := &fakeThesisStore{}

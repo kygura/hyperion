@@ -44,6 +44,8 @@ func newTestEngine(provider *fakeChatProvider) *reasoner.Engine {
 		map[string][]string{provider.name: {"model-x"}},
 		provider.name, "model-x",
 		provider.name, "model-x",
+		provider.name, "model-x",
+		provider.name, "model-x",
 	)
 	return reasoner.NewEngine(bus.New(), reg, make(chan metrics.Digest), nil)
 }

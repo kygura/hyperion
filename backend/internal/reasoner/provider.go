@@ -33,8 +33,10 @@ const (
 // Role identifies which configured provider to use and which prompt frames the
 // request: routine batch reasoning vs interactive chat / escalations. The plan
 // splits these so a cheap model can do batches while a stronger one handles
-// chat. RoleReview and RoleTrigger are the two thesis-pipeline tiers; both run
-// on the batch provider binding — they are prompts, not separate transports.
+// chat. RoleReview (thesis formation) and RoleTrigger (trade-decision) are the two
+// thesis-pipeline tiers, and each now carries its OWN independent (provider, model)
+// binding: they can run different models on different transports, no longer
+// collapsed onto the batch binding.
 type Role string
 
 const (

@@ -54,7 +54,7 @@ func newScriptEngine(t *testing.T, prov *scriptProvider) (*reasoner.Engine, chan
 	t.Helper()
 	providers := map[string]reasoner.Provider{"script": prov}
 	models := map[string][]string{"script": {"m"}}
-	reg := reasoner.NewRegistry(providers, models, "script", "m", "script", "m")
+	reg := reasoner.NewRegistry(providers, models, "script", "m", "script", "m", "script", "m", "script", "m")
 	ch := make(chan metrics.Digest, 16)
 	eng := reasoner.NewEngine(bus.New(), reg, ch, nil)
 	return eng, ch
@@ -142,7 +142,7 @@ func TestEngineReviewThenGatedTrigger(t *testing.T) {
 	prov := &scriptProvider{}
 	providers := map[string]reasoner.Provider{"script": prov}
 	models := map[string][]string{"script": {"m"}}
-	reg := reasoner.NewRegistry(providers, models, "script", "m", "script", "m")
+	reg := reasoner.NewRegistry(providers, models, "script", "m", "script", "m", "script", "m", "script", "m")
 	ch := make(chan metrics.Digest, 16)
 
 	b := bus.New()

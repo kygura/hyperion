@@ -366,15 +366,32 @@ func buildReasoner(cfg config.Config) *reasoner.Registry {
 	register("openai", reasoner.NewOpenAICompatible("openai", p.OpenAI.Key("OPENAI_API_KEY"), p.OpenAI.Model, p.OpenAI.BaseURL), p.OpenAI)
 	register("deepseek", reasoner.NewOpenAICompatible("deepseek", p.Deepseek.Key("DEEPSEEK_API_KEY"), p.Deepseek.Model, p.Deepseek.BaseURL), p.Deepseek)
 
-	// Custom providers: any OpenAI-compatible (or Anthropic-protocol) endpoint,
-	// registered by its config key. This is the provider-agnostic surface.
+	// Custom providers: any OpenAI-compatible / Anthropic-protocol endpoint, or a
+	// harness kind that spawns an authenticated CLI subprocess. Registered by its
+	// config key. Harness providers carry no key (the CLI owns its own auth) and
+	// are registered unconditionally: if the CLI binary is missing from PATH, the
+	// provider still registers and every Complete call returns a clear
+	// "binary not found" error — same "fail on the call, not at startup" posture
+	// used for a missing API key.
 	for name, pc := range p.Custom {
-		envDefault := strings.ToUpper(name) + "_API_KEY"
-		key := pc.Key(envDefault)
-		if pc.Kind == "anthropic" {
-			register(name, reasoner.NewAnthropic(key, pc.Model, pc.BaseURL), pc)
-		} else {
-			register(name, reasoner.NewOpenAICompatible(name, key, pc.Model, pc.BaseURL), pc)
+		switch pc.Kind {
+		case "harness-pi":
+			// pi needs a --provider sub-backend; BaseURL is meaningless for a
+			// subprocess harness, so it carries the sub-provider here (defaulting
+			// to openai-codex, the GPT-5.6 backend this build targets).
+			sub := pc.BaseURL
+			if sub == "" {
+				sub = "openai-codex"
+			}
+			register(name, reasoner.NewPiProvider(name, sub, pc.Model), pc)
+		case "harness-claude":
+			register(name, reasoner.NewClaudeProvider(name, pc.Model), pc)
+		case "harness-codex":
+			register(name, reasoner.NewCodexProvider(name, pc.Model), pc)
+		case "anthropic":
+			register(name, reasoner.NewAnthropic(pc.Key(strings.ToUpper(name)+"_API_KEY"), pc.Model, pc.BaseURL), pc)
+		default:
+			register(name, reasoner.NewOpenAICompatible(name, pc.Key(strings.ToUpper(name)+"_API_KEY"), pc.Model, pc.BaseURL), pc)
 		}
 	}
 
@@ -382,8 +399,14 @@ func buildReasoner(cfg config.Config) *reasoner.Registry {
 	// default (first known model). The registry then binds (provider, model) per role.
 	batchModel := firstNonEmpty(cfg.Reasoner.BatchModel, first(models[cfg.Reasoner.BatchProvider]))
 	chatModel := firstNonEmpty(cfg.Reasoner.ChatModel, first(models[cfg.Reasoner.ChatProvider]))
+	reviewModel := firstNonEmpty(cfg.Reasoner.ReviewModel, first(models[cfg.Reasoner.ReviewProvider]))
+	triggerModel := firstNonEmpty(cfg.Reasoner.TriggerModel, first(models[cfg.Reasoner.TriggerProvider]))
 
-	return reasoner.NewRegistry(providers, models, cfg.Reasoner.BatchProvider, batchModel, cfg.Reasoner.ChatProvider, chatModel)
+	return reasoner.NewRegistry(providers, models,
+		cfg.Reasoner.BatchProvider, batchModel,
+		cfg.Reasoner.ChatProvider, chatModel,
+		cfg.Reasoner.ReviewProvider, reviewModel,
+		cfg.Reasoner.TriggerProvider, triggerModel)
 }
 
 // mergeModels returns a provider's known model ids with its default model first and

@@ -37,30 +37,40 @@ type Registry struct {
 
 // NewRegistry builds a registry. providers is keyed by name ("anthropic", etc);
 // models lists the known model ids per provider for the picker; the role arguments
-// seed the initial (provider, model) binding for the batch and chat roles.
-func NewRegistry(providers map[string]Provider, models map[string][]string, batchProvider, batchModel, chatProvider, chatModel string) *Registry {
+// seed the initial (provider, model) binding for each of the four roles. Review and
+// trigger are bound independently of batch so thesis formation and trade-execution
+// decisions can run on different models instead of collapsing onto one binding.
+func NewRegistry(providers map[string]Provider, models map[string][]string, batchProvider, batchModel, chatProvider, chatModel, reviewProvider, reviewModel, triggerProvider, triggerModel string) *Registry {
 	return &Registry{
 		providers: providers,
 		models:    models,
 		roles: map[Role]binding{
-			RoleBatch: {provider: batchProvider, model: batchModel},
-			RoleChat:  {provider: chatProvider, model: chatModel},
+			RoleBatch:   {provider: batchProvider, model: batchModel},
+			RoleChat:    {provider: chatProvider, model: chatModel},
+			RoleReview:  {provider: reviewProvider, model: reviewModel},
+			RoleTrigger: {provider: triggerProvider, model: triggerModel},
 		},
 	}
 }
 
 // For returns the provider and bound model for a role, falling back to any available
 // provider (with an empty id, signalling the adapter's own default) when the bound
-// provider is missing.
+// provider name is set but not registered. A BLANK provider name (e.g. an unset
+// review_provider/trigger_provider in config) returns ok=false: a trading system
+// must fail loud, never silently land on an arbitrary map-iteration-order provider
+// for its decision-making role.
 func (r *Registry) For(role Role) (Provider, string, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	b := r.roles[role]
+	if b.provider == "" {
+		return nil, "", false
+	}
 	if p, ok := r.providers[b.provider]; ok {
 		return p, b.model, true
 	}
 	for _, p := range r.providers {
-		return p, "", true // any provider beats none; "" → adapter's own default
+		return p, "", true // configured-but-unregistered name → any provider beats none
 	}
 	return nil, "", false
 }
@@ -211,7 +221,12 @@ func NewEngine(b *bus.Bus, reg *Registry, digestsIn <-chan metrics.Digest, onVer
 		bus:       b,
 		registry:  reg,
 		digestsIn: digestsIn,
-		timeout:   90 * time.Second,
+		// 120s: single source of truth for every provider call (harness and HTTP
+		// alike). Harness CLIs need the headroom for cold subprocess start plus a
+		// full model round trip; a 120s HTTP cap is harmless backward-compat. This
+		// is the deadline that actually bites — the adapters' own harnessTimeout
+		// only shrinks a deadline, so it can never exceed this.
+		timeout:   120 * time.Second,
 		onVerdict: onVerdict,
 	}
 }
@@ -297,9 +312,9 @@ func roleFor(kind string) Role {
 }
 
 // reason runs one completion for a same-kind digest group with a timeout,
-// applies thesis operations (review tier), and publishes the verdicts. Both
-// tiers ride the batch provider binding — RoleReview/RoleTrigger select the
-// prompt, not the transport.
+// applies thesis operations (review tier), and publishes the verdicts. Each
+// tier resolves its own provider binding via the digest's role, so review and
+// trigger can run different models on different transports.
 func (e *Engine) reason(ctx context.Context, kind string, digests []metrics.Digest) {
 	// Registered first so every exit — including the no-provider return below —
 	// decrements the inflight count. Only the last group returns the line to IDLE.
@@ -309,12 +324,12 @@ func (e *Engine) reason(ctx context.Context, kind string, digests []metrics.Dige
 		}
 	}()
 
-	provider, model, ok := e.registry.For(RoleBatch)
+	role := roleFor(kind)
+	provider, model, ok := e.registry.For(role)
 	if !ok {
 		e.bus.PublishStatus(bus.StatusEvent{Detail: "no reasoning provider configured"})
 		return
 	}
-	role := roleFor(kind)
 
 	// Tier status: the TUI's status line shows which asset is being reasoned
 	// about and on which tier, then drops back to IDLE.
@@ -332,12 +347,14 @@ func (e *Engine) reason(ctx context.Context, kind string, digests []metrics.Dige
 	resp, err := provider.Complete(cctx, Request{Role: role, Digests: digests, Model: model})
 	if err != nil {
 		e.bus.PublishStatus(bus.StatusEvent{Provider: provider.Name(), Detail: "reason error: " + err.Error()})
-		if role == RoleReview {
-			// A missed review leaves the existing thesis untouched; the next
-			// close or trigger retries. The miss itself is journaled.
-			for _, d := range digests {
-				e.journal(d.Coin, "error", "thesis review missed: "+err.Error())
-			}
+		// Journal the failed call for every non-chat role, not just review.
+		// Harness providers add new failure modes on the trigger/batch path too
+		// (missing CLI binary, expired CLI auth, quota exhaustion), and a run of
+		// silent trigger failures must leave something to grep afterward, not just
+		// a transient status line. A missed call leaves prior thesis/verdict state
+		// untouched; the next close or trigger retries.
+		for _, d := range digests {
+			e.journal(d.Coin, "error", string(role)+" reason failed: "+err.Error())
 		}
 		return
 	}

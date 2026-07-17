@@ -82,6 +82,8 @@ func newSettingsTestEngine(t *testing.T) *reasoner.Engine {
 		},
 		"anthropic", "claude-opus-4-8", // batch
 		"openai", "gpt-4o", // chat
+		"anthropic", "claude-opus-4-8", // review
+		"openai", "gpt-4o", // trigger
 	)
 	return reasoner.NewEngine(bus.New(), reg, make(chan metrics.Digest), nil)
 }
@@ -142,6 +144,12 @@ func TestSettingsGetHappyPath(t *testing.T) {
 	if body.Risk.MaxPositionUSD != 5000 {
 		t.Errorf("risk.max_position_usd = %v, want 5000", body.Risk.MaxPositionUSD)
 	}
+	if body.Review.Provider != "anthropic" || body.Review.Model != "claude-opus-4-8" {
+		t.Fatalf("review = %+v, want anthropic/claude-opus-4-8", body.Review)
+	}
+	if body.Trigger.Provider != "openai" || body.Trigger.Model != "gpt-4o" {
+		t.Fatalf("trigger = %+v, want openai/gpt-4o", body.Trigger)
+	}
 }
 
 func TestSettingsPutSwitchesChatModelOnly(t *testing.T) {
@@ -169,6 +177,66 @@ func TestSettingsPutSwitchesChatModelOnly(t *testing.T) {
 	}
 	if body.Batch.Provider != "anthropic" || body.Batch.Model != "claude-opus-4-8" {
 		t.Fatalf("batch drifted: %+v", body.Batch)
+	}
+}
+
+// TestSettingsPutReviewAndTriggerAppliesAndPersists mirrors
+// TestSettingsPutSwitchesChatModelOnly but for the review/trigger role
+// fields, which had zero test coverage before this fix. Also asserts the
+// SaveConfig closure receives the new values, not just the registry.
+func TestSettingsPutReviewAndTriggerAppliesAndPersists(t *testing.T) {
+	engine := newSettingsTestEngine(t)
+	cfg := config.Default()
+	var mu sync.Mutex
+	var saved config.Config
+	deps := Deps{
+		Engine:      engine,
+		Cfg:         cfg,
+		CfgSnapshot: func() config.Config { return cfg },
+		SaveConfig: func(apply func(*config.Config)) error {
+			mu.Lock()
+			defer mu.Unlock()
+			apply(&cfg)
+			saved = cfg
+			return nil
+		},
+	}
+	srv := newSettingsTestServer(t, deps)
+
+	resp := putJSON(t, srv, "/api/settings", map[string]any{
+		"review_provider":  "openai",
+		"review_model":     "gpt-4o",
+		"trigger_provider": "anthropic",
+		"trigger_model":    "claude-sonnet-4-6",
+	}, nil)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("status = %d, want 204", resp.StatusCode)
+	}
+
+	var body settingsResponse
+	getResp, err := srv.Client().Get(srv.URL + "/api/settings")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer getResp.Body.Close()
+	if err := json.NewDecoder(getResp.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Review.Provider != "openai" || body.Review.Model != "gpt-4o" {
+		t.Fatalf("review = %+v, want openai/gpt-4o", body.Review)
+	}
+	if body.Trigger.Provider != "anthropic" || body.Trigger.Model != "claude-sonnet-4-6" {
+		t.Fatalf("trigger = %+v, want anthropic/claude-sonnet-4-6", body.Trigger)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if saved.Reasoner.ReviewProvider != "openai" || saved.Reasoner.ReviewModel != "gpt-4o" {
+		t.Fatalf("saved reasoner review = %+v, want openai/gpt-4o", saved.Reasoner)
+	}
+	if saved.Reasoner.TriggerProvider != "anthropic" || saved.Reasoner.TriggerModel != "claude-sonnet-4-6" {
+		t.Fatalf("saved reasoner trigger = %+v, want anthropic/claude-sonnet-4-6", saved.Reasoner)
 	}
 }
 
@@ -239,6 +307,26 @@ func TestSettingsPutModePropose(t *testing.T) {
 	}
 }
 
+// TestSettingsPutProviderKeyHarnessKindRejected is the regression test for the
+// standards-review finding: PUTting a key for a provider configured as a
+// harness kind (CLI-subprocess auth, no API key) must not fall through to
+// buildProvider's OpenAI-compatible branch and silently replace the working
+// harness provider.
+func TestSettingsPutProviderKeyHarnessKindRejected(t *testing.T) {
+	engine := newSettingsTestEngine(t)
+	cfg := config.Default()
+	cfg.Providers.Custom = map[string]config.ProviderCfg{
+		"my-harness": {Kind: "harness-claude"},
+	}
+	srv := newSettingsTestServer(t, Deps{Engine: engine, Cfg: cfg, CfgSnapshot: func() config.Config { return cfg }})
+
+	resp := putJSON(t, srv, "/api/providers/my-harness/key", map[string]any{"key": "sk-test"}, nil)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422", resp.StatusCode)
+	}
+}
+
 func TestSettingsPutProviderKeyUnknownReturns404(t *testing.T) {
 	engine := newSettingsTestEngine(t)
 	cfg := config.Default()
@@ -261,6 +349,8 @@ func TestSettingsPutProviderKeySetsAndMasksHint(t *testing.T) {
 	reg := reasoner.NewRegistry(
 		map[string]reasoner.Provider{"local-llm": custom},
 		map[string][]string{"local-llm": {"model-a"}},
+		"local-llm", "model-a",
+		"local-llm", "model-a",
 		"local-llm", "model-a",
 		"local-llm", "model-a",
 	)
