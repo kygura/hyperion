@@ -21,8 +21,47 @@ cd ../tui && go build -o hyperagent-tui ./src
 ./hyperagent-tui -core-url http://127.0.0.1:8787
 ```
 
-Provider API keys go in `.env` (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
-`DEEPSEEK_API_KEY`).
+## Reasoner: providers & role binding
+
+The daemon reasons over market data via language models. Three transport types
+are available:
+
+**Harness providers** (recommended): spawn CLI binaries as subprocesses —
+`claude`, `pi`, `codex` — with no stored API keys. Requires the CLI already
+authenticated locally (e.g., `pi login`, `claude auth`).
+
+**Direct API providers** (fallback): call HTTP APIs directly with keys stored
+in `.env`: `openai`, `anthropic`, `deepseek`.
+
+Role binding is **independent**: thesis formation (`RoleReview`) and trade
+execution policy (`RoleTrigger`) can use different providers:
+
+```toml
+[reasoner]
+# Thesis formation (lower frequency, deeper reasoning)
+review_provider = "claude-harness"
+
+# Trade execution & verdict gates (high frequency, cost-optimized)
+trigger_provider = "pi-harness"
+trigger_model = "gpt-5.6-luna"    # pi sub-provider defaults
+batch_provider = "pi-harness"      # digest batching (same as trigger)
+batch_model = "gpt-5.6-luna"
+
+# Chat (human operator interface; unchanged)
+chat_provider = "deepseek"
+chat_model = "deepseek-chat"
+```
+
+Direct API keys (if using fallback providers) go in `.env`:
+
+```
+ANTHROPIC_API_KEY=sk-...
+OPENAI_API_KEY=sk-...
+DEEPSEEK_API_KEY=sk-...
+```
+
+Switch providers at runtime via the HTTP settings endpoint (no restart needed);
+the daemon journals provider errors and preserves prior state on failure.
 
 ## Wallet setup (execution)
 
