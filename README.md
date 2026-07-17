@@ -11,6 +11,7 @@ Autonomous trading operator on Hyperliquid. Agents state a mandate in plain lang
 - **Backend daemon** (:8787) — Market ingestion, position tracking, order execution, risk gates, event bus
 - **MCP server** — Exposes Hyperliquid markets and trading as tools. Claude (or any MCP client) reads data and places orders through same risk gates as daemon
 - **TUI cockpit** — Operator interface. Real-time feeds, watchlist, position view, order builder
+- **Reasoning orchestration** — Harness-first (Claude Code, Codex, pi carry user auth). Direct API (Claude, OpenAI, Deepseek) fallback. Thesis formation and execution policy split across roles
 - **Append-only journal** — Every candidate, thesis, and fill recorded. Proof layer for reputation
 
 ## Structure
@@ -47,7 +48,7 @@ Cockpit connects to backend over HTTP+WS. One screen, five panels (MANDATE · MA
 
 - **Backend:** Go, Echo (HTTP), WebSocket, Bubble Tea (MCP event handling)
 - **Frontend:** Go, Lipgloss v2 (TUI rendering)
-- **Reasoning:** Claude / OpenAI / Deepseek (via MCP tool calls)
+- **Reasoning:** Harness-first (Claude Code, Codex, pi); Direct API (Claude, OpenAI, Deepseek) fallback
 - **Market Data:** Hyperliquid API (REST + WebSocket)
 - **Signing:** Custom EIP-712 implementation, Hyperliquid reference vector verified
 - **Metrics:** Prometheus-compatible endpoint

@@ -1,31 +1,191 @@
-# pitch
+# Pitch Materials — Hyperion
 
-YC-application demo and landing-page assets for Hyperion.
+Index of all pitch, marketing, and investor materials.
 
-## Demo
+---
 
-![Hyperion TUI showcase](media/hyperion-tui.gif)
+## Quick Navigation
 
-The showcase covers the cockpit (`hyperagent-tui`) connecting to a live daemon, browsing the command surface (`/help`), growing the watchlist (`/watch add`), re-timeframing a market (`/tf`), flipping propose/autonomous execution mode, forcing a fresh scan (`/scan`), and asking the agent directly for a written read on a live market.
+### Pitch Deck
 
-## Regenerating the demo
+- **[deck/README.md](deck/README.md)** — deployment guide (Vercel, Cloudflare Pages)
+- **[deck/deck.md](deck/deck.md)** — slide outline (markdown reference)
+- **[deck/index.html](deck/index.html)** — deck landing page
+- **[pitch.html](pitch.html)** — interactive pitch deck (authoritative version)
+- **[PITCH.md](PITCH.md)** — authored pitch copy (locked; do not modify)
 
-The demo is a reproducible VHS script. Install VHS:
+### Founder Materials
 
-```sh
-go install github.com/charmbracelet/vhs@latest
+- **[YC-APPLICATION.md](YC-APPLICATION.md)** — YC batch prep (timeline, checklist, demo plan)
+
+### Investor Materials
+
+- **[investor/README.md](investor/README.md)** — investor materials index and FAQ
+- **[investor/FINANCIAL-PLAN.md](investor/FINANCIAL-PLAN.md)** — revenue model, unit economics, 5-year projections
+
+### Supporting Assets
+
+- **[media/](media/)** — GIFs, videos, images (pitch assets)
+- **[mock-tui/](mock-tui/)** — TUI mockups
+
+---
+
+## Document Ownership & Status
+
+| Document | Owner | Status | Lock |
+|----------|-------|--------|------|
+| PITCH.md | Founders | Authored | LOCKED |
+| YC-APPLICATION.md | Founders | Evergreen | — |
+| investor/FINANCIAL-PLAN.md | Founders + Finance | Annual review | — |
+| investor/README.md | Founders | Current | — |
+| pitch.html | (generated from PITCH.md) | Current | — |
+| deck/ | Engineering | Current | — |
+
+---
+
+## Messaging Guidelines
+
+### For All Materials (Pitch, Deck, Web)
+
+**Emphasize:**
+1. **Working product** — founders trade daily using this system
+2. **Verifiable proof** — append-only journal with byte-exact signatures
+3. **Mandate-driven** — traders set a goal; agent executes
+4. **Deterministic risk** — compiled gates, not inference
+5. **Agent-native** — MCP protocol, standard LLM integration
+
+**Avoid:**
+- "AI trading bot" (too generic)
+- "We predict markets" (you don't; you manage to a mandate)
+- "Unrealized P&L" (focus on realized)
+- Overstatement of LLM capability (Claude is the reasoner, not the sole driver)
+
+---
+
+## Materials by Audience
+
+### For Investors (Angels, VCs)
+
+1. **[PITCH.md](PITCH.md)** — read the core narrative
+2. **[investor/FINANCIAL-PLAN.md](investor/FINANCIAL-PLAN.md)** — understand unit economics and TAM
+3. **[investor/README.md](investor/README.md)** — FAQ and competitive positioning
+4. Live demo (deployed pitch deck + TUI recording)
+
+### For YC
+
+1. **[YC-APPLICATION.md](YC-APPLICATION.md)** — timeline and checklist
+2. **[deck/](deck/)** — deploy and share live demo URL
+3. Founder video (1 min, unlisted YouTube)
+4. **[investor/FINANCIAL-PLAN.md](investor/FINANCIAL-PLAN.md)** — prep for "how will you make money"
+
+### For Early Users / Crypto Community
+
+1. **[deck/index.html](deck/index.html)** — deployed landing page
+2. **[pitch.html](pitch.html)** — interactive deck
+3. Live demo + journal walkthrough
+4. Social: Twitter/Discord with landing page link
+
+### For Enterprise / Funds
+
+1. **[investor/README.md](investor/README.md)** — enterprise value prop
+2. **[investor/FINANCIAL-PLAN.md](investor/FINANCIAL-PLAN.md)** — pricing and licensing
+3. **[YC-APPLICATION.md](YC-APPLICATION.md)** — traction and team
+4. Custom demo (multi-agent fleet, custom risk gates)
+
+---
+
+## Deployment Checklist
+
+Before sharing any materials publicly:
+
+- [ ] Rotate all API keys (OpenAI, Deepseek, Hyperliquid) in `backend/.env`
+- [ ] Verify `.env` is gitignored and not in git history
+- [ ] Deploy `deck/` to Vercel/Cloudflare
+- [ ] Test deployed URL in incognito browser
+- [ ] Verify media (GIFs, videos) loads
+- [ ] Add deployed URL to YC application
+- [ ] Test MCP registration (`claude mcp add ...`)
+- [ ] Record demo (TUI + dashboard)
+- [ ] Record founder video (1 min)
+
+---
+
+## Timeline
+
+| By | Do | Owner |
+|----|-----|-------|
+| Jul 11 | Deploy pitch deck landing page | Founders |
+| Jul 15 | Record TUI demo (VHS) + upload | Engineering |
+| Jul 18 | Record founder video | Founders |
+| Jul 21 | Fill YC application | Founders |
+| Jul 24 | Submit YC | Founders |
+
+See **[YC-APPLICATION.md](YC-APPLICATION.md)** for full timeline.
+
+---
+
+## Directory Structure
+
+```
+pitch/
+├── README.md                    ← You are here
+├── PITCH.md                     ← Authored pitch copy (locked)
+├── YC-APPLICATION.md            ← YC batch prep
+├── pitch.html                   ← Interactive deck (main)
+├── deck/
+│   ├── README.md               ← Deployment guide
+│   ├── deck.md                 ← Slide outline
+│   └── index.html              ← Deck landing page
+├── investor/
+│   ├── README.md               ← Investor materials index
+│   └── FINANCIAL-PLAN.md        ← Revenue model & projections
+├── media/                       ← Assets (GIFs, videos)
+└── mock-tui/                    ← TUI mockups
 ```
 
-Prerequisites: the `hyperagent` daemon must be running on `127.0.0.1:8787` with `-testnet` flag, warmed up with bars and a live WS link (`GET /api/health` reports `"connected": true`).
+---
 
-The tape's `Output` lines are repo-root-relative, so run it from the repo root:
+## FAQ
 
-```sh
-vhs pitch/media/hyperion-tui.tape
-```
+### Can I edit PITCH.md?
 
-This regenerates `pitch/media/hyperion-tui.gif` and `.mp4`.
+No. The pitch copy is authored and final. If core messaging needs to change, contact the founders.
 
-## Landing page
+### Where should I add a new asset (screenshot, video)?
 
-`pitch.html` is the static hosted landing page; `PITCH.md` is the source copy it derives from. Both are authored and final — see the project PITCH for product messaging.
+→ `media/` folder. Update references in `pitch.html` if needed.
+
+### How do I deploy the deck?
+
+→ Read **[deck/README.md](deck/README.md)** for Vercel, Cloudflare Pages, or GitHub Pages instructions.
+
+### What's the financial model?
+
+→ **[investor/FINANCIAL-PLAN.md](investor/FINANCIAL-PLAN.md)** — SaaS subscription + flow fees + enterprise licensing. LTV:CAC = 500:1.
+
+### Who are the competitors?
+
+→ **[investor/README.md](investor/README.md)** — static bots (3Commas), copilots (ChatGPT), traditional prop firms.
+
+### What's the YC timeline and checklist?
+
+→ **[YC-APPLICATION.md](YC-APPLICATION.md)** — deadline July 27 8pm PT, demo URL, founder video, application form guidance.
+
+---
+
+## External Links
+
+- **YC Application:** https://www.ycombinator.com/apply
+- **Hyperliquid Docs:** https://hyperliquid.gitbook.io/
+- **Claude API:** https://anthropic.com/api
+- **MCP Spec:** https://modelcontextprotocol.io/
+
+---
+
+## Contact
+
+**Email:** nicolascerrato17@gmail.com
+
+---
+
+*Last updated: July 9, 2026*
