@@ -61,6 +61,16 @@ func main() {
 				log.Fatalf("mcp: %v", err)
 			}
 			return
+		case "auth":
+			if err := runAuth(os.Args[2:]); err != nil {
+				log.Fatalf("auth: %v", err)
+			}
+			return
+		case "doctor":
+			if err := runDoctor(os.Args[2:]); err != nil {
+				log.Fatalf("doctor: %v", err)
+			}
+			return
 		}
 	}
 
