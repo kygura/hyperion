@@ -68,10 +68,10 @@
   @keyframes htScLine { 0% { transform: translateY(-110%); } 60%, 100% { transform: translateY(230%); } }
   @keyframes htSpin { to { transform: rotate(360deg); } }
   @keyframes htSheen { 0%, 55% { transform: translateX(-100%); } 100% { transform: translateX(320%); } }
+  @keyframes htBtnSheen { from { transform: translateX(-160%); } to { transform: translateX(160%); } }
 
   [data-hero-anim] { opacity: 0; animation: htRise .95s var(--ease-out) forwards; }
   [data-hero-anim="0"] { animation-delay: .08s; }
-  [data-hero-anim="1"] { animation-delay: .32s; }
   [data-hero-anim="2"] { animation-delay: .5s; }
   [data-hero-anim="3"] { animation-delay: .66s; }
   [data-hero-anim="4"] { animation-delay: .82s; }
@@ -123,15 +123,15 @@
   .hero-kicker { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 22px; }
   .hero .brand-hero { font-size: clamp(64px, 11vw, 156px); line-height: 0.92; letter-spacing: -0.02em; margin: 0 0 22px; overflow: hidden; padding-bottom: 0.06em; }
   .brand-hero .ltr { display: inline-block; transform: translateY(112%); animation: htLtr 1s var(--ease-out) forwards; animation-delay: calc(.14s + var(--i) * .045s); }
-  .hero .subhead { font-family: "IBM Plex Mono", monospace; font-size: clamp(13px, 1.4vw, 15px); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); margin: 0 0 22px; }
   .hero .tagline { font-family: "Newsreader", serif; font-style: italic; font-weight: 400; font-size: clamp(19px, 2.3vw, 27px); line-height: 1.45; color: var(--ink); max-width: 34ch; margin: 0 0 26px; }
   .hero p.lead { font-size: 17px; line-height: 1.65; color: var(--ink2); max-width: 55ch; margin: 0 0 40px; }
   .cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
-  .btn { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; padding: 15px 26px; border-radius: 4px; display: inline-block; transition: opacity .25s ease, transform .3s var(--ease-out), border-color .25s ease; }
-  .btn-primary { background: var(--ink); color: var(--paper); }
-  .btn-primary:hover { opacity: 0.9; }
-  .btn-secondary { color: var(--ink); border: 1px solid var(--line); }
-  .btn-secondary:hover { border-color: var(--ink2); }
+  .btn { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; text-decoration: none; padding: 15px 26px; border-radius: 4px; display: inline-block; position: relative; overflow: hidden; isolation: isolate; transition: opacity .25s ease, transform .3s var(--ease-out), border-color .25s ease, box-shadow .35s var(--ease-out); }
+  .btn::before { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--paper) 55%, transparent), transparent); transform: translateX(-160%); pointer-events: none; z-index: 1; }
+  .btn:hover::before { animation: htBtnSheen 0.7s ease-in-out; }
+  .btn:active { transform: scale(.96); transition-duration: .12s; }
+  .btn-primary { background: var(--ink); color: var(--paper); background-image: linear-gradient(110deg, var(--ink) 0%, color-mix(in srgb, var(--accent) 60%, var(--ink)) 50%, var(--ink) 100%); background-size: 230% 100%; background-position: 0% 0%; transition: background-position .7s var(--ease-out), box-shadow .35s var(--ease-out), transform .3s var(--ease-out); }
+  .btn-primary:hover { opacity: 1; background-position: 100% 0%; box-shadow: 0 10px 26px -10px color-mix(in srgb, var(--accent) 70%, transparent); }
 
   .scroll-cue { position: absolute; right: 40px; bottom: 40px; display: flex; flex-direction: column; align-items: center; gap: 12px; pointer-events: none; }
   .scroll-cue .sc-label { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.24em; color: var(--ink2); writing-mode: vertical-rl; }
@@ -281,9 +281,6 @@
   .copy-toast { margin: 18px 0 0; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); opacity: 0; transform: translateY(-4px); transition: opacity .3s ease, transform .3s ease; }
   .copy-toast.is-visible { opacity: 1; transform: none; }
 
-  footer { border-top: 1px solid var(--line); }
-  footer .bar { padding: 22px 0; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-  footer span { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; color: var(--ink2); }
 
   /* Human / Agent view switch */
   .view-switch { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 2px; gap: 2px; flex: none; }
@@ -370,13 +367,11 @@
   <div class="hero-fade"></div>
   <div class="wrap hero-inner">
     <p data-hero-anim="0" class="hero-kicker">Pre-seed &middot; 2026</p>
-    <h1 class="brand-hero" aria-label="Hyperion"><span aria-hidden="true"><span class="ltr" style="--i:0">H</span><span class="ltr" style="--i:1">y</span><span class="ltr" style="--i:2">p</span><span class="ltr" style="--i:3">e</span><span class="ltr" style="--i:4">r</span><span class="ltr" style="--i:5">t</span><span class="ltr" style="--i:6">r</span><span class="ltr" style="--i:7">a</span><span class="ltr" style="--i:8">d</span><span class="ltr" style="--i:9">e</span><span class="ltr" style="--i:10">r</span></span></h1>
-    <p data-hero-anim="1" class="subhead">The avenue for vibe-trading</p>
+    <h1 class="brand-hero" aria-label="Hyperion"><span aria-hidden="true"><span class="ltr" style="--i:0">H</span><span class="ltr" style="--i:1">y</span><span class="ltr" style="--i:2">p</span><span class="ltr" style="--i:3">e</span><span class="ltr" style="--i:4">r</span><span class="ltr" style="--i:5">i</span><span class="ltr" style="--i:6">o</span><span class="ltr" style="--i:7">n</span></span></h1>
     <p data-hero-anim="2" class="tagline">An autonomous trading operator, built on Hyperliquid.</p>
-    <p data-hero-anim="3" class="lead">Hyperion runs a trading desk that never sleeps. It ingests markets continuously, reasons about them in writing, and executes toward long-term financial goals you state in plain language.</p>
+    <p data-hero-anim="3" class="lead">Hyperion runs a trading desk around the clock. It ingests markets continuously, reasons about them in writing, and executes toward long-term financial goals you state in plain language.</p>
     <div data-hero-anim="4" class="cta-row">
       <a href="PITCH.md" download="hyperion-pitch.md" class="btn btn-primary" data-magnetic>Download pitch</a>
-      <a href="#thesis" class="btn btn-secondary" data-magnetic>Read the thesis</a>
     </div>
   </div>
   <div data-hero-anim="5" class="scroll-cue" aria-hidden="true">
@@ -392,15 +387,15 @@
   </div>
   <div class="grid">
     <div class="sticky-col">
-      <h2 data-anim="rise"><span class="hl">Attention</span>, not judgement, is the trading bottleneck.</h2>
+      <h2 data-anim="rise"><span class="hl">Attention</span> is the trading bottleneck.</h2>
     </div>
     <div class="copy">
-      <p data-anim="rise">On-chain markets solved access. Anyone, anywhere, can hold a position on a venue that never closes, with custody in their own hands.</p>
-      <p data-anim="rise">What they didn't solve is attention. Someone still has to read the order book, funding, news, and flow at three in the morning, and still has to be at the screen when a limit order needs replacing before the market moves past it.</p>
-      <p data-anim="rise">That's the value an agent actually adds, and it isn't intelligence. It's capacity: the ability to ingest order book state, news, and liquidity flows continuously, and hold all of it against a <span class="hl">mandate</span>&nbsp;&mdash; not a bot's fixed strategy, but a goal, a horizon, and risk limits a trader already believes in.</p>
-      <p data-anim="rise">It's the medium a thesis gets expressed through. You say what you want to hold, over what period, at what risk, and the agent does the watching. No more staring at charts. No more hoping a limit order fills before the market leaves you behind.</p>
-      <p data-anim="rise">State the outcome, delegate the mechanics. <span class="hl">The onboarding surface of trading is about to become language</span>, because the execution surface no longer needs a person babysitting it.</p>
-      <p data-anim="rise">This isn't unique to trading. Travel platforms are shipping agents that search, book, and pay for a trip in one pass, with no human touching the transaction. Software can hold a crypto wallet and move funds without ever passing KYC at a bank, so agents already show up as counterparties on-chain.</p>
+      <p data-anim="rise">On-chain markets solved access. Anyone, anywhere, can hold a position on a venue open around the clock, with custody in their own hands.</p>
+      <p data-anim="rise">Attention is what's still missing. Someone still has to read the order book, funding, news, and flow at three in the morning, and still has to be at the screen when a limit order needs replacing before the market moves past it.</p>
+      <p data-anim="rise">The value an agent actually adds is capacity: the ability to ingest order book state, news, and liquidity flows continuously, and hold all of it against a <span class="hl">mandate</span>, a goal, a horizon, and risk limits a trader already believes in.</p>
+      <p data-anim="rise">It's the medium a thesis gets expressed through. You say what you want to hold, over what period, at what risk, and the agent handles the watching, the charts, and the limit orders.</p>
+      <p data-anim="rise">State the outcome, delegate the mechanics. <span class="hl">The onboarding surface of trading is about to become language</span>, because the execution surface can run on its own now.</p>
+      <p data-anim="rise">This pattern is spreading beyond trading. Travel platforms are shipping agents that search, book, and pay for a trip in one pass, with the transaction handled end to end by software. A crypto wallet lets software hold funds and move them directly, bypassing KYC at a bank, so agents already show up as counterparties on-chain.</p>
       <p data-anim="rise">Industry estimates already put the <strong>agentic economy</strong> in the trillions of dollars of annual activity by the end of the decade. Markets are the sharpest edge of it: liquid, quantifiable, and open around the clock.</p>
       <p data-anim="rise">We think trading is the leading edge of the agentic economy. Hyperion is built for that edge first.</p>
       <p data-anim="rise">Hyperion is that operator: an autonomous trading desk sitting between a trader's mandate and the venue. We're building on Hyperliquid because it's the first on-chain venue with the performance and liquidity to make continuous, serious execution possible.</p>
@@ -444,7 +439,7 @@
       <p class="tam-desc">Subscription + bps on flow from Hyperliquid's prosumer trader base stating mandates in the first 12&ndash;18 months. A sliver of SAM, sized to what one execution layer can actually capture early.</p>
     </div>
   </div>
-  <p class="market-footnote">Order-of-magnitude estimates we derived, not third-party forecasts of Hyperion specifically. Built from published agentic-AI economic-impact research (PwC, McKinsey) and on-chain volume data (DefiLlama).
+  <p class="market-footnote">Order-of-magnitude estimates we derived ourselves and applied specifically to Hyperion, built from published agentic-AI economic-impact research (PwC, McKinsey) and on-chain volume data (DefiLlama).
   </p>
 </section>
 
@@ -456,17 +451,17 @@
   <h2 class="section-title">One loop, running continuously.<span class="loop-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9" stroke-dasharray="40 17"></circle></svg></span></h2>
   <div class="loop-grid" data-anim="rise">
     <div class="loop-step">
-      <div class="step-num">01 — INGEST</div>
+      <div class="step-num">01 · INGEST</div>
       <h3>A continuous read</h3>
       <p>Order books, funding, open interest, positions, and flow on Hyperliquid, normalized into one live picture of the market, around the clock.</p>
     </div>
     <div class="loop-step">
-      <div class="step-num">02 — REASON</div>
+      <div class="step-num">02 · REASON</div>
       <h3>Judgment in writing</h3>
       <p>The picture is weighed against your mandate (horizon, targets, risk limits). Every decision is reasoned in writing before it's acted on.</p>
     </div>
     <div class="loop-step">
-      <div class="step-num">03 — EXECUTE</div>
+      <div class="step-num">03 · EXECUTE</div>
       <h3>Direct to the venue</h3>
       <p>Orders are sized, staged, and placed on Hyperliquid through hard-coded risk gates. Results feed back into the picture, and the loop continues.</p>
     </div>
@@ -535,7 +530,7 @@
       </div>
     </div>
   </div>
-  <p class="footnote">ILLUSTRATIVE CONCEPT — PRODUCT IN DEVELOPMENT</p>
+  <p class="footnote">ILLUSTRATIVE CONCEPT · PRODUCT IN DEVELOPMENT</p>
 </section>
 
 <section id="proof" class="page wrap">
@@ -544,7 +539,7 @@
     <span class="section-label">Proof</span>
   </div>
   <h2 class="section-title">The loop already runs.</h2>
-  <p data-anim="rise" class="proof-lead">The full loop &mdash; ingest, reason, execute, journal &mdash; exists and runs today. It de-risks the hard parts (signing, gating, continuous reasoning) and generates the journal evidence the product story rests on.</p>
+  <p data-anim="rise" class="proof-lead">The full loop (ingest, reason, execute, journal) exists and runs today. It de-risks the hard parts (signing, gating, continuous reasoning) and generates the journal evidence the product story rests on.</p>
   <div class="stat-grid" data-anim="rise">
     <div class="stat">
       <div class="n" data-stat-count data-count-to="300" data-prefix="~">~300</div>
@@ -552,21 +547,21 @@
     </div>
     <div class="stat">
       <div class="n">0</div>
-      <div class="cap">Withdrawal authority — the agent wallet trades, never withdraws</div>
+      <div class="cap">Withdrawal authority: the agent wallet is trade-only</div>
     </div>
     <div class="stat">
       <div class="n">6</div>
-      <div class="cap">Compiled risk gates on every order — no model output bypasses them</div>
+      <div class="cap">Compiled risk gates enforced on every order before it reaches the venue</div>
     </div>
   </div>
   <div class="ledger">
     <div class="ledger-row" data-anim="rise">
       <span class="ledger-key">INGEST</span>
-      <p>Live aggregation across 10&ndash;30 Hyperliquid markets: multi-timeframe bars with perp-native metrics &mdash; CVD, basis, funding trajectory, OI delta, liquidation proximity, cross-asset correlation.</p>
+      <p>Live aggregation across 10&ndash;30 Hyperliquid markets: multi-timeframe bars with perp-native metrics, including CVD, basis, funding trajectory, OI delta, liquidation proximity, and cross-asset correlation.</p>
     </div>
     <div class="ledger-row" data-anim="rise" data-delay="1">
       <span class="ledger-key">REASON</span>
-      <p>Model-agnostic (Anthropic / OpenAI / DeepSeek). Timeframe-batched digests in; schema-validated trade candidates with written theses out. <strong>Never free text.</strong></p>
+      <p>Model-agnostic (Anthropic / OpenAI / DeepSeek). Timeframe-batched digests in; schema-validated trade candidates with written theses out. <strong>Structured output, always.</strong></p>
     </div>
     <div class="ledger-row" data-anim="rise" data-delay="2">
       <span class="ledger-key">EXECUTE</span>
@@ -574,7 +569,7 @@
     </div>
     <div class="ledger-row" data-anim="rise" data-delay="3">
       <span class="ledger-key">SIGNING</span>
-      <p>The master key signs exactly one <strong>approveAgent</strong> transaction. The daemon holds a scoped agent wallet that can trade but cannot withdraw. No SDK dependency.</p>
+      <p>The master key signs exactly one <strong>approveAgent</strong> transaction. The daemon holds a scoped agent wallet restricted to trading. Signing logic owned in-house.</p>
     </div>
     <div class="ledger-row" data-anim="rise" data-delay="4">
       <span class="ledger-key">JOURNAL</span>
@@ -596,18 +591,18 @@
   <div class="now-grid" data-anim="rise" style="margin-top:56px;">
     <div class="loop-step">
       <div class="step-num">THE VENUE</div>
-      <h3>An exchange with no gatekeeper</h3>
-      <p>Hyperliquid became the dominant on-chain perp venue &mdash; billions a day through a public, signature-gated API. No broker, no API-key custodian.</p>
+      <h3>An exchange with an open door</h3>
+      <p>Hyperliquid became the dominant on-chain perp venue, moving billions a day through a public, signature-gated API you connect to directly.</p>
     </div>
     <div class="loop-step">
       <div class="step-num">THE AGENTS</div>
       <h3>The socket got standardized</h3>
-      <p>Every major lab shipped tool-calling agents, and MCP standardized the way they plug into the world &mdash; inside the same 18 months.</p>
+      <p>Every major lab shipped tool-calling agents, and MCP standardized the way they plug into the world, all within the same 18 months.</p>
     </div>
     <div class="loop-step">
       <div class="step-num">THE GAP</div>
-      <h3>Execution, not intelligence</h3>
-      <p>What's missing is trustworthy execution and a mandate-level interface. The models are ready; the wire to the venue is not.</p>
+      <h3>The execution gap</h3>
+      <p>What's missing is trustworthy execution and a mandate-level interface. The models are ready; the wire to the venue is still being built.</p>
     </div>
   </div>
   <p data-anim="rise" class="punchline">The curves cross exactly at <span class="hl">agents that trade</span>.</p>
@@ -633,7 +628,7 @@
     <div class="moat-card">
       <span class="moat-idx">M-03</span>
       <h3>Owned signing</h3>
-      <p>The dangerous layer is ~300 lines of code we own and test byte-exact against reference vectors &mdash; not an inherited SDK.</p>
+      <p>The dangerous layer is ~300 lines of code, written and owned in-house, tested byte-exact against reference vectors.</p>
     </div>
     <div class="moat-card">
       <span class="moat-idx">M-04</span>
@@ -687,19 +682,12 @@
   </div>
 </section>
 
-<footer>
-  <div class="wrap bar">
-    <span>2026 HYPERION</span>
-    <span>BUILT ON HYPERLIQUID</span>
-    <span>A PROJECT BY @KYGRA</span>
-  </div>
-</footer>
 </div>
 
 <div id="agent-view" class="agent-view wrap" hidden>
-  <p class="agent-hint mono">Plain-text rendering of <code>PITCH.md</code>, for models and other machine readers.</p>
+  <p class="agent-hint mono">Structured rendering of this page's content, for models and other machine readers.</p>
   <article id="agent-doc" class="agent-doc" aria-live="polite">
-    <p class="agent-loading mono">Loading PITCH.md…</p>
+    <p class="agent-loading mono">Loading…</p>
   </article>
 </div>
 
@@ -797,22 +785,29 @@
   // Magnetic buttons
   if (!reduced && canHover) {
     document.querySelectorAll("[data-magnetic]").forEach(function (el) {
+      var dx = 0, dy = 0, pressed = false;
+      function render() {
+        var scale = pressed ? 0.96 : 1.03;
+        el.style.transform = "translate(" + dx.toFixed(1) + "px," + dy.toFixed(1) + "px) scale(" + scale + ")";
+      }
       el.addEventListener("mousemove", function (e) {
         var r = el.getBoundingClientRect();
-        var dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
-        var dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
-        el.style.transform = "translate(" + (dx * 3.5).toFixed(1) + "px," + (dy * 2.5).toFixed(1) + "px)";
+        dx = ((e.clientX - (r.left + r.width / 2)) / (r.width / 2)) * 3.5;
+        dy = ((e.clientY - (r.top + r.height / 2)) / (r.height / 2)) * 2.5;
+        render();
       });
-      el.addEventListener("mouseleave", function () { el.style.transform = ""; });
+      el.addEventListener("mouseenter", render);
+      el.addEventListener("mousedown", function () { pressed = true; render(); });
+      el.addEventListener("mouseup", function () { pressed = false; render(); });
+      el.addEventListener("mouseleave", function () { pressed = false; dx = 0; dy = 0; el.style.transform = ""; });
     });
   }
 
-  // Market field canvas (living price streams + thesis line)
+  // Market field canvas — ascii candlestick tape
   var canvas = document.getElementById("feed");
   var ctx = canvas.getContext("2d");
   var dpr = 1, visible = true, raf = null, last = 0;
   var marks = [], markRaf = null;                        // execution markers dropped on click
-  var mouseX = 0, mouseY = 0, mouseAmp = 0, mouseTarget = 0; // viewer's attention lens (hover)
 
   function handleMarketClick(e) {
     if (reduced) return;
@@ -839,15 +834,6 @@
     markRaf = requestAnimationFrame(mloop);
   }
   canvas.addEventListener("click", handleMarketClick);
-  if (!reduced && canHover) {
-    canvas.addEventListener("mousemove", function (e) {
-      var rect = canvas.getBoundingClientRect();
-      mouseX = (e.clientX - rect.left) * dpr;
-      mouseY = (e.clientY - rect.top) * dpr;
-      mouseTarget = 1;
-    });
-    canvas.addEventListener("mouseleave", function () { mouseTarget = 0; });
-  }
 
   function hash3(x, y, z) {
     var n = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(z, 1440662683);
@@ -877,42 +863,32 @@
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
 
-  // Field of market ticks — a grid of jittered points, rebuilt on resize to fill the canvas.
-  var ticks = [];
-  function buildTicks() {
-    ticks = [];
-    var cw = canvas.clientWidth, ch = canvas.clientHeight;
-    if (!cw || !ch) return;
-    var gap = 50;                                   // target spacing in css px
-    var cxN = Math.max(6, Math.round(cw / gap));
-    var cyN = Math.max(4, Math.round(ch / gap));
-    for (var gy = 0; gy < cyN; gy++) {
-      for (var gx = 0; gx < cxN; gx++) {
-        var h1 = hash3(gx, gy, 7), h2 = hash3(gx, gy, 19);
-        ticks.push({
-          nx: (gx + 0.5 + (h1 - 0.5) * 0.9) / cxN, // jitter inside the cell so it reads organic
-          ny: (gy + 0.5 + (h2 - 0.5) * 0.9) / cyN,
-          seed: h1 * 53.7 + h2 * 12.1,
-          phase: hash3(gx, gy, 31)
-        });
-      }
-    }
+  // Live ascii candlestick tape — the operator's price feed, drawn as monospace glyphs.
+  var CELL = 9;                                     // css px per candle column / row
+  var candles = [], candleSeed = 0, priceWalk = 0.5, lastCandleAt = 0;
+  var CANDLE_GAP = 640;                              // ms between new candles
+  function nextCandle() {
+    candleSeed++;
+    var drift = (fbm(candleSeed * 0.12, 3.7, candleSeed * 0.4) - 0.5) * 0.09;
+    var open = priceWalk;
+    var close = Math.min(0.95, Math.max(0.05, open + drift));
+    var vol = 0.015 + hash3(candleSeed, 4, 71) * 0.05;
+    priceWalk = close;
+    return {
+      open: open, close: close,
+      high: Math.min(0.98, Math.max(open, close) + hash3(candleSeed, 5, 71) * vol),
+      low: Math.max(0.02, Math.min(open, close) - hash3(candleSeed, 6, 71) * vol)
+    };
   }
-
-  var TCLK = 0.0004;                                // attention clock scale
-  function focusPos(ms, w, hgt) {                   // roaming focus of the operator's attention
-    var tt = (motionOn() ? ms : 12500) * TCLK;
-    return [
-      w * (0.5 + 0.33 * Math.sin(tt * 0.55) * Math.cos(tt * 0.21)),
-      hgt * (0.46 + 0.30 * Math.sin(tt * 0.83 + 1.2))
-    ];
+  function fitCandles(target) {
+    while (candles.length < target) candles.push(nextCandle());
+    while (candles.length > target) candles.shift();
   }
 
   function drawFrame(now) {
     if (!canvas.width) return;
     var w = canvas.width, hgt = canvas.height;
     var moving = motionOn();
-    var t = (moving ? now : 12500) * TCLK;
     ctx.clearRect(0, 0, w, hgt);
 
     var cs = getComputedStyle(body);
@@ -922,82 +898,55 @@
     var aRgb = hexToRgb(accentHex) || (dark ? [201, 143, 102] : [154, 91, 56]);
     var acc = aRgb[0] + "," + aRgb[1] + "," + aRgb[2];
 
-    mouseAmp += (mouseTarget - mouseAmp) * 0.06;
+    // Candlestick tape: one column per cell, newest at the right edge, oldest scrolls off the left.
+    var cellPx = CELL * dpr;
+    fitCandles(Math.max(8, Math.round(w / cellPx)));
+    if (moving && now - lastCandleAt > CANDLE_GAP) {
+      lastCandleAt = now;
+      candles.push(nextCandle());
+      candles.shift();
+    }
+    var lo = 1, hi = 0;
+    for (var cq = 0; cq < candles.length; cq++) {
+      lo = Math.min(lo, candles[cq].low);
+      hi = Math.max(hi, candles[cq].high);
+    }
+    var span = Math.max(0.1, hi - lo);
+    var chartTop = hgt * 0.16, chartBot = hgt * 0.8;
+    function yOf(p) { return chartBot - ((p - lo) / span) * (chartBot - chartTop); }
 
-    // Attention lenses: the operator's roaming focus, plus the viewer's on hover.
+    // The live edge of the tape — where the operator's pulse and execution ring sit.
     var R = Math.min(w, hgt) * 0.24;
-    var fp = focusPos(now, w, hgt);
-    var ax = fp[0], ay = fp[1];
-    var focs = [{ x: ax, y: ay, r: R, w: 1 }];
-    if (mouseAmp > 0.02) focs.push({ x: mouseX, y: mouseY, r: R * 0.82, w: mouseAmp });
+    var lastC = candles[candles.length - 1];
+    var ax = w - cellPx * 0.5, ay = yOf(lastC.close);
 
-    // Resolve every tick's screen position (with a slow drift) and its attention weight.
-    var n = ticks.length;
-    var px = new Float32Array(n), py = new Float32Array(n), pw = new Float32Array(n);
-    for (var i = 0; i < n; i++) {
-      var tk = ticks[i];
-      var X = tk.nx * w + Math.sin(t * 0.7 + tk.seed) * 5 * dpr;
-      var Y = tk.ny * hgt + Math.cos(t * 0.6 + tk.seed * 1.3) * 5 * dpr;
-      px[i] = X; py[i] = Y;
-      var wgt = 0;
-      for (var f = 0; f < focs.length; f++) {
-        var fc = focs[f];
-        var dd = Math.hypot(X - fc.x, Y - fc.y);
-        if (dd < fc.r) wgt = Math.max(wgt, (1 - dd / fc.r) * fc.w);
+    // The candlestick tape — every candle drawn as wick/body glyphs on a fixed row grid.
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = Math.round(cellPx) + "px 'IBM Plex Mono', monospace";
+    var rowH = cellPx;
+    for (var ci = 0; ci < candles.length; ci++) {
+      var cd = candles[ci];
+      var x = w - (candles.length - ci) * cellPx + cellPx * 0.5;
+      var yO = yOf(cd.open), yC = yOf(cd.close), yH = yOf(cd.high), yL = yOf(cd.low);
+      var up = cd.close >= cd.open;
+      var bodyTop = Math.min(yO, yC), bodyBot = Math.max(yO, yC);
+      var dCenter = Math.hypot(x - ax, (bodyTop + bodyBot) / 2 - ay);
+      var wgtC = Math.max(0, 1 - dCenter / R);
+      ctx.fillStyle = "rgba(" + (up ? acc : inkRgb) + "," + Math.min(0.95, (up ? 0.48 : 0.3) + wgtC * 0.4).toFixed(3) + ")";
+      var rTop = Math.round(yH / rowH), rBot = Math.round(yL / rowH);
+      for (var ry = rTop; ry <= rBot; ry++) {
+        var yPix = ry * rowH + rowH * 0.5;
+        if (yPix >= bodyTop - rowH * 0.5 && yPix <= bodyBot + rowH * 0.5) continue;
+        ctx.fillText("|", x, yPix);
       }
-      pw[i] = wgt;
-    }
-
-    // Soft glow under each attention lens.
-    for (var f2 = 0; f2 < focs.length; f2++) {
-      var fc2 = focs[f2];
-      var g = ctx.createRadialGradient(fc2.x, fc2.y, 0, fc2.x, fc2.y, fc2.r);
-      g.addColorStop(0, "rgba(" + acc + "," + (0.06 * fc2.w).toFixed(3) + ")");
-      g.addColorStop(1, "rgba(" + acc + ",0)");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(fc2.x, fc2.y, fc2.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Reasoning: link each in-focus tick to its nearest in-focus neighbour (transient constellation).
-    var lit = [];
-    for (var i2 = 0; i2 < n; i2++) if (pw[i2] > 0.14) lit.push(i2);
-    ctx.lineWidth = 1 * dpr;
-    for (var li = 0; li < lit.length; li++) {
-      var a = lit[li], best = -1, bestd = 1e9;
-      for (var lj = 0; lj < lit.length; lj++) {
-        if (lj === li) continue;
-        var b = lit[lj];
-        var dl = Math.hypot(px[a] - px[b], py[a] - py[b]);
-        if (dl < bestd) { bestd = dl; best = b; }
-      }
-      if (best > a && bestd < R * 0.7) {            // best > a dedupes each edge
-        ctx.strokeStyle = "rgba(" + acc + "," + (Math.min(pw[a], pw[best]) * 0.5).toFixed(3) + ")";
-        ctx.beginPath();
-        ctx.moveTo(px[a], py[a]);
-        ctx.lineTo(px[best], py[best]);
-        ctx.stroke();
+      var bTop = Math.round(bodyTop / rowH), bBot = Math.round(bodyBot / rowH);
+      for (var ry2 = bTop; ry2 <= bBot; ry2++) {
+        ctx.fillText(up ? "#" : ":", x, ry2 * rowH + rowH * 0.5);
       }
     }
 
-    // Market ticks: faint ink field, brightening to accent where attention rests.
-    for (var i3 = 0; i3 < n; i3++) {
-      var wq = pw[i3];
-      var flick = 0.55 + 0.45 * vnoise3(ticks[i3].phase * 20, 0, t * 1.6 + ticks[i3].seed);
-      var baseA = (dark ? 0.13 : 0.12) * flick;
-      var rad = (0.9 + wq * 1.8) * dpr;
-      if (wq > 0.05) {
-        ctx.fillStyle = "rgba(" + acc + "," + Math.min(0.95, baseA + wq * (dark ? 0.6 : 0.55)).toFixed(3) + ")";
-      } else {
-        ctx.fillStyle = "rgba(" + inkRgb + "," + baseA.toFixed(3) + ")";
-      }
-      ctx.beginPath();
-      ctx.arc(px[i3], py[i3], rad, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // The operator — a small pulsing core at the roaming focus.
+    // The operator — a small pulsing core watching the live edge of the tape.
     var pulse = moving ? (0.5 + 0.5 * Math.sin(now * 0.005)) : 0.6;
     ctx.fillStyle = "rgba(" + acc + "," + (0.12 + pulse * 0.12).toFixed(3) + ")";
     ctx.beginPath();
@@ -1008,15 +957,14 @@
     ctx.arc(ax, ay, 2.4 * dpr, 0, Math.PI * 2);
     ctx.fill();
 
-    // Autonomous execution — a ring fires on a steady cadence at wherever the focus was.
+    // Autonomous execution — a ring fires on a steady cadence at the live edge of the tape.
     if (moving) {
       var period = 2600, fired = now - (now % period), age0 = (now - fired) / 1400;
       if (age0 <= 1) {
-        var efp = focusPos(fired, w, hgt);
         ctx.strokeStyle = "rgba(" + acc + "," + ((1 - age0) * 0.4).toFixed(3) + ")";
         ctx.lineWidth = 1.4 * dpr;
         ctx.beginPath();
-        ctx.arc(efp[0], efp[1], (5 + age0 * 52) * dpr, 0, Math.PI * 2);
+        ctx.arc(ax, ay, (5 + age0 * 52) * dpr, 0, Math.PI * 2);
         ctx.stroke();
       }
     }
@@ -1043,7 +991,6 @@
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.max(1, Math.round(canvas.clientWidth * dpr));
     canvas.height = Math.max(1, Math.round(canvas.clientHeight * dpr));
-    buildTicks();
     if (!motionOn()) drawFrame(performance.now());
   });
   ro.observe(canvas);
@@ -1057,7 +1004,6 @@
     last = now;
     drawFrame(now);
   }
-  buildTicks();
   raf = requestAnimationFrame(loop);
   drawFrame(performance.now());
 
@@ -1081,10 +1027,10 @@
   var vnow = 14 * 3600 + 2 * 60 + 11;
   var typeTimer = null;
   var logEntries = [
-    { id: 4, t: "14:02:11", text: "Funding flipped negative on ETH-PERP. Holding — carry now favors the position.", isNew: false },
+    { id: 4, t: "14:02:11", text: "Funding flipped negative on ETH-PERP. Holding, since carry now favors the position.", isNew: false },
     { id: 3, t: "13:47:36", text: "Filled 0.8 ETH at 3,412.50. Tranche 3 of 5 toward target allocation.", isNew: false },
     { id: 2, t: "13:12:04", text: "Spread wide against the 30-day norm. Staged a limit order inside the book instead of taking.", isNew: false },
-    { id: 1, t: "09:30:00", text: "Daily review written. Drawdown check: −2.1% against the 8% limit — within mandate.", isNew: false }
+    { id: 1, t: "09:30:00", text: "Daily review written. Drawdown check: −2.1% against the 8% limit, within mandate.", isNew: false }
   ];
   var logPool = [
     "Order book thinned above 3,450. Pulled the resting bid and re-quoted 8 bps lower.",
@@ -1092,8 +1038,8 @@
     "Rebalanced 0.4 ETH into stables. Allocation now 57 / 43 against the 60 / 40 target.",
     "Funding turned positive. Trimmed 0.2 ETH to keep carry cost inside budget.",
     "Depth improved on the bid. Lifted a 0.5 ETH tranche at 3,401.10.",
-    "Volatility spike flagged. Held size; no action taken pending the next read.",
-    "Basis compressed vs. spot. Left the position unchanged — thesis intact.",
+    "Volatility spike flagged. Held size, waiting on the next read.",
+    "Basis compressed vs. spot. Left the position unchanged, thesis intact.",
     "Cleared a stale limit 12 bps outside the book. Re-staged closer to mid."
   ];
 
@@ -1185,72 +1131,85 @@
   var viewAgentBtn = document.getElementById("view-agent");
   var agentDocLoaded = false;
 
-  function mdToHtml(md) {
-    function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-    function inline(s) {
-      s = esc(s);
-      s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
-      s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-      s = s.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-      s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-      return s;
-    }
-    function parseRow(r) {
-      return r.trim().replace(/^\||\|$/g, "").split("|").map(function (c) { return c.trim(); });
-    }
-    var lines = md.replace(/\r\n/g, "\n").split("\n");
-    var html = "", para = [], i = 0;
-    function flushPara() {
-      if (para.length) { html += "<p>" + inline(para.join(" ")) + "</p>"; para = []; }
-    }
-    while (i < lines.length) {
-      var line = lines[i];
-      if (/^\s*$/.test(line)) { flushPara(); i++; continue; }
-      if (/^---\s*$/.test(line)) { flushPara(); html += "<hr>"; i++; continue; }
-      var m = /^(#{1,3})\s+(.*)$/.exec(line);
-      if (m) { flushPara(); var tag = "h" + m[1].length; html += "<" + tag + ">" + inline(m[2]) + "</" + tag + ">"; i++; continue; }
-      if (/^\|/.test(line)) {
-        flushPara();
-        var rows = [];
-        while (i < lines.length && /^\|/.test(lines[i])) { rows.push(lines[i]); i++; }
-        var header = parseRow(rows[0]);
-        var body2 = rows.slice(2).map(parseRow);
-        html += "<table><thead><tr>" + header.map(function (h) { return "<th>" + inline(h) + "</th>"; }).join("") + "</tr></thead><tbody>" +
-          body2.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + inline(c) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table>";
-        continue;
-      }
-      if (/^\d+\.\s+/.test(line)) {
-        flushPara();
-        var oitems = [];
-        while (i < lines.length && /^\d+\.\s+/.test(lines[i])) { oitems.push(lines[i].replace(/^\d+\.\s+/, "")); i++; }
-        html += "<ol>" + oitems.map(function (it) { return "<li>" + inline(it) + "</li>"; }).join("") + "</ol>";
-        continue;
-      }
-      if (/^-\s+/.test(line)) {
-        flushPara();
-        var uitems = [];
-        while (i < lines.length && /^-\s+/.test(lines[i])) { uitems.push(lines[i].replace(/^-\s+/, "")); i++; }
-        html += "<ul>" + uitems.map(function (it) { return "<li>" + inline(it) + "</li>"; }).join("") + "</ul>";
-        continue;
-      }
-      para.push(line.trim());
-      i++;
-    }
-    flushPara();
-    return html;
-  }
-
   function loadAgentDoc() {
     if (agentDocLoaded) return;
-    fetch("PITCH.md").then(function (res) {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.text();
-    }).then(function (text) {
-      agentDocEl.innerHTML = mdToHtml(text);
-      agentDocLoaded = true;
-    }).catch(function () {
-      agentDocEl.innerHTML = '<p class="agent-loading">Could not load PITCH.md. Read it directly at <code>/pitch/PITCH.md</code>, or use the download button in the hero.</p>';
+    function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function txt(el) { return el ? esc(el.textContent.trim().replace(/\s+/g, " ")) : ""; }
+    function h(tag, el) { return el ? "<" + tag + ">" + txt(el) + "</" + tag + ">" : ""; }
+    function p(el) { return h("p", el); }
+
+    var out = "<h1>Hyperion</h1>";
+    out += p(humanViewEl.querySelector("#top .tagline"));
+    out += p(humanViewEl.querySelector("#top .lead"));
+
+    var thesis = humanViewEl.querySelector("#thesis");
+    out += h("h2", thesis.querySelector(".section-title"));
+    thesis.querySelectorAll(".copy p").forEach(function (el) { out += p(el); });
+
+    var market = humanViewEl.querySelector("#market");
+    out += h("h2", market.querySelector(".section-title"));
+    out += p(market.querySelector(".market-lead"));
+    market.querySelectorAll(".tam-row").forEach(function (row) {
+      var tier = txt(row.querySelector(".tam-tier"));
+      var name = txt(row.querySelector(".tam-name"));
+      var value = (row.getAttribute("data-prefix") || "") + row.getAttribute("data-count-to") + (row.getAttribute("data-suffix") || "");
+      out += "<h3>" + tier + " &middot; " + value + "</h3><p><strong>" + name + ".</strong> " + txt(row.querySelector(".tam-desc")) + "</p>";
     });
+    out += p(market.querySelector(".market-footnote"));
+
+    var system = humanViewEl.querySelector("#system");
+    out += h("h2", system.querySelector(".section-title"));
+    system.querySelectorAll(".loop-step").forEach(function (step) {
+      out += h("h3", step.querySelector("h3"));
+      out += p(step.querySelector("p"));
+    });
+    out += p(system.querySelector(".loop-note"));
+
+    var iface = humanViewEl.querySelector("#interface");
+    out += h("h2", iface.querySelector(".section-title"));
+    var mandate = iface.querySelector(".mandate-text");
+    if (mandate) out += "<p><strong>Example mandate:</strong> " + txt(mandate) + "</p>";
+
+    var proof = humanViewEl.querySelector("#proof");
+    out += h("h2", proof.querySelector(".section-title"));
+    out += p(proof.querySelector(".proof-lead"));
+    out += "<ul>";
+    proof.querySelectorAll(".stat").forEach(function (stat) {
+      out += "<li>" + txt(stat.querySelector(".n")) + " &middot; " + txt(stat.querySelector(".cap")) + "</li>";
+    });
+    out += "</ul>";
+    proof.querySelectorAll(".ledger-row").forEach(function (row) {
+      out += "<p><strong>" + txt(row.querySelector(".ledger-key")) + ":</strong> " + txt(row.querySelector("p")) + "</p>";
+    });
+
+    var why = humanViewEl.querySelector("#why");
+    out += h("h2", why.querySelector(".section-title"));
+    why.querySelectorAll(".loop-step").forEach(function (step) {
+      out += "<h3>" + txt(step.querySelector(".step-num")) + ": " + txt(step.querySelector("h3")) + "</h3>";
+      out += p(step.querySelector("p"));
+    });
+    out += p(why.querySelector(".punchline"));
+
+    var moat = humanViewEl.querySelector("#moat");
+    out += h("h2", moat.querySelector(".section-title"));
+    moat.querySelectorAll(".moat-card").forEach(function (card) {
+      out += "<h3>" + txt(card.querySelector(".moat-idx")) + " &middot; " + txt(card.querySelector("h3")) + "</h3>";
+      out += p(card.querySelector("p"));
+    });
+
+    var roadmap = humanViewEl.querySelector("#roadmap");
+    out += h("h2", roadmap.querySelector(".section-title"));
+    roadmap.querySelectorAll(".tl-row").forEach(function (row) {
+      out += "<h3>" + txt(row.querySelector(".tl-h")) + " &middot; " + txt(row.querySelector(".tl-t")) + "</h3>";
+      out += p(row.querySelector(".tl-d"));
+    });
+
+    var contact = humanViewEl.querySelector("#contact");
+    out += h("h2", contact.querySelector(".contact-block h2"));
+    out += p(contact.querySelector(".contact-btn"));
+
+    agentDocEl.innerHTML = out;
+    agentDocLoaded = true;
   }
 
   function getStoredView() {
