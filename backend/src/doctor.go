@@ -14,7 +14,7 @@ import (
 )
 
 // harnessNames is the fixed report order.
-var harnessNames = []string{"pi", "claude", "codex"}
+var harnessNames = []string{"pi", "claude", "codex", "kimi"}
 
 // binLookup resolves a harness binary's path on PATH. Injectable (like
 // cliRunner) so doctor's tests can force a "not found" case without

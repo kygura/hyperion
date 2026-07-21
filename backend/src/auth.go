@@ -1,7 +1,7 @@
 // auth: in-app trigger for each reasoning harness CLI's real interactive login,
 // so a login can be started from Hyperion instead of a separate shell command.
 //
-//	hyperagent auth <pi|claude|codex>
+//	hyperagent auth <pi|claude|codex|kimi>
 //
 // The login subprocess inherits a REAL terminal (so OAuth/browser prompts work)
 // but NOT the daemon's full env: it runs under reasoner.AllowlistEnv — the exact
@@ -34,6 +34,8 @@ const authLoginTimeout = 10 * time.Minute
 // loginCommands maps a harness to the exact argv of its real login surface.
 //   - claude: `claude auth login` — interactive Anthropic sign-in.
 //   - codex:  `codex login` (bare) — interactive ChatGPT/OAuth sign-in.
+//   - kimi:   `kimi login` — OAuth device-code flow (Kimi Code CLI); runs
+//     from the shell without entering the agent TUI.
 //   - pi:     `pi config` — pi has NO login/auth subcommand (verified via
 //     `pi --help`: only install/remove/update/list/config). Credentials are
 //     resolved from provider env vars or `--api-key`; `pi config` is its only
@@ -42,6 +44,7 @@ const authLoginTimeout = 10 * time.Minute
 var loginCommands = map[string][]string{
 	"claude": {"claude", "auth", "login"},
 	"codex":  {"codex", "login"},
+	"kimi":   {"kimi", "login"},
 	"pi":     {"pi", "config"},
 }
 
@@ -69,12 +72,12 @@ func runAuth(args []string) error {
 // doctor.go's writeDoctor(w, ...) split (render/decide vs. spawn).
 func buildAuth(ctx context.Context, w io.Writer, lookPath func(string) (string, error), args []string) (*exec.Cmd, error) {
 	if len(args) == 0 {
-		return nil, fmt.Errorf("usage: hyperagent auth <pi|claude|codex>")
+		return nil, fmt.Errorf("usage: hyperagent auth <pi|claude|codex|kimi>")
 	}
 	harness := strings.ToLower(strings.TrimSpace(args[0]))
 	argv, ok := loginCommands[harness]
 	if !ok {
-		return nil, fmt.Errorf("unknown harness %q: use one of pi, claude, codex", harness)
+		return nil, fmt.Errorf("unknown harness %q: use one of pi, claude, codex, kimi", harness)
 	}
 	if _, err := lookPath(argv[0]); err != nil {
 		return nil, fmt.Errorf("%s: binary not found on PATH: %w", argv[0], err)

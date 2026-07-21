@@ -144,7 +144,8 @@ type ProviderCfg struct {
 	// Kind selects the wire protocol for Custom providers: "openai" (default),
 	// "anthropic", or one of the harness kinds that spawn an authenticated CLI
 	// subprocess instead of calling an HTTP API — "harness-pi", "harness-claude",
-	// "harness-codex". The three named providers set this implicitly. Harness
+	// "harness-codex", "harness-kimi". The three named providers set this
+	// implicitly. Harness
 	// kinds need no APIKey; the CLI carries its own auth.
 	Kind string `toml:"kind"`
 }

@@ -30,6 +30,7 @@ func TestWriteDoctorAllHealthy(t *testing.T) {
 		"pi":     "/home/user/.bun/bin/pi",
 		"claude": "/home/user/.local/bin/claude",
 		"codex":  "/home/user/.local/bin/codex",
+		"kimi":   "/home/user/.local/bin/kimi",
 	})
 
 	var buf bytes.Buffer
@@ -45,6 +46,9 @@ func TestWriteDoctorAllHealthy(t *testing.T) {
 		"  auth:   ok (logged in)\n",
 		"codex:\n",
 		"  binary: found (/home/user/.local/bin/codex)\n",
+		"kimi:\n",
+		"  binary: found (/home/user/.local/bin/kimi)\n",
+		"  auth:   unknown (kimi has no auth-status command",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output missing %q\nfull output:\n%s", want, out)

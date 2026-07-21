@@ -398,6 +398,8 @@ func buildReasoner(cfg config.Config) *reasoner.Registry {
 			register(name, reasoner.NewClaudeProvider(name, pc.Model), pc)
 		case "harness-codex":
 			register(name, reasoner.NewCodexProvider(name, pc.Model), pc)
+		case "harness-kimi":
+			register(name, reasoner.NewKimiProvider(name, pc.Model), pc)
 		case "anthropic":
 			register(name, reasoner.NewAnthropic(pc.Key(strings.ToUpper(name)+"_API_KEY"), pc.Model, pc.BaseURL), pc)
 		default:

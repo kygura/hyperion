@@ -33,7 +33,7 @@ func realCLI(ctx context.Context, bin string, args ...string) (string, error) {
 // harnessBin maps a harness name to its binary; "" for unknown.
 func harnessBin(harness string) string {
 	switch harness {
-	case "pi", "claude", "codex":
+	case "pi", "claude", "codex", "kimi":
 		return harness
 	}
 	return ""
@@ -57,6 +57,7 @@ type authState struct {
 // probeAuth reports login state per harness without echoing any PII.
 //   - claude: `claude auth status --json`, extract ONLY the loggedIn bool.
 //   - codex:  `codex login status`, plain text "Logged in ..." vs not.
+//   - kimi:   no auth-status command exists (login is `kimi login`) → "unknown".
 //   - pi:     no auth primitive exists → honestly "unknown".
 func probeAuth(ctx context.Context, run cliRunner, harness string) authState {
 	switch harness {
@@ -87,6 +88,8 @@ func probeAuth(ctx context.Context, run cliRunner, harness string) authState {
 			return authState{"unknown", "codex login status failed: " + errString(err)}
 		}
 		return authState{"logged-out", firstLine(out)}
+	case "kimi":
+		return authState{"unknown", "kimi has no auth-status command; login via `hyperagent auth kimi`"}
 	case "pi":
 		return authState{"unknown", "pi has no auth-status command; auth via provider env/--api-key (see `pi config`)"}
 	}
@@ -110,6 +113,10 @@ func probeModels(ctx context.Context, run cliRunner, harness string) (string, er
 		return fmt.Sprintf("%d models listed (catalog only, not a live-auth check)", countModelLines(out)), nil
 	case "claude", "codex":
 		return "covered by auth status (no zero-cost model list)", nil
+	case "kimi":
+		// kimi has neither an auth-status nor a proven zero-cost model list;
+		// don't fabricate a signal from `kimi provider list` parsing.
+		return "no zero-cost model list (kimi has no auth-status command)", nil
 	}
 	return "", fmt.Errorf("unknown harness %q", harness)
 }

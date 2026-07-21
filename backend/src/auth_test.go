@@ -22,6 +22,7 @@ func TestLoginCmdConstruction(t *testing.T) {
 	cases := map[string][]string{
 		"claude": {"claude", "auth", "login"},
 		"codex":  {"codex", "login"},
+		"kimi":   {"kimi", "login"},
 		"pi":     {"pi", "config"},
 	}
 	for harness, wantArgs := range cases {
@@ -165,6 +166,10 @@ func TestProbeAuth(t *testing.T) {
 
 	if pi := probeAuth(ctx, fakeCLI(nil), "pi"); pi.State != "unknown" {
 		t.Errorf("pi has no auth primitive: state = %q, want unknown", pi.State)
+	}
+
+	if km := probeAuth(ctx, fakeCLI(nil), "kimi"); km.State != "unknown" {
+		t.Errorf("kimi has no auth-status command: state = %q, want unknown", km.State)
 	}
 }
 

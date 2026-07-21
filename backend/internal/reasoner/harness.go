@@ -81,7 +81,8 @@ var (
 		"SHELL": true, "TERM": true, "TZ": true, "TMPDIR": true,
 		"PWD": true, "LANG": true, "LANGUAGE": true, "COLORTERM": true,
 		// tool config/install homes (normally under HOME; honor overrides)
-		"CODEX_HOME": true, "CLAUDE_CONFIG_DIR": true, "BUN_INSTALL": true,
+		"CODEX_HOME": true, "CLAUDE_CONFIG_DIR": true, "KIMI_CODE_HOME": true,
+		"BUN_INSTALL": true,
 		"NVM_DIR": true, "NODE_PATH": true, "PNPM_HOME": true,
 		"VOLTA_HOME": true, "FNM_DIR": true, "ASDF_DIR": true,
 	}
