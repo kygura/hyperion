@@ -54,6 +54,12 @@
     body[data-palette="cyan"]:not([data-theme]) { --accent: #4fd8c4; }
     body[data-palette="green"]:not([data-theme]) { --accent: #7cc98f; }
   }
+  /* Full-screen circular reveal for the theme toggle (native View Transitions API) */
+  @media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+    ::view-transition-old(root) { z-index: 1; }
+    ::view-transition-new(root) { z-index: 2; }
+  }
   a { color: inherit; }
   ::selection { background: var(--accent); color: var(--paper); }
   * { transition: color .35s ease, background-color .35s ease, border-color .35s ease; }
@@ -122,6 +128,16 @@
   .nav-link:hover::after, .nav-link.is-active::after { right: 0; }
   #theme-toggle { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink2); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
   #theme-toggle:hover { color: var(--ink); border-color: var(--ink2); }
+
+  .palette-select { position: relative; }
+  .palette-select summary { list-style: none; cursor: pointer; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
+  .palette-select summary::-webkit-details-marker { display: none; }
+  .palette-select summary:hover { border-color: var(--ink2); }
+  .palette-select[open] summary { border-color: var(--ink2); }
+  .swatch-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+  .palette-pop { position: absolute; top: calc(100% + 8px); right: 0; display: flex; gap: 8px; padding: 8px; background: var(--paper2); border: 1px solid var(--line); border-radius: 999px; z-index: 30; animation: htRise .18s var(--ease-out); }
+  .swatch { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line); background: var(--sw); cursor: pointer; padding: 0; }
+  .swatch[aria-current="true"] { box-shadow: 0 0 0 2px var(--paper2), 0 0 0 3px var(--ink2); }
 
   .hero { position: relative; min-height: 86vh; display: flex; align-items: flex-end; overflow: hidden; }
   .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; }
@@ -327,6 +343,14 @@
         <button id="view-human" type="button" class="view-btn is-active" aria-pressed="true">Human</button>
         <button id="view-agent" type="button" class="view-btn" aria-pressed="false">Agent</button>
       </div>
+      <details id="palette-select" class="palette-select">
+        <summary aria-label="Choose accent palette"><span class="swatch-dot"></span></summary>
+        <div class="palette-pop" role="group" aria-label="Accent palette">
+          <button type="button" class="swatch" data-palette="orange" style="--sw:#9a5b38" aria-label="Orange"></button>
+          <button type="button" class="swatch" data-palette="cyan" style="--sw:#0d8f83" aria-label="Cyan"></button>
+          <button type="button" class="swatch" data-palette="green" style="--sw:#3f7d4f" aria-label="Green"></button>
+        </div>
+      </details>
       <button id="theme-toggle" type="button">Dark</button>
     </nav>
   </div>
@@ -632,22 +656,50 @@
     var s = getStoredTheme();
     if (s !== "dark" && s !== "light") applyTheme(e.matches ? "dark" : "light", false);
   });
-  themeBtn.addEventListener("click", function () {
+  themeBtn.addEventListener("click", function (e) {
     var cur = body.getAttribute("data-theme") === "dark" ? "dark" : "light";
-    applyTheme(cur === "dark" ? "light" : "dark", true);
+    var next = cur === "dark" ? "light" : "dark";
+    if (reduced || !document.startViewTransition) { applyTheme(next, true); return; }
+    var x = e.clientX, y = e.clientY;
+    var endRadius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    var root = document.documentElement;
+    themeBtn.disabled = true;
+    var t = document.startViewTransition(function () { applyTheme(next, true); });
+    t.ready.then(function () {
+      root.animate(
+        { clipPath: ["circle(0px at " + x + "px " + y + "px)", "circle(" + endRadius + "px at " + x + "px " + y + "px)"] },
+        { duration: 550, easing: "ease-in-out", pseudoElement: "::view-transition-new(root)" }
+      );
+    });
+    t.finished.then(function () { themeBtn.disabled = false; });
   });
 
-  // Palette — swap the accent color via ?palette=cyan|green|orange, persisted after that
+  // Palette — swap the accent color via the header swatch picker (or ?palette=cyan|green|orange), persisted after that
   var PALETTES = ["orange", "cyan", "green"];
+  var paletteSelect = document.getElementById("palette-select");
+  var swatches = document.querySelectorAll(".swatch");
+  function setPalette(palette, persist) {
+    body.setAttribute("data-palette", palette);
+    swatches.forEach(function (s) { s.setAttribute("aria-current", s.dataset.palette === palette ? "true" : "false"); });
+    if (persist) { try { localStorage.setItem("hyperion-palette", palette); } catch (e) {} }
+    if (!motionOn()) drawFrame(performance.now());
+  }
   (function initPalette() {
     var qp = new URLSearchParams(window.location.search).get("palette");
     var stored;
     try { stored = localStorage.getItem("hyperion-palette"); } catch (e) { stored = null; }
     var palette = PALETTES.indexOf(qp) !== -1 ? qp : (PALETTES.indexOf(stored) !== -1 ? stored : "orange");
-    body.setAttribute("data-palette", palette);
-    if (PALETTES.indexOf(qp) !== -1) { try { localStorage.setItem("hyperion-palette", qp); } catch (e) {} }
-    if (!motionOn()) drawFrame(performance.now());
+    setPalette(palette, PALETTES.indexOf(qp) !== -1);
   })();
+  swatches.forEach(function (s) {
+    s.addEventListener("click", function () {
+      setPalette(s.dataset.palette, true);
+      paletteSelect.open = false;
+    });
+  });
+  document.addEventListener("click", function (e) {
+    if (paletteSelect.open && !paletteSelect.contains(e.target)) paletteSelect.open = false;
+  });
 
   function motionOn() { return !reduced; }
 
