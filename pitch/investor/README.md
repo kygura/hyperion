@@ -56,7 +56,6 @@ Timeline, application requirements (demo, founder video, etc.), and draft answer
 2. **Verifiable proof layer** — append-only journal with byte-exact signatures
 3. **Wedge market** — Hyperliquid's prosumer base (~$50M/yr near-term addressable)
 4. **Expanding TAM** — agents that trade; eventually enterprise agent fleets for funds
-5. **Competitive moat** — owned signing, verifiable journal, single executor (no SDK lock-in)
 
 ### What NOT to Say
 

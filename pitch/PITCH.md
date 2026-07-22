@@ -59,13 +59,6 @@ The **hosted trading operator**: a web application where a user states a mandate
 - Every major lab shipped tool-calling agents, and MCP standardized the socket, in the same 18 months.
 - The curves cross at "agents that trade." What's missing is trustworthy execution and a mandate-level interface, not intelligence.
 
-## Moat
-
-- **The journal.** Verifiable, append-only decision records: the reputation layer autonomous trading will need.
-- **One path to the wire.** Web app, MCP clients, and the autonomous loop share one executor and one set of compiled gates. Auditable by construction.
-- **Owned signing.** The dangerous layer is code we own and test byte-exact against reference vectors, not an inherited SDK.
-- **Mandate-native design.** Competitors ship bots (static strategies) or copilots (chat over charts). Everything here is built around the mandate: goal, horizon, risk envelope, written judgment.
-
 ## Market
 
 - **Wedge:** on-chain traders who want representation, not another terminal. Starting with Hyperliquid's prosumer base.
@@ -81,14 +74,6 @@ The **hosted trading operator**: a web application where a user states a mandate
 | **SOM**, Hyperion's near-term wedge | ~$50M/yr addressable | Subscription + bps on flow from Hyperliquid's prosumer trader base stating mandates in the first 12–18 months. A sliver of SAM, sized to what one execution layer can capture early. |
 
 *Order-of-magnitude estimates we derived, not third-party forecasts of Hyperion specifically. Built from published agentic-AI economic-impact research (PwC, McKinsey) and on-chain volume data (DefiLlama).*
-
-## Roadmap
-
-| Horizon | Deliverable |
-|---|---|
-| Now | Full loop built as a working prototype (ingest → reason → execute → journal), MCP interface shipped |
-| 6 mo | Hosted trading operator: mandates in plain language, decision log, one-click scoped-wallet onboarding, halt-anytime |
-| 12–18 mo | Execution layer for agents: scoped signing as a service, mandate reputation on verifiable journals, multi-venue |
 
 ## The ask
 
