@@ -11,10 +11,6 @@ Index of all pitch, marketing, and investor materials.
 - **[pitch.html](pitch.html)** — interactive pitch deck (authoritative version, deployed at the site root)
 - **[PITCH.md](PITCH.md)** — authored pitch copy (revised 2026-07-22; contact founders before further edits)
 
-### Founder Materials
-
-- **[YC-APPLICATION.md](YC-APPLICATION.md)** — YC batch prep (timeline, checklist, demo plan)
-
 ### Investor Materials
 
 - **[investor/README.md](investor/README.md)** — investor materials index and FAQ
@@ -32,7 +28,6 @@ Index of all pitch, marketing, and investor materials.
 | Document | Owner | Status | Lock |
 |----------|-------|--------|------|
 | PITCH.md | Founders | Revised 2026-07-22 | — |
-| YC-APPLICATION.md | Founders | Evergreen | — |
 | investor/FINANCIAL-PLAN.md | Founders + Finance | Annual review | — |
 | investor/README.md | Founders | Current | — |
 | pitch.html | (generated from PITCH.md) | Current | — |
@@ -69,10 +64,9 @@ Index of all pitch, marketing, and investor materials.
 
 ### For YC
 
-1. **[YC-APPLICATION.md](YC-APPLICATION.md)** — timeline and checklist
-2. **[pitch.html](pitch.html)** — deployed landing page, share the live demo URL
-3. Founder video (1 min, unlisted YouTube)
-4. **[investor/FINANCIAL-PLAN.md](investor/FINANCIAL-PLAN.md)** — prep for "how will you make money"
+1. **[pitch.html](pitch.html)** — deployed landing page, share the live demo URL
+2. Founder video (1 min, unlisted YouTube)
+3. **[investor/FINANCIAL-PLAN.md](investor/FINANCIAL-PLAN.md)** — prep for "how will you make money"
 
 ### For Early Users / Crypto Community
 
@@ -84,8 +78,7 @@ Index of all pitch, marketing, and investor materials.
 
 1. **[investor/README.md](investor/README.md)** — enterprise value prop
 2. **[investor/FINANCIAL-PLAN.md](investor/FINANCIAL-PLAN.md)** — pricing and licensing
-3. **[YC-APPLICATION.md](YC-APPLICATION.md)** — traction and team
-4. Custom demo (multi-agent fleet, custom risk gates)
+3. Custom demo (multi-agent fleet, custom risk gates)
 
 ---
 
@@ -115,8 +108,6 @@ Before sharing any materials publicly:
 | Jul 21 | Fill YC application | Founders |
 | Jul 24 | Submit YC | Founders |
 
-See **[YC-APPLICATION.md](YC-APPLICATION.md)** for full timeline.
-
 ---
 
 ## Directory Structure
@@ -125,7 +116,6 @@ See **[YC-APPLICATION.md](YC-APPLICATION.md)** for full timeline.
 pitch/
 ├── README.md                    ← You are here
 ├── PITCH.md                     ← Authored pitch copy
-├── YC-APPLICATION.md            ← YC batch prep
 ├── pitch.html                   ← Interactive deck (deployed at site root)
 ├── vercel.json                  ← Rewrites "/" to pitch.html
 ├── investor/
@@ -158,10 +148,6 @@ No. The pitch copy is authored and final. If core messaging needs to change, con
 ### Who are the competitors?
 
 → **[investor/README.md](investor/README.md)** — static bots (3Commas), copilots (ChatGPT), traditional prop firms.
-
-### What's the YC timeline and checklist?
-
-→ **[YC-APPLICATION.md](YC-APPLICATION.md)** — deadline July 27 8pm PT, demo URL, founder video, application form guidance.
 
 ---
 

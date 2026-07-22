@@ -106,7 +106,7 @@ Welcome to Hyperion documentation. Here's how to navigate.
 
 ## External Links
 
-- **Landing page (live):** TBD (deploy pitch/deck/)
+- **Landing page (live):** https://www.hypertrade.space (deployed from `pitch/`)
 - **GitHub (optional):** TBD (public or private repo)
 - **YC profile:** https://www.ycombinator.com/apply (submitted Jul 24, 2026)
 - **Hyperliquid docs:** https://hyperliquid.gitbook.io/
@@ -119,8 +119,6 @@ Welcome to Hyperion documentation. Here's how to navigate.
 
 - Added ARCHITECTURE.md, QUICKSTART.md, DESIGN.md, API.md
 - Created investor/ folder with FINANCIAL-PLAN.md
-- Organized pitch/ materials into deck/ subdirectory
-- YC-APPLICATION.md timeline updated
 
 ---
 

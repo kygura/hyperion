@@ -25,10 +25,6 @@ How Hyperion makes money:
 
 Addressable market, unit economics, and margin model.
 
-### 3. **../YC-APPLICATION.md** (YC Batch Prep)
-
-Timeline, application requirements (demo, founder video, etc.), and draft answers for YC's form.
-
 ---
 
 ## Public Materials

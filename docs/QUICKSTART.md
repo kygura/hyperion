@@ -218,6 +218,5 @@ All orders go through the same risk gates and signer. No bypassing.
 ## Next Steps
 
 - **Read** `ARCHITECTURE.md` to understand how the system works
-- **Review** `docs/YC-APPLICATION.md` for application context and the demo plan
 - **Explore** the decision journal to build intuition for the reasoning quality
 - **Customize** `config.toml` in the backend to adjust risk gates, reasoning cadence, and venue subscriptions
