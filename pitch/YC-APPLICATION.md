@@ -12,7 +12,7 @@ Sources: [ycombinator.com/apply](https://www.ycombinator.com/apply) · [howtoapp
 ## 1. Are we in good shape to apply? Yes.
 
 - **Incorporation is not required to apply.** If accepted, YC helps incorporate (US/Canada/Cayman/Singapore).
-- **Pre-launch is normal.** ~40% of funded companies per batch are "just an idea." We are well past that: the full loop runs daily as the founders' own desk.
+- **Pre-launch is normal.** ~40% of funded companies per batch are "just an idea." We are well past that: the full loop is built and tested as a working prototype.
 - **Crypto is welcome.** YC runs a Crypto Deals Program (Coinbase, Circle, Solana Foundation partners) and now offers the $500k in USDC.
 - **Our strongest asset** is a working product with an unusual proof surface (append-only decision journal, owned EIP-712 signing verified byte-exact). The application should lead with that.
 - **Our weakest surface** is everything public-facing: no hosted landing page, no public repo, no demo URL, no traction numbers. All fixable before July 27.
@@ -39,7 +39,7 @@ Answers below are adapted from `pitch/PITCH.md` (the authored language). Items m
 (46 chars)
 
 **What is your company going to make?**
-> Hyperion runs a trading desk that never sleeps. A trader states a mandate in plain language — "reach a 60/40 ETH–stablecoin split over 90 days, drawdown under 8%, leverage capped at 2×" — and the agent does the watching: it ingests order books, funding, and flow on Hyperliquid continuously, reasons about them in writing, and executes through hard-coded risk gates. Every decision is journaled and inspectable; the user can halt at any time. The interface is a mandate, not an order ticket. We're building the hosted web product on top of a backend core that already exists and trades daily.
+> Hyperion runs a trading desk that never sleeps. A trader states a mandate in plain language — "reach a 60/40 ETH–stablecoin split over 90 days, drawdown under 8%, leverage capped at 2×" — and the agent does the watching: it ingests order books, funding, and flow on Hyperliquid continuously, reasons about them in writing, and executes through hard-coded risk gates. Every decision is journaled and inspectable; the user can halt at any time. The interface is a mandate, not an order ticket. We're building the hosted web product on top of a backend core that already exists.
 
 **Where do you live now / where will the company be based after YC?**
 > **[FOUNDERS]**
@@ -50,10 +50,10 @@ Answers below are adapted from `pitch/PITCH.md` (the authored language). Items m
 ### Progress
 
 **How far along are you?**
-> The full loop — ingest, reason, execute, journal — runs as a single Go binary and is the founders' own trading desk, in daily use. Live ingest across 10–30 Hyperliquid markets with perp-native metrics; model-agnostic reasoning producing schema-validated trade candidates (never free text); a deterministic execution layer where every order passes compiled risk gates; owned ~300-line EIP-712 signing verified byte-exact against Hyperliquid's reference vectors, with a scoped agent wallet that can trade but cannot withdraw; an append-only journal of every candidate, thesis, and fill; an MCP server so any agent can trade through the same gates; and a terminal UI as the operator's cockpit. Pre-launch, pre-revenue: the raise productizes this core into the hosted operator.
+> The full loop — ingest, reason, execute, journal — runs as a single Go binary, built and tested as the founders' own working prototype. Live ingest across 10–30 Hyperliquid markets with perp-native metrics; model-agnostic reasoning producing schema-validated trade candidates (never free text); a deterministic execution layer where every order passes compiled risk gates; owned ~300-line EIP-712 signing verified byte-exact against Hyperliquid's reference vectors, with a scoped agent wallet that can trade but cannot withdraw; an append-only journal of every candidate, thesis, and fill; an MCP server so any agent can trade through the same gates; and a terminal UI as the operator's cockpit. Pre-launch, pre-revenue: the raise productizes this core into the hosted operator.
 
 **How long have you been working on this? Tech stack?**
-> **[FOUNDERS]** for duration. Stack: Go daemon (event-bus architecture), Bubble Tea TUI, React/TypeScript dashboard, HTTP+WS API, Anthropic/OpenAI/Deepseek reasoning backends.
+> **[FOUNDERS]** for duration. Stack: Go daemon (event-bus architecture), Bubble Tea TUI, React/TypeScript dashboard, HTTP+WS API, model-agnostic reasoning backend.
 
 **Do you have revenue / users?**
 > No. Pre-launch. The internal desk is the proving ground; the journal it generates is the evidence the product story rests on.
@@ -61,7 +61,7 @@ Answers below are adapted from `pitch/PITCH.md` (the authored language). Items m
 ### Idea
 
 **Why did you pick this idea? What domain expertise do you have? How do you know people need this?**
-> **[FOUNDERS]** — this must be personal. The thesis to anchor on: attention, not judgment, is the trading bottleneck. On-chain markets solved access; nobody solved having to be at the screen at 3 a.m. when a limit order needs replacing. We built the desk for ourselves first and use it daily — we are user zero.
+> **[FOUNDERS]** — this must be personal. The thesis to anchor on: attention, not judgment, is the trading bottleneck. On-chain markets solved access; nobody solved having to be at the screen at 3 a.m. when a limit order needs replacing. We built the desk for ourselves first and tested it end-to-end — we are user zero.
 
 **Who are your competitors? What do you understand that they don't?**
 > Competitors ship bots (static strategies — 3Commas-style grid/DCA tools) or copilots (chat over charts). Everything in Hyperion is built around the mandate: goal, horizon, risk envelope, written judgment. Three things we hold that they don't: a verifiable append-only journal (the reputation layer autonomous trading will need), one path to the wire (web app, MCP clients, and the loop share one executor and one set of compiled gates), and owned signing rather than an inherited SDK.

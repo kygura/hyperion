@@ -12,7 +12,7 @@ Index of all pitch, marketing, and investor materials.
 - **[deck/deck.md](deck/deck.md)** — slide outline (markdown reference)
 - **[deck/index.html](deck/index.html)** — deck landing page
 - **[pitch.html](pitch.html)** — interactive pitch deck (authoritative version)
-- **[PITCH.md](PITCH.md)** — authored pitch copy (locked; do not modify)
+- **[PITCH.md](PITCH.md)** — authored pitch copy (revised 2026-07-22; contact founders before further edits)
 
 ### Founder Materials
 
@@ -34,7 +34,7 @@ Index of all pitch, marketing, and investor materials.
 
 | Document | Owner | Status | Lock |
 |----------|-------|--------|------|
-| PITCH.md | Founders | Authored | LOCKED |
+| PITCH.md | Founders | Revised 2026-07-22 | — |
 | YC-APPLICATION.md | Founders | Evergreen | — |
 | investor/FINANCIAL-PLAN.md | Founders + Finance | Annual review | — |
 | investor/README.md | Founders | Current | — |
@@ -48,7 +48,7 @@ Index of all pitch, marketing, and investor materials.
 ### For All Materials (Pitch, Deck, Web)
 
 **Emphasize:**
-1. **Working product** — founders trade daily using this system
+1. **Functional prototype** — the core loop is built and tested
 2. **Verifiable proof** — append-only journal with byte-exact signatures
 3. **Mandate-driven** — traders set a goal; agent executes
 4. **Deterministic risk** — compiled gates, not inference
@@ -58,7 +58,7 @@ Index of all pitch, marketing, and investor materials.
 - "AI trading bot" (too generic)
 - "We predict markets" (you don't; you manage to a mandate)
 - "Unrealized P&L" (focus on realized)
-- Overstatement of LLM capability (Claude is the reasoner, not the sole driver)
+- Overstatement of LLM capability (the LLM is the reasoner, not the sole driver)
 
 ---
 

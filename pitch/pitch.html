@@ -120,8 +120,7 @@
   .hero-fade { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, var(--paper) 96%); pointer-events: none; }
   .hero-inner { position: relative; width: 100%; padding-top: 120px; padding-bottom: 84px; pointer-events: none; }
   .hero-inner .cta-row { pointer-events: auto; }
-  .hero-kicker { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin-bottom: 22px; }
-  .hero .brand-hero { font-size: clamp(64px, 11vw, 156px); line-height: 0.92; letter-spacing: -0.02em; margin: 0 0 22px; overflow: hidden; padding-bottom: 0.06em; }
+  .hero .brand-hero { font-size: clamp(64px, 11vw, 156px); line-height: 0.92; letter-spacing: -0.02em; margin: 0 0 22px; overflow: hidden; padding-top: 0.08em; padding-bottom: 0.06em; }
   .brand-hero .ltr { display: inline-block; transform: translateY(112%); animation: htLtr 1s var(--ease-out) forwards; animation-delay: calc(.14s + var(--i) * .045s); }
   .hero .tagline { font-family: "Newsreader", serif; font-style: italic; font-weight: 400; font-size: clamp(19px, 2.3vw, 27px); line-height: 1.45; color: var(--ink); max-width: 34ch; margin: 0 0 26px; }
   .hero p.lead { font-size: 17px; line-height: 1.65; color: var(--ink2); max-width: 55ch; margin: 0 0 40px; }
@@ -366,8 +365,7 @@
   <canvas id="feed"></canvas>
   <div class="hero-fade"></div>
   <div class="wrap hero-inner">
-    <p data-hero-anim="0" class="hero-kicker">Pre-seed &middot; 2026</p>
-    <h1 class="brand-hero" aria-label="Hyperion"><span aria-hidden="true"><span class="ltr" style="--i:0">H</span><span class="ltr" style="--i:1">y</span><span class="ltr" style="--i:2">p</span><span class="ltr" style="--i:3">e</span><span class="ltr" style="--i:4">r</span><span class="ltr" style="--i:5">i</span><span class="ltr" style="--i:6">o</span><span class="ltr" style="--i:7">n</span></span></h1>
+    <h1 data-hero-anim="0" class="brand-hero" aria-label="Hyperion"><span aria-hidden="true"><span class="ltr" style="--i:0">H</span><span class="ltr" style="--i:1">y</span><span class="ltr" style="--i:2">p</span><span class="ltr" style="--i:3">e</span><span class="ltr" style="--i:4">r</span><span class="ltr" style="--i:5">i</span><span class="ltr" style="--i:6">o</span><span class="ltr" style="--i:7">n</span></span></h1>
     <p data-hero-anim="2" class="tagline">An autonomous trading operator, built on Hyperliquid.</p>
     <p data-hero-anim="3" class="lead">Hyperion runs a trading desk around the clock. It ingests markets continuously, reasons about them in writing, and executes toward long-term financial goals you state in plain language.</p>
     <div data-hero-anim="4" class="cta-row">
@@ -538,8 +536,8 @@
     <span class="section-num">05</span>
     <span class="section-label">Proof</span>
   </div>
-  <h2 class="section-title">The loop already runs.</h2>
-  <p data-anim="rise" class="proof-lead">The full loop (ingest, reason, execute, journal) exists and runs today. It de-risks the hard parts (signing, gating, continuous reasoning) and generates the journal evidence the product story rests on.</p>
+  <h2 class="section-title">Built, not just imagined.</h2>
+  <p data-anim="rise" class="proof-lead">The full loop (ingest, reason, execute, journal) exists as a working prototype. It de-risks the hard parts (signing, gating, continuous reasoning) and generates the journal evidence the product story rests on.</p>
   <div class="stat-grid" data-anim="rise">
     <div class="stat">
       <div class="n" data-stat-count data-count-to="300" data-prefix="~">~300</div>
@@ -561,7 +559,7 @@
     </div>
     <div class="ledger-row" data-anim="rise" data-delay="1">
       <span class="ledger-key">REASON</span>
-      <p>Model-agnostic (Anthropic / OpenAI / DeepSeek). Timeframe-batched digests in; schema-validated trade candidates with written theses out. <strong>Structured output, always.</strong></p>
+      <p>Model-agnostic. Timeframe-batched digests in; schema-validated trade candidates with written theses out. <strong>Structured output, always.</strong></p>
     </div>
     <div class="ledger-row" data-anim="rise" data-delay="2">
       <span class="ledger-key">EXECUTE</span>

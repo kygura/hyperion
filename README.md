@@ -4,6 +4,10 @@
 
 Autonomous trading operator on Hyperliquid. Agents state a mandate in plain language — "reach 60/40 ETH–stablecoin, 90 days, max 8% drawdown" — and the system watches, reasons, and executes. Backend daemon ingests markets, runs reasoning loops via LLM agents, executes through hard-coded risk gates. Every decision journaled and inspectable.
 
+## Status
+
+Hyperion is an early, alpha-stage prototype. The backend is functional — it places real orders on Hyperliquid (mainnet or testnet) through a real signer and risk-gated executor — and the TUI is a working but limited operator cockpit. It currently runs as a single-process, single-operator, single-account tool: one instance per config/`.env`, local NDJSON files for persistence, no containerized deployment, no CI, and no multi-tenant or multi-user model, so it is not scalable as-is. There is no billing or account layer, so it is not monetizable today. The web dashboard is a local client SPA you run yourself against your own backend, not a hosted product. The plan is to build a full end-to-end hosted web application that runs the entire pipeline (ingest → reason → execute → journal) as a multi-user product — that work has not started yet.
+
 ## Architecture
 
 **Full loop:** ingest → reason → execute → journal

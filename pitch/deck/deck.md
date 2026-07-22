@@ -35,7 +35,7 @@ Most crypto traders can make good decisions. What they can't do: be at the scree
 A mandate-driven operator:
 
 1. Trader sets a goal: *"60/40 ETH–stablecoin split, 90 days, 8% max drawdown"*
-2. Agent reasons about markets continuously (Claude / LLM)
+2. Agent reasons about markets continuously (LLM)
 3. Agent executes through hard-coded risk gates
 4. Every decision is journaled and inspectable
 5. Operator can halt or adjust at any time
@@ -49,7 +49,7 @@ A mandate-driven operator:
 **Full loop:** ingest → reason → execute → journal
 
 - **Ingest:** Live orderbooks, funding rates, trade flow from Hyperliquid
-- **Reason:** Claude analyzes markets, proposes trades with confidence scores
+- **Reason:** An LLM analyzes markets, proposes trades with confidence scores
 - **Execute:** Orders pass compiled risk gates (position limits, leverage caps, drawdown floors)
 - **Journal:** Every candidate, thesis, and fill is logged append-only (proof of competence)
 
@@ -88,14 +88,14 @@ Every trade is signed and journaled:
 
 ## Slide 6: Traction
 
-**The Founders Trade It Daily**
+**The Founders Built and Tested It Themselves**
 
-- Full loop runs every 5 minutes on the founders' own account (testnet + live)
+- Full loop tested end-to-end on the founders' own account (testnet + live)
 - Real order execution, real fills, real journal
 - Median confidence: 7.5 / 10
 - Execution success rate: 98% (passes risk gates)
 
-We are user zero. We know the product works because we depend on it.
+We are user zero. We built it to prove the loop works.
 
 ---
 
@@ -139,7 +139,7 @@ We are user zero. We know the product works because we depend on it.
 **Three Curves Cross**
 
 1. **Hyperliquid dominance:** billions/day, best-in-class on-chain perp venue
-2. **LLM agents:** Claude, GPT-4, etc. can reason about markets
+2. **LLM agents:** any LLM can reason about markets
 3. **MCP standardization:** agents can call tools (trading) in a standard way
 
 **Result:** "Agents that trade" is now possible and practical.
@@ -185,7 +185,7 @@ We are user zero. We know the product works because we depend on it.
 **We are raising $500k via SAFE**
 
 **Why Hyperion:**
-- **Working product** — founders use it daily
+- **Functional prototype** — the core loop is built and tested
 - **Large TAM** — $10–100M by 2030 (on-chain trading + agents)
 - **Strong unit economics** — LTV:CAC = 500:1, 95% gross margin
 - **Experienced founders** — built trading systems, crypto infrastructure
@@ -209,9 +209,9 @@ Email: nicolascerrato17@gmail.com
 
 - **Emphasize the journal.** Most people don't think about reputation layers for agents. This is novel.
 - **Show a live demo if possible.** A real TUI + journal is more convincing than screenshots.
-- **Be concrete about traction.** "We trade our own money daily" beats vapor promises.
+- **Be concrete about what's built.** "We built and tested the full loop ourselves" beats vapor promises.
 - **Address the LLM risk directly.** Explain why risk gates matter more than model capability.
-- **Mention multi-model support.** Claude, OpenAI, Deepseek all work; no lock-in.
+- **Mention multi-model support.** Reasoning is model-agnostic; no lock-in.
 
 ---
 

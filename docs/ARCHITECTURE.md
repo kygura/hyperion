@@ -171,16 +171,15 @@ The TUI talks to the backend over HTTP+WS. No local state; all display is derive
 
 ### Dashboard (`dashboard/`)
 
-**Language:** React (TypeScript)
+**Language:** React (TypeScript), Vite
 
-A web UI for remote monitoring and mandate adjustment. Can be deployed separately or hosted on the same domain as the landing page.
+A local client SPA — you run it yourself (`bun run dev`) and it points at a backend daemon running on your own machine (`VITE_CORE_URL`, defaults to `http://127.0.0.1:8787`). It is not a hosted or multi-user product.
 
-Key pages:
-- **Agent Console:** live event feed from the daemon (WS push)
-- **Markets:** order book and depth chart
-- **Positions:** portfolio composition, history, P&L breakdown
-- **Orders:** open/closed order history with fill details
-- **Journal:** searchable decision journal with explanations
+Actual pages (see `dashboard/src/main.tsx`):
+- **`/dashboard`:** market view
+- **`/dashboard/portfolio`:** portfolio/paper-trading view
+- **`/dashboard/agent`:** live agent console (status, liquidity regime, theses, propose-mode approvals, decision log, chat) — requires the daemon running
+- **`/dashboard/branches`:** redirects to `/dashboard/portfolio`
 
 Builds on top of the same HTTP+WS API as the TUI.
 
@@ -298,7 +297,22 @@ The operator is always in control:
 
 ---
 
-## Deployment
+## Current Limitations
+
+Hyperion today is a single-process, single-operator system, not a hosted service:
+
+- One daemon instance per operator, bound to one Hyperliquid account (one `config.toml` + `.env`).
+- No multi-tenant or multi-user model anywhere in the code.
+- Persistence is local NDJSON files — no database, no replication.
+- No Dockerfile or docker-compose — no containerized deployment story.
+- No CI configured (no `.github/workflows/`).
+- No billing/accounts layer — no monetization mechanism exists in code.
+
+The planned full end-to-end hosted web application (a multi-user product running the entire ingest → reason → execute → journal pipeline) has not been built yet.
+
+## Running Locally
+
+There is no hosted deployment today — each component runs as a local process on the operator's own machine.
 
 ### Backend
 
@@ -328,13 +342,11 @@ go build -o hyperagent-tui ./src
 
 ```bash
 cd dashboard
-npm install
-npm run build
-npm run dev    # local dev
-# or
-npm run preview   # production preview
-# Deploy dist/ to Vercel/Cloudflare
+bun install   # or: npm install
+bun run dev   # local dev server, http://localhost:5173
 ```
+
+Requires the backend daemon running locally (`VITE_CORE_URL` points at it, defaults to `http://127.0.0.1:8787`).
 
 ### MCP Registration
 

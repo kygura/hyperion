@@ -52,7 +52,7 @@ Timeline, application requirements (demo, founder video, etc.), and draft answer
 
 ### For Investors (What to Emphasize)
 
-1. **Working product in daily use** — the founders trade using this system themselves
+1. **Functional prototype** — the core loop is built and tested
 2. **Verifiable proof layer** — append-only journal with byte-exact signatures
 3. **Wedge market** — Hyperliquid's prosumer base (~$50M/yr near-term addressable)
 4. **Expanding TAM** — agents that trade; eventually enterprise agent fleets for funds
@@ -98,11 +98,11 @@ Three streams:
 
 ### What's your initial customer?
 
-You. The founders. The system trades real capital daily (testnet and mainnet). The journal is your proof.
+You. The founders. The system has been tested with real capital (testnet and mainnet). The journal is your proof.
 
 ### How is this different from 3Commas, TradingView Pine Script bots, etc.?
 
-Those ship **static strategies** (grid, DCA, etc.). Hyperion is **reasoning-driven** — Claude reasons about markets and adapts. Plus: verifiable journal (they don't have this), deterministic risk gates (they rely on inference), and no SDK lock-in (MCP is open).
+Those ship **static strategies** (grid, DCA, etc.). Hyperion is **reasoning-driven** — the reasoning layer analyzes markets and adapts. Plus: verifiable journal (they don't have this), deterministic risk gates (they rely on inference), and no SDK lock-in (MCP is open).
 
 ### What about regulatory risk?
 
@@ -163,7 +163,7 @@ If you're prepping a deck, use this structure:
 
 1. **Problem:** attention, not judgment, is the trading bottleneck
 2. **Solution:** Hyperion (agent + mandate + journal)
-3. **Traction:** founders trade daily using the system
+3. **Traction:** founders built and tested the full loop themselves
 4. **Market:** Hyperliquid prosumers, $50M/yr near-term
 5. **Business Model:** subscription + flow fees + enterprise
 6. **Competitive Edge:** owned signing, verifiable journal, single executor
