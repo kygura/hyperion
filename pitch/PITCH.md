@@ -7,23 +7,35 @@ Hyperion runs a trading desk that never sleeps: it ingests markets, reasons abou
 
 ## Thesis
 
-**Attention, not judgment, is the trading bottleneck.**
+**Three things a trader runs out of: attention, presence, discipline. Judgment is never the one that runs out first.**
+
+### Attention
 
 On-chain markets solved access. Anyone, anywhere, can hold a position on a venue that never closes, with custody in their own hands.
 
 What they didn't solve is attention. Someone still has to read the order book, funding, news, and flow at three in the morning, and still has to be at the screen when a limit order needs replacing before the market moves past it.
 
+And the surface keeps widening. Complexity compounds; the hours in a day don't. A single post can reprice a position before you've finished reading it, true or not, because the market takes it at face value first and verifies later.
+
+### Presence
+
+A position is not a decision made once. The narrative moving a market on Thursday is rarely the one that opened the trade on Monday, and an exit price fixed at entry stops describing the risk actually being carried. Holding a position properly means managing and hedging it against what the market believes today, which is work that never pauses.
+
 The value an agent adds is capacity, not intelligence. It ingests order book state, news, and liquidity flows around the clock, and holds all of it against a **mandate**: a goal, a horizon, and risk limits a trader already holds, not a bot's fixed strategy.
 
-It's the medium through which a trader expresses a thesis. You say what you want to hold, over what period, at what risk, and the agent does the watching. You stop staring at charts, stop hoping a limit order fills before the market leaves you behind.
+It's the medium through which a trader expresses a thesis. You say what you want to hold, over what period, at what risk, and the agent does the watching.
+
+### Discipline
+
+Theses fail less often than the people holding them. Conviction is cheap at entry and expensive halfway through a drawdown, and most positions are closed by discomfort rather than by evidence. An operator carrying the mandate has nothing to feel: it sizes, waits, hedges, and executes the trade you said you wanted. When the read is that nothing should be done, it does nothing.
+
+---
 
 State the outcome, delegate the mechanics. The onboarding surface of trading is becoming language, because the execution surface no longer needs a person babysitting it.
 
 Travel platforms ship agents that search, book, and pay for a trip in one pass, no human touching the transaction. Software holds a crypto wallet and moves funds without passing KYC at a bank, so agents show up as counterparties on-chain.
 
-Industry estimates put the agentic economy in the trillions of dollars of annual activity by the end of the decade. Markets are the sharpest edge of it: liquid, quantifiable, and open around the clock.
-
-Trading is the leading edge of the agentic economy, not a side case of it. Hyperion sits at that edge: an autonomous trading operator between a trader's mandate and the venue.
+Markets are the sharpest edge of that shift: liquid, quantifiable, adversarial, and open around the clock. Trading is the leading edge of the agentic economy, not a side case of it. Hyperion sits at that edge: an autonomous trading operator between a trader's mandate and the venue.
 
 ## Product: one loop, running continuously
 
@@ -37,46 +49,46 @@ The loop is inspectable end to end. You can read every decision the agent has ma
 
 ## What's built
 
-The full loop exists and runs as a single Go binary, built as the founders' own working prototype:
+The full loop exists and runs as a single Go binary, built as my own working prototype:
 
 - **Live ingest & aggregation** across 10–30 Hyperliquid markets: multi-timeframe bars with perp-native metrics (CVD, basis, funding trajectory, OI delta, liquidation proximity, cross-asset correlation).
 - **Model-agnostic reasoning**: timeframe-batched digests in, schema-validated trade candidates with written theses out. Never free text.
 - **Deterministic execution layer.** Every order passes compiled risk gates: max position, max exposure, max concurrency, price sanity vs. live mark, post-stop cooldown, daily-loss kill-switch. No model output bypasses them.
-- **Owned signing.** The master key signs exactly one `approveAgent` transaction. The daemon holds only a scoped agent wallet that can trade but **cannot withdraw**. The EIP-712 signing module is ~300 lines we own, verified byte-exact against Hyperliquid's reference vectors, with no SDK dependency.
+- **Owned signing.** The master key signs exactly one `approveAgent` transaction. The daemon holds only a scoped agent wallet that can trade but **cannot withdraw**. The EIP-712 signing module is ~300 lines I own, verified byte-exact against Hyperliquid's reference vectors, with no SDK dependency.
 - **Append-only journal.** Every candidate, thesis, and fill in one place: audit trail, backtest corpus, and the agent's memory.
 - **MCP server:** any agent speaking MCP can read markets and place orders through the same gates. Every client shares one path to the wire.
 - **Terminal UI.** The operator's cockpit for the personal-tool deployment.
 
 This prototype is the proving ground, not the product. It de-risks the hard parts (signing, gating, continuous reasoning) and generates the journal evidence the product story rests on.
 
-## The product we're raising to build
+## The product this raise builds
 
 The **hosted trading operator**: a web application where a user states a mandate in plain language and reads the agent's work (decision log, position, risk against mandate, progress), with one-click scoped-wallet onboarding and the ability to halt at any time. The backend core exists. The raise productizes it.
 
 ## Why now
 
-- Hyperliquid became the dominant on-chain perp venue (billions/day) with a public, signature-gated API: a full exchange with no gatekeeper, no broker, no API-key custodian. It's the first on-chain venue with the performance and liquidity to make continuous, serious execution possible.
-- Every major lab shipped tool-calling agents, and MCP standardized the socket, in the same 18 months.
-- The curves cross at "agents that trade." What's missing is trustworthy execution and a mandate-level interface, not intelligence.
+Two curves, one crossing.
+
+- **The venue.** Hyperliquid put a full perpetuals exchange behind a public, signature-gated API and became the dominant on-chain venue while doing it. There is no broker to onboard with and no key custodian to trust: an order needs a signature, not a relationship.
+- **The models.** Tool-calling models became reliable enough to carry a position's context across days instead of turns, and MCP standardized how they reach anything outside themselves. Both landed inside the same eighteen months.
+
+The curves cross exactly at "agents that trade." What's missing at the crossing was never intelligence. It's execution worth handing a key to, and an interface pitched at a mandate instead of an order ticket.
 
 ## Market
 
-- **Wedge:** on-chain traders who want representation, not another terminal. Starting with Hyperliquid's prosumer base.
-- **Expansion:** the coming population of trading agents needs an execution layer: scoped signing, per-mandate risk envelopes, verifiable track records, multi-venue routing.
-- **Model:** subscription for the hosted agent, bps on autonomously executed flow, and enterprise licenses for funds running agent fleets.
+**The venue is already there.** No forecast is needed to size this one. The exchange, the liquidity, and the trader all exist today, in public, at volume. What doesn't exist yet is anything sitting between them that can hold a mandate.
 
-### Sizing the opportunity
+**$4.4T** cleared in cumulative perpetuals volume on Hyperliquid to date, running at a multi-hundred-billion-dollar monthly clip (DefiLlama).
 
-| | Estimate | What it represents |
-|---|---|---|
-| **TAM**, agent-mediated economic activity, global | ~$20T/yr by 2030 | The broad shift: agents executing on stated intent across commerce, finance, and services. Midpoint of published estimates. PwC projects $2.6–4.4T in annual GDP contribution from agentic AI by 2030; McKinsey projects ~$13T in additional economic output from AI agents, $3–5T of that in agentic commerce alone. |
-| **SAM**, on-chain markets an agent can execute against | ~$3T/yr by 2030 | On-chain spot and derivatives volume, extrapolated from current trajectory. Hyperliquid alone has cleared $4.4T in cumulative perp volume to date and runs at a multi-hundred-billion-dollar monthly clip (DefiLlama); on-chain venues broadly scale with it as agentic participation grows. |
-| **SOM**, Hyperion's near-term wedge | ~$50M/yr addressable | Subscription + bps on flow from Hyperliquid's prosumer trader base stating mandates in the first 12–18 months. A sliver of SAM, sized to what one execution layer can capture early. |
+- **The venue:** a full exchange behind a public, signature-gated API. No broker, no listing desk, no API-key custodian. A signature is the only thing between an order and the book.
+- **The trader:** on-chain traders who want representation, not another terminal. People who already hold a view, and are tired of being the one who has to sit with it at three in the morning. Starting with Hyperliquid's prosumer base.
+- **The model:** subscription for the hosted operator, basis points on the flow it executes autonomously, and licences for funds running fleets of agents.
+- **The layer:** every agent that trades needs the same thing underneath: scoped signing, a per-mandate risk envelope, and a track record somebody else can verify. That layer is the durable position.
 
-*Order-of-magnitude estimates we derived, not third-party forecasts of Hyperion specifically. Built from published agentic-AI economic-impact research (PwC, McKinsey) and on-chain volume data (DefiLlama).*
+*Volume figures as reported by DefiLlama. There are no projections in this document.*
 
 ## The ask
 
-We're pre-launch, raising a pre-seed to (1) ship the hosted trading operator, (2) harden the scoped-signing service, (3) run supervised live capital to build the public journal that proves the loop.
+I'm pre-launch, raising a pre-seed to (1) ship the hosted trading operator, (2) harden the scoped-signing service, (3) run supervised live capital to build the public journal that proves the loop.
 
 **ncerratoanton@gmail.com**

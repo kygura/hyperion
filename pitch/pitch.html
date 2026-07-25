@@ -173,7 +173,20 @@
   #thesis h2 { font-size: clamp(30px, 3vw, 40px); line-height: 1.2; letter-spacing: -0.01em; }
   #thesis .copy { display: flex; flex-direction: column; gap: 26px; font-size: 18.5px; line-height: 1.65; max-width: 58ch; }
   #thesis .copy p { margin: 0; }
-  #thesis .copy p:first-of-type::first-letter { font-family: "Newsreader", serif; font-size: 3.35em; float: left; line-height: 0.82; padding: 4px 12px 0 0; color: var(--accent); }
+  #thesis .part { display: flex; flex-direction: column; gap: 26px; }
+  #thesis .part:first-child p:first-of-type::first-letter { font-family: "Newsreader", serif; font-size: 3.35em; float: left; line-height: 0.82; padding: 4px 12px 0 0; color: var(--accent); }
+
+  /* Threefold rail: the sticky column tracks which problem the essay is on */
+  .rail { position: relative; list-style: none; margin: 42px 0 0; padding: 2px 0 2px 30px; display: flex; flex-direction: column; gap: 24px; }
+  .rail-line { position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--line); }
+  .rail-line::after { content: ""; position: absolute; inset: 0; background: var(--accent); transform: scaleY(var(--rail-p, 0)); transform-origin: top; }
+  .rail-i { position: relative; display: flex; align-items: baseline; gap: 13px; opacity: 0.38; transition: opacity .55s var(--ease-out); }
+  .rail-i::before { content: ""; position: absolute; left: -32px; top: 0.62em; width: 5px; height: 5px; border-radius: 50%; background: var(--line); transition: background-color .4s ease, box-shadow .4s ease; }
+  .rail-i.is-on { opacity: 1; }
+  .rail-i.is-on::before { background: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); }
+  .rail-n { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.16em; color: var(--accent); }
+  .rail-w { font-family: "Newsreader", serif; font-size: 21px; letter-spacing: -0.01em; }
+  .rail-note { margin: 26px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--ink2); max-width: 30ch; }
 
   #system h2 { margin-bottom: 56px; }
   .loop-glyph { display: inline-block; width: 0.62em; height: 0.62em; margin-left: 16px; vertical-align: baseline; color: var(--accent); }
@@ -230,22 +243,12 @@
   /* Market */
   #market h2 { margin-bottom: 18px; max-width: 22ch; }
   .market-lead { font-size: 16.5px; line-height: 1.7; color: var(--ink2); max-width: 64ch; margin: 0 0 54px; }
-  .tam-funnel { display: flex; flex-direction: column; gap: 36px; }
-  .tam-row { border-top: 1px solid var(--line); padding-top: 22px; transition: transform .3s var(--ease-out); }
-  .tam-row:hover { transform: translateX(5px); }
-  .tam-head { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-  .tam-tier { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.16em; color: var(--accent); flex: none; width: 44px; }
-  .tam-name { font-family: "Newsreader", serif; font-size: 19px; flex: 1; min-width: 220px; }
-  .tam-value { margin-left: auto; font-size: 22px; font-variant-numeric: tabular-nums; color: var(--ink); }
-  .tam-track { display: block; height: 9px; border-radius: 999px; background: var(--line); overflow: hidden; }
-  .tam-fill { display: block; height: 100%; width: 0%; border-radius: 999px; background: var(--accent); transition: width 1.3s var(--ease-out); }
-  .tam-desc { margin: 14px 0 0; font-size: 14px; line-height: 1.65; color: var(--ink2); max-width: 72ch; }
+  .market-figure { display: flex; align-items: baseline; gap: 30px; flex-wrap: wrap; margin: 0 0 62px; }
+  .mf-value { font-family: "Newsreader", serif; font-size: clamp(56px, 8.5vw, 104px); line-height: 0.9; letter-spacing: -0.03em; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .market-figure figcaption { flex: 1; min-width: 260px; max-width: 40ch; font-size: 15px; line-height: 1.65; color: var(--ink2); }
   .market-footnote { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.05em; line-height: 1.7; color: var(--ink2); margin: 44px 0 0; max-width: 78ch; }
 
-  /* Proof */
-  #proof h2 { margin-bottom: 18px; }
-  .proof-lead { font-size: 16.5px; line-height: 1.7; color: var(--ink2); max-width: 66ch; margin: 0 0 54px; }
-  .proof-lead strong { color: var(--ink); font-weight: 500; }
+  /* Ledger rows (market) */
   .ledger { border-bottom: 1px solid var(--line); }
   .ledger-row { display: grid; grid-template-columns: 150px 1fr; gap: 28px; padding: 20px 0; border-top: 1px solid var(--line); transition: transform .3s var(--ease-out), opacity .85s var(--ease-out); }
   .ledger-row:hover { transform: translateX(5px); }
@@ -254,8 +257,10 @@
   .ledger-row p strong { color: var(--ink); font-weight: 500; }
 
   /* Why now */
+  #why .now-grid { grid-template-columns: 1fr 1fr; gap: 64px; }
   #why .now-grid .loop-step h3 { font-size: 23px; }
-  .punchline { margin: 72px auto 0; text-align: center; font-family: "Newsreader", serif; font-style: italic; font-size: clamp(24px, 3vw, 36px); line-height: 1.35; max-width: 26ch; }
+  .punchline { margin: 78px auto 0; text-align: center; font-family: "Newsreader", serif; font-style: italic; font-size: clamp(24px, 3vw, 36px); line-height: 1.35; max-width: 26ch; }
+  .punch-sub { margin: 22px auto 0; text-align: center; max-width: 56ch; font-size: 16px; line-height: 1.7; color: var(--ink2); }
 
   /* Contact */
   #contact { padding-top: 100px; text-align: center; }
@@ -304,6 +309,8 @@
   @media (max-width: 860px) {
     #thesis .grid, .loop-grid, .now-grid, .term-body { grid-template-columns: 1fr; }
     #thesis .sticky-col { position: static; }
+    .rail-i { opacity: 1; } /* nothing to track once the column stops being sticky */
+    #why .now-grid { grid-template-columns: 1fr; }
     .ledger-row { grid-template-columns: 1fr; gap: 8px; }
     .term-side { border-left: none; border-top: 1px solid var(--line); }
     nav.mainnav { gap: 14px; }
@@ -311,7 +318,6 @@
     .scroll-cue { display: none; }
   }
   @media (max-width: 640px) {
-    .tam-value { margin-left: 0; }
     .contact-cta { flex-direction: column; }
   }
 
@@ -323,6 +329,7 @@
     .brand-hero .ltr { transform: none; }
     .section-head::after { transform: scaleX(1); }
     .loop-step::before { transform: scaleX(1); }
+    .rail-i { opacity: 1; }
     .hl { background-size: 100% 36%; }
     .progress-fill::after { display: none; }
   }
@@ -337,7 +344,6 @@
       <a href="#thesis" class="nav-link">Thesis</a>
       <a href="#market" class="nav-link">Market</a>
       <a href="#system" class="nav-link">System</a>
-      <a href="#proof" class="nav-link">Proof</a>
       <a href="#contact" class="nav-link">Contact</a>
       <div class="view-switch" role="group" aria-label="View mode">
         <button id="view-human" type="button" class="view-btn is-active" aria-pressed="true">Human</button>
@@ -382,18 +388,33 @@
   </div>
   <div class="grid">
     <div class="sticky-col">
-      <h2 data-anim="rise"><span class="hl">Attention</span> is the trading bottleneck.</h2>
+      <h2 data-anim="rise"><span class="hl">Three things</span> a trader runs out of.</h2>
+      <ol class="rail" data-anim="rise" data-delay="1">
+        <span class="rail-line" data-rail-line aria-hidden="true"></span>
+        <li class="rail-i" data-rail-i><span class="rail-n">01</span><span class="rail-w">Attention</span></li>
+        <li class="rail-i" data-rail-i><span class="rail-n">02</span><span class="rail-w">Presence</span></li>
+        <li class="rail-i" data-rail-i><span class="rail-n">03</span><span class="rail-w">Discipline</span></li>
+      </ol>
+      <p class="rail-note" data-anim="rise" data-delay="2">Judgment is never the one that runs out first.</p>
     </div>
     <div class="copy">
-      <p data-anim="rise">On-chain markets solved access. Anyone, anywhere, can hold a position on a venue open around the clock, with custody in their own hands.</p>
-      <p data-anim="rise">Attention is what's still missing. Someone still has to read the order book, funding, news, and flow at three in the morning, and still has to be at the screen when a limit order needs replacing before the market moves past it.</p>
-      <p data-anim="rise">The value an agent actually adds is capacity: the ability to ingest order book state, news, and liquidity flows continuously, and hold all of it against a <span class="hl">mandate</span>, a goal, a horizon, and risk limits a trader already believes in.</p>
-      <p data-anim="rise">It's the medium a thesis gets expressed through. You say what you want to hold, over what period, at what risk, and the agent handles the watching, the charts, and the limit orders.</p>
+      <div class="part" data-part>
+        <p data-anim="rise">On-chain markets solved access. Anyone, anywhere, can hold a position on a venue open around the clock, with custody in their own hands.</p>
+        <p data-anim="rise"><span class="hl">Attention is what's still missing.</span> Someone still has to read the order book, funding, news, and flow at three in the morning, and still has to be at the screen when a limit order needs replacing before the market moves past it.</p>
+        <p data-anim="rise">And the surface keeps widening. Complexity compounds; the hours in a day don't. A single post can reprice a position before you've finished reading it, true or not, because the market takes it at face value first and verifies later.</p>
+      </div>
+      <div class="part" data-part>
+        <p data-anim="rise"><span class="hl">A position is not a decision made once.</span> The narrative moving a market on Thursday is rarely the one that opened the trade on Monday, and an exit price fixed at entry stops describing the risk actually being carried. Holding a position properly means managing and hedging it against what the market believes today, which is work that never pauses.</p>
+        <p data-anim="rise">The value an agent actually adds is capacity: the ability to ingest order book state, news, and liquidity flows continuously, and hold all of it against a <span class="hl">mandate</span>, a goal, a horizon, and risk limits a trader already believes in.</p>
+        <p data-anim="rise">It's the medium a thesis gets expressed through. You say what you want to hold, over what period, at what risk, and the agent handles the watching, the charts, and the limit orders.</p>
+      </div>
+      <div class="part" data-part>
+        <p data-anim="rise"><span class="hl">Theses fail less often than the people holding them.</span> Conviction is cheap at entry and expensive halfway through a drawdown, and most positions are closed by discomfort rather than by evidence. An operator carrying the mandate has nothing to feel: it sizes, waits, hedges, and executes the trade you said you wanted. When the read is that nothing should be done, it does nothing.</p>
+      </div>
       <p data-anim="rise">State the outcome, delegate the mechanics. <span class="hl">The onboarding surface of trading is about to become language</span>, because the execution surface can run on its own now.</p>
       <p data-anim="rise">This pattern is spreading beyond trading. Travel platforms are shipping agents that search, book, and pay for a trip in one pass, with the transaction handled end to end by software. A crypto wallet lets software hold funds and move them directly, bypassing KYC at a bank, so agents already show up as counterparties on-chain.</p>
-      <p data-anim="rise">Industry estimates already put the <strong>agentic economy</strong> in the trillions of dollars of annual activity by the end of the decade. Markets are the sharpest edge of it: liquid, quantifiable, and open around the clock.</p>
-      <p data-anim="rise">We think trading is the leading edge of the agentic economy. Hyperion is built for that edge first.</p>
-      <p data-anim="rise">Hyperion is that operator: an autonomous trading desk sitting between a trader's mandate and the venue. We're building on Hyperliquid because it's the first on-chain venue with the performance and liquidity to make continuous, serious execution possible.</p>
+      <p data-anim="rise">Markets are the sharpest edge of that shift: liquid, quantifiable, adversarial, and open around the clock. Trading is the leading edge of the agentic economy, not a side case of it.</p>
+      <p data-anim="rise">Hyperion is that operator: an autonomous trading desk sitting between a trader's mandate and the venue. It runs on Hyperliquid, the first on-chain venue with the performance and liquidity to make continuous, serious execution possible.</p>
     </div>
   </div>
 </section>
@@ -403,39 +424,31 @@
     <span class="section-num">02</span>
     <span class="section-label">Market</span>
   </div>
-  <h2 class="section-title">The agentic economy, sized three ways.</h2>
-  <p data-anim="rise" class="market-lead">Trading is the sharpest edge of a much larger shift. The same mandate-and-delegate pattern is starting to run commerce, procurement, and services. Here's how we size it, from broadest to what we can actually capture first.</p>
-  <div class="tam-funnel">
-    <div class="tam-row" data-tam data-fill="100" data-count-to="20" data-prefix="$" data-suffix="T">
-      <div class="tam-head">
-        <span class="tam-tier">TAM</span>
-        <span class="tam-name">Agent-mediated economic activity, global</span>
-        <span class="tam-value mono" data-tam-value>$0T</span>
-      </div>
-      <span class="tam-track"><span class="tam-fill" data-tam-fill></span></span>
-      <p class="tam-desc">The broad shift: agents executing on stated intent across commerce, finance, and services by 2030. Midpoint of PwC ($2.6&ndash;4.4T annual GDP contribution from agentic AI) and McKinsey (~$13T in additional output, $3&ndash;5T of that in agentic commerce alone).</p>
+  <h2 class="section-title">The venue is already there.</h2>
+  <p data-anim="rise" class="market-lead">No forecast is needed to size this one. The exchange, the liquidity, and the trader all exist today, in public, at volume. What doesn't exist yet is anything sitting between them that can hold a mandate.</p>
+  <figure class="market-figure" data-anim="rise">
+    <span class="mf-value">$4.4T</span>
+    <figcaption>cleared in cumulative perpetuals volume on Hyperliquid to date, running at a multi-hundred-billion-dollar monthly clip.</figcaption>
+  </figure>
+  <div class="ledger">
+    <div class="ledger-row" data-anim="rise">
+      <span class="ledger-key">THE VENUE</span>
+      <p>A full exchange behind a public, signature-gated API. No broker, no listing desk, no API-key custodian. <strong>A signature is the only thing between an order and the book.</strong></p>
     </div>
-    <div class="tam-row" data-tam data-fill="58" data-count-to="3" data-prefix="$" data-suffix="T">
-      <div class="tam-head">
-        <span class="tam-tier">SAM</span>
-        <span class="tam-name">On-chain markets an agent can execute against</span>
-        <span class="tam-value mono" data-tam-value>$0T</span>
-      </div>
-      <span class="tam-track"><span class="tam-fill" data-tam-fill></span></span>
-      <p class="tam-desc">On-chain spot and derivatives volume, extrapolated from current trajectory. Hyperliquid alone has cleared $4.4T in cumulative perp volume to date and runs at a multi-hundred-billion-dollar monthly clip (DefiLlama); on-chain venues broadly scale with it as agentic participation grows.</p>
+    <div class="ledger-row" data-anim="rise" data-delay="1">
+      <span class="ledger-key">THE TRADER</span>
+      <p>On-chain traders who want representation, not another terminal. People who already hold a view, and are tired of being the one who has to sit with it at three in the morning.</p>
     </div>
-    <div class="tam-row" data-tam data-fill="24" data-count-to="50" data-prefix="$" data-suffix="M">
-      <div class="tam-head">
-        <span class="tam-tier">SOM</span>
-        <span class="tam-name">Hyperion's near-term wedge</span>
-        <span class="tam-value mono" data-tam-value>$0M</span>
-      </div>
-      <span class="tam-track"><span class="tam-fill" data-tam-fill></span></span>
-      <p class="tam-desc">Subscription + bps on flow from Hyperliquid's prosumer trader base stating mandates in the first 12&ndash;18 months. A sliver of SAM, sized to what one execution layer can actually capture early.</p>
+    <div class="ledger-row" data-anim="rise" data-delay="2">
+      <span class="ledger-key">THE MODEL</span>
+      <p>Subscription for the hosted operator, basis points on the flow it executes autonomously, and licences for funds running fleets of agents.</p>
+    </div>
+    <div class="ledger-row" data-anim="rise" data-delay="3">
+      <span class="ledger-key">THE LAYER</span>
+      <p>Every agent that trades needs the same thing underneath: scoped signing, a per-mandate risk envelope, and a track record somebody else can verify. That layer is the durable position.</p>
     </div>
   </div>
-  <p class="market-footnote">Order-of-magnitude estimates we derived ourselves and applied specifically to Hyperion, built from published agentic-AI economic-impact research (PwC, McKinsey) and on-chain volume data (DefiLlama).
-  </p>
+  <p class="market-footnote">Volume figures as reported by DefiLlama. Everything on this page is something that already happened; there are no projections in it.</p>
 </section>
 
 <section id="system" class="page wrap">
@@ -528,74 +541,35 @@
   <p class="footnote">ILLUSTRATIVE CONCEPT</p>
 </section>
 
-<section id="proof" class="page wrap">
-  <div data-anim="rise" class="section-head">
-    <span class="section-num">05</span>
-    <span class="section-label">Proof</span>
-  </div>
-  <h2 class="section-title">Built, not just imagined.</h2>
-  <p data-anim="rise" class="proof-lead">The full loop (ingest, reason, execute, journal) exists as a working prototype. It de-risks the hard parts (signing, gating, continuous reasoning) and generates the journal evidence the product story rests on.</p>
-  <div class="ledger">
-    <div class="ledger-row" data-anim="rise">
-      <span class="ledger-key">INGEST</span>
-      <p>Live aggregation across 10&ndash;30 Hyperliquid markets: multi-timeframe bars with perp-native metrics, including CVD, basis, funding trajectory, OI delta, liquidation proximity, and cross-asset correlation.</p>
-    </div>
-    <div class="ledger-row" data-anim="rise" data-delay="1">
-      <span class="ledger-key">REASON</span>
-      <p>Model-agnostic. Timeframe-batched digests in; schema-validated trade candidates with written theses out. <strong>Structured output, always.</strong></p>
-    </div>
-    <div class="ledger-row" data-anim="rise" data-delay="2">
-      <span class="ledger-key">EXECUTE</span>
-      <p>Every order passes compiled risk gates: max position, max exposure, max concurrency, price sanity against live mark, post-stop cooldown, and a daily-loss kill-switch.</p>
-    </div>
-    <div class="ledger-row" data-anim="rise" data-delay="3">
-      <span class="ledger-key">SIGNING</span>
-      <p>The master key signs exactly one <strong>approveAgent</strong> transaction. The daemon holds a scoped agent wallet restricted to trading. Signing logic owned in-house.</p>
-    </div>
-    <div class="ledger-row" data-anim="rise" data-delay="4">
-      <span class="ledger-key">JOURNAL</span>
-      <p>Append-only. Every candidate, thesis, and fill in one place: audit trail, backtest corpus, and the agent's memory.</p>
-    </div>
-    <div class="ledger-row" data-anim="rise" data-delay="5">
-      <span class="ledger-key">MCP</span>
-      <p>Any agent that speaks MCP can read markets and place orders through the same gates. Every client shares <strong>one path to the wire</strong>.</p>
-    </div>
-  </div>
-</section>
-
 <section id="why" class="page wrap">
   <div data-anim="rise" class="section-head">
-    <span class="section-num">06</span>
+    <span class="section-num">05</span>
     <span class="section-label">Why now</span>
   </div>
   <h2 class="section-title">Two curves, one crossing.</h2>
   <div class="now-grid" data-anim="rise" style="margin-top:56px;">
     <div class="loop-step">
-      <div class="step-num">THE VENUE</div>
+      <div class="step-num">CURVE ONE &middot; THE VENUE</div>
       <h3>An exchange with an open door</h3>
-      <p>Hyperliquid became the dominant on-chain perp venue, moving billions a day through a public, signature-gated API you connect to directly.</p>
+      <p>Hyperliquid put a full perpetuals exchange behind a public, signature-gated API and became the dominant on-chain venue while doing it. There is no broker to onboard with and no key custodian to trust: an order needs a signature, not a relationship.</p>
     </div>
     <div class="loop-step">
-      <div class="step-num">THE AGENTS</div>
+      <div class="step-num">CURVE TWO &middot; THE MODELS</div>
       <h3>The socket got standardized</h3>
-      <p>Every major lab shipped tool-calling agents, and MCP standardized the way they plug into the world, all within the same 18 months.</p>
-    </div>
-    <div class="loop-step">
-      <div class="step-num">THE GAP</div>
-      <h3>The execution gap</h3>
-      <p>What's missing is trustworthy execution and a mandate-level interface. The models are ready; the wire to the venue is still being built.</p>
+      <p>Tool-calling models became reliable enough to carry a position's context across days instead of turns, and MCP standardized how they reach anything outside themselves. Both landed inside the same eighteen months.</p>
     </div>
   </div>
   <p data-anim="rise" class="punchline">The curves cross exactly at <span class="hl">agents that trade</span>.</p>
+  <p data-anim="rise" class="punch-sub">What's missing at the crossing was never intelligence. It's execution worth handing a key to, and an interface pitched at a mandate instead of an order ticket.</p>
 </section>
 
 <section id="contact" class="page wrap" style="padding-bottom:90px;">
   <div data-anim="rise" class="section-head no-line" style="margin-bottom:0;">
-    <span class="section-num">07</span>
+    <span class="section-num">06</span>
     <span class="section-label">Contact</span>
   </div>
   <div data-anim="rise" class="contact-block">
-    <h2>We're pre-launch, and talking to early users and investors.</h2>
+    <h2>Pre-launch, and talking to early users and investors.</h2>
 
     <div class="contact-cta">
       <a href="mailto:ncerratoanton@gmail.com" class="btn btn-primary contact-btn" data-magnetic>ncerratoanton@gmail.com</a>
@@ -721,13 +695,32 @@
   // Scroll progress + hero parallax
   var progressBar = document.getElementById("scroll-progress");
   var heroInner = document.querySelector(".hero-inner");
+  var railLine = document.querySelector("[data-rail-line]");
+  var railItems = Array.prototype.slice.call(document.querySelectorAll("[data-rail-i]"));
+  var railParts = Array.prototype.slice.call(document.querySelectorAll("#thesis [data-part]"));
   var scrollTicking = false;
+
+  // Thesis rail: fills across the three movements, each problem stays lit once reached
+  function updateRail(y) {
+    if (!railLine || !railParts.length) return;
+    var mark = y + window.innerHeight * 0.42;
+    var start = railParts[0].getBoundingClientRect().top + y;
+    var last = railParts[railParts.length - 1];
+    var end = last.getBoundingClientRect().top + y + last.offsetHeight;
+    var span = end - start;
+    railLine.style.setProperty("--rail-p", span > 0 ? Math.max(0, Math.min(1, (mark - start) / span)) : 0);
+    var active = -1;
+    railParts.forEach(function (el, i) { if (el.getBoundingClientRect().top + y <= mark) active = i; });
+    railItems.forEach(function (el, i) { el.classList.toggle("is-on", i <= active); });
+  }
+
   function onScrollFrame() {
     scrollTicking = false;
     var doc = document.documentElement;
     var max = doc.scrollHeight - window.innerHeight;
     var y = window.scrollY || doc.scrollTop;
     progressBar.style.transform = "scaleX(" + (max > 0 ? Math.min(1, y / max) : 0) + ")";
+    updateRail(y);
     if (!reduced && heroInner && y < window.innerHeight) {
       heroInner.style.transform = "translateY(" + (y * 0.16) + "px)";
       heroInner.style.opacity = String(Math.max(0, 1 - y / (window.innerHeight * 0.85)));
@@ -1109,17 +1102,18 @@
     out += p(humanViewEl.querySelector("#top .lead"));
 
     var thesis = humanViewEl.querySelector("#thesis");
-    out += h("h2", thesis.querySelector(".section-title"));
+    out += h("h2", thesis.querySelector(".section-title, .sticky-col h2"));
+    var rail = Array.prototype.map.call(thesis.querySelectorAll("[data-rail-i] .rail-w"), txt);
+    if (rail.length) out += "<p><strong>" + rail.join(" &middot; ") + ".</strong> " + txt(thesis.querySelector(".rail-note")) + "</p>";
     thesis.querySelectorAll(".copy p").forEach(function (el) { out += p(el); });
 
     var market = humanViewEl.querySelector("#market");
     out += h("h2", market.querySelector(".section-title"));
     out += p(market.querySelector(".market-lead"));
-    market.querySelectorAll(".tam-row").forEach(function (row) {
-      var tier = txt(row.querySelector(".tam-tier"));
-      var name = txt(row.querySelector(".tam-name"));
-      var value = (row.getAttribute("data-prefix") || "") + row.getAttribute("data-count-to") + (row.getAttribute("data-suffix") || "");
-      out += "<h3>" + tier + " &middot; " + value + "</h3><p><strong>" + name + ".</strong> " + txt(row.querySelector(".tam-desc")) + "</p>";
+    var fig = market.querySelector(".market-figure");
+    if (fig) out += "<p><strong>" + txt(fig.querySelector(".mf-value")) + "</strong> " + txt(fig.querySelector("figcaption")) + "</p>";
+    market.querySelectorAll(".ledger-row").forEach(function (row) {
+      out += "<p><strong>" + txt(row.querySelector(".ledger-key")) + ":</strong> " + txt(row.querySelector("p")) + "</p>";
     });
     out += p(market.querySelector(".market-footnote"));
 
@@ -1136,18 +1130,6 @@
     var mandate = iface.querySelector(".mandate-text");
     if (mandate) out += "<p><strong>Example mandate:</strong> " + txt(mandate) + "</p>";
 
-    var proof = humanViewEl.querySelector("#proof");
-    out += h("h2", proof.querySelector(".section-title"));
-    out += p(proof.querySelector(".proof-lead"));
-    out += "<ul>";
-    proof.querySelectorAll(".stat").forEach(function (stat) {
-      out += "<li>" + txt(stat.querySelector(".n")) + " &middot; " + txt(stat.querySelector(".cap")) + "</li>";
-    });
-    out += "</ul>";
-    proof.querySelectorAll(".ledger-row").forEach(function (row) {
-      out += "<p><strong>" + txt(row.querySelector(".ledger-key")) + ":</strong> " + txt(row.querySelector("p")) + "</p>";
-    });
-
     var why = humanViewEl.querySelector("#why");
     out += h("h2", why.querySelector(".section-title"));
     why.querySelectorAll(".loop-step").forEach(function (step) {
@@ -1155,6 +1137,7 @@
       out += p(step.querySelector("p"));
     });
     out += p(why.querySelector(".punchline"));
+    out += p(why.querySelector(".punch-sub"));
 
     var contact = humanViewEl.querySelector("#contact");
     out += h("h2", contact.querySelector(".contact-block h2"));
@@ -1188,38 +1171,6 @@
     var stored = getStoredView();
     applyView(stored === "agent" ? "agent" : "human", false);
   })();
-
-  // Market TAM/SAM/SOM bars — animate fill + count-up on scroll into view
-  var tamRows = document.querySelectorAll("[data-tam]");
-  function animateTamRow(row) {
-    var fill = row.querySelector("[data-tam-fill]");
-    var valueEl = row.querySelector("[data-tam-value]");
-    var target = parseFloat(row.getAttribute("data-count-to"));
-    var prefix = row.getAttribute("data-prefix") || "";
-    var suffix = row.getAttribute("data-suffix") || "";
-    fill.style.width = row.getAttribute("data-fill") + "%";
-    if (reduced) { valueEl.textContent = prefix + target + suffix; return; }
-    var start = performance.now();
-    var dur = 1300;
-    function step(now) {
-      var t = Math.min(1, (now - start) / dur);
-      var eased = 1 - Math.pow(1 - t, 3);
-      var val = Math.round(target * eased);
-      valueEl.textContent = prefix + val + suffix;
-      if (t < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-  if (tamRows.length) {
-    var tamIo = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        animateTamRow(e.target);
-        tamIo.unobserve(e.target);
-      });
-    }, { threshold: 0.4 });
-    tamRows.forEach(function (row) { tamIo.observe(row); });
-  }
 
   // Contact — copy email to clipboard
   var copyBtn = document.getElementById("copy-email");
