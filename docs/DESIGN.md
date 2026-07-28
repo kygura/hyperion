@@ -83,7 +83,6 @@ This document records the core design decisions and the trade-offs that shaped H
 - **Latency:** a TUI is instant; web dashboards introduce browser lag
 - **Control:** keyboard-driven, no mouse fumbling when you need to halt
 - **Accessibility:** works over SSH, no dependencies on a web server
-- **Separation:** TUI is the operator's domain; dashboard is for monitoring from afar
 
 **Trade-off:** Less polished UI (text, not graphics), but snappier and more operator-friendly.
 
@@ -151,19 +150,6 @@ This document records the core design decisions and the trade-offs that shaped H
 - **Operator awareness:** less noise in the journal; cleaner decision history
 
 **Trade-off:** Slower reaction to regime shifts, but the tradeoff favors quality over speed.
-
----
-
-## React Dashboard (Optional Monitoring)
-
-**Decision:** Dashboard is a React app, separate from the backend. Optional for traders who want web UX.
-
-**Why:**
-- **Choice:** TUI is the hardcore operator interface; dashboard is for monitoring from browser
-- **Decoupling:** dashboard can be deployed anywhere; doesn't tie to backend infrastructure
-- **Real-time:** connects via WebSocket; live event stream
-
-**Trade-off:** Two UIs to maintain, but they serve different use cases.
 
 ---
 

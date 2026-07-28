@@ -7,7 +7,6 @@ Get Hyperion running in 5 minutes.
 ## Prerequisites
 
 - **Go 1.21+** (backend + TUI)
-- **Node.js 18+** (dashboard; optional)
 - **Hyperliquid testnet or mainnet account** with API keys
 - One of: **Claude API key** (recommended), OpenAI API key, or Deepseek API key
 
@@ -79,25 +78,7 @@ You should see five panels:
 
 ---
 
-## Step 3: Dashboard (Optional)
-
-```bash
-cd dashboard
-
-# Install and build
-npm install
-npm run build
-npm run dev    # local dev server on :5173
-```
-
-Open `http://localhost:5173`. You'll see:
-- Live event feed (connected to backend via WebSocket)
-- Markets and positions
-- Decision journal with explanations
-
----
-
-## Step 4: Set a Mandate
+## Step 3: Set a Mandate
 
 In the TUI, edit the mandate (propose mode):
 
@@ -112,7 +93,7 @@ Press Enter to confirm.
 
 ---
 
-## Step 5: Run in Propose Mode (Recommended for First Run)
+## Step 4: Run in Propose Mode (Recommended for First Run)
 
 The TUI starts in **propose mode**: the backend reasons about markets, generates candidates, but does NOT execute. You review each candidate and decide whether to:
 
@@ -132,7 +113,7 @@ Once you're comfortable, press `m` to toggle to **autonomous mode**. The daemon 
 
 ---
 
-## Step 6: Watch the Decision Journal
+## Step 5: Watch the Decision Journal
 
 Press `5` in the TUI to jump to the **DECISION JOURNAL** panel. Scroll through proposals and fills:
 
@@ -155,7 +136,7 @@ Every decision is append-only and immutable.
 
 ---
 
-## Step 7: MCP Integration (Use Claude)
+## Step 6: MCP Integration (Use Claude)
 
 Register the MCP server:
 

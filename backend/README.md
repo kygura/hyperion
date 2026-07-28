@@ -155,7 +155,7 @@ journaled like any other candidate.
 
 The same core the MCP server runs on — store, digests, verdicts, journal,
 chat, gated execution — is also reachable over HTTP+WS, so any frontend
-(the `tui/` client, the web dashboard, a script, `curl`) can attach without
+(the `tui/` client, a script, `curl`) can attach without
 going through a Claude client. Runs whenever `[api] enabled = true`; binds
 loopback by default.
 

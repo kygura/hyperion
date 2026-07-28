@@ -28,7 +28,7 @@ Welcome to Hyperion documentation. Here's how to navigate.
 
 ### How It Works
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** — System diagram, components (daemon, TUI, dashboard, MCP), data flow, risk gates, signing, journal
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — System diagram, components (daemon, TUI, MCP), data flow, risk gates, signing, journal
 - **[DESIGN.md](DESIGN.md)** — Why we made specific choices (mandate-driven UI, compiled gates, event bus, append-only journal, etc.)
 
 ### Building & Operating
@@ -36,7 +36,6 @@ Welcome to Hyperion documentation. Here's how to navigate.
 - **[API.md](API.md)** — HTTP API (markets, positions, orders, journal, control), WebSocket events, MCP tools
 - **Backend README** (`backend/README.md`) — Build, test, config, deployment
 - **TUI README** (`tui/README.md`) — Build and run the operator cockpit
-- **Dashboard README** (`dashboard/README.md`) — Build and deploy the web UI
 
 ---
 
@@ -93,14 +92,12 @@ Welcome to Hyperion documentation. Here's how to navigate.
 - **Architecture changes:** update ARCHITECTURE.md immediately
 - **API changes:** update API.md + backend README
 - **Design decisions:** add entry to DESIGN.md
-- **Financial projections:** update FINANCIAL-PLAN.md annually
 - **Pitch deck:** update only if core messaging changes (rare)
 
 ### Version Control
 
 - All docs are in git
 - Pitch copy (PITCH.md) is locked; changes require founder approval
-- Investor docs are read-only once YC application is submitted (branching for updates)
 
 ---
 
@@ -108,7 +105,6 @@ Welcome to Hyperion documentation. Here's how to navigate.
 
 - **Landing page (live):** https://www.hypertrade.space (deployed from `pitch/`)
 - **GitHub (optional):** TBD (public or private repo)
-- **YC profile:** https://www.ycombinator.com/apply (submitted Jul 24, 2026)
 - **Hyperliquid docs:** https://hyperliquid.gitbook.io/
 
 ---
@@ -118,7 +114,6 @@ Welcome to Hyperion documentation. Here's how to navigate.
 **Jul 9, 2026:** Documentation structure finalized. All core docs complete.
 
 - Added ARCHITECTURE.md, QUICKSTART.md, DESIGN.md, API.md
-- Created investor/ folder with FINANCIAL-PLAN.md
 
 ---
 

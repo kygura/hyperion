@@ -169,22 +169,6 @@ The TUI talks to the backend over HTTP+WS. No local state; all display is derive
 
 ---
 
-### Dashboard (`dashboard/`)
-
-**Language:** React (TypeScript), Vite
-
-A local client SPA — you run it yourself (`bun run dev`) and it points at a backend daemon running on your own machine (`VITE_CORE_URL`, defaults to `http://127.0.0.1:8787`). It is not a hosted or multi-user product.
-
-Actual pages (see `dashboard/src/main.tsx`):
-- **`/dashboard`:** market view
-- **`/dashboard/portfolio`:** portfolio/paper-trading view
-- **`/dashboard/agent`:** live agent console (status, liquidity regime, theses, propose-mode approvals, decision log, chat) — requires the daemon running
-- **`/dashboard/branches`:** redirects to `/dashboard/portfolio`
-
-Builds on top of the same HTTP+WS API as the TUI.
-
----
-
 ### MCP Server
 
 Exposes trading as a set of tools that any MCP client (Claude, Cursor, etc.) can call:
@@ -214,7 +198,7 @@ All calls go through the same risk gates and signing layer. The MCP server is a 
 ```
 Hyperliquid WS → Market Event → Event Bus → Subscribers
                                               ├─ Storage (metrics)
-                                              ├─ Display (TUI/dashboard)
+                                              ├─ Display (TUI)
                                               └─ Reasoning (market picture builder)
 ```
 
@@ -338,16 +322,6 @@ go build -o hyperagent-tui ./src
 ./hyperagent-tui -core-url http://127.0.0.1:8787
 ```
 
-### Dashboard
-
-```bash
-cd dashboard
-bun install   # or: npm install
-bun run dev   # local dev server, http://localhost:5173
-```
-
-Requires the backend daemon running locally (`VITE_CORE_URL` points at it, defaults to `http://127.0.0.1:8787`).
-
 ### MCP Registration
 
 ```bash
@@ -397,7 +371,7 @@ go test ./...
 ## Monitoring
 
 - **Prometheus metrics** on `:8787/metrics` — integrate with Grafana
-- **Event logs** streamed to the TUI and dashboard in real time
+- **Event logs** streamed to the TUI in real time
 - **Journal** available via HTTP (`/journal`) and on disk
 
 Key alerts:
