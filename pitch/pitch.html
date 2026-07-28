@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hyperion</title>
-<meta name="description" content="Hyperion is an autonomous trading operator that runs continuously. It ingests markets, reasons about them in writing, and executes toward long-term financial goals you state in plain language. Built on Hyperliquid.">
+<meta name="description" content="Hyperion is an agentic operating system for expressing a market thesis. You bring the thesis; Hyperion ingests markets and headlines continuously, hedges, rebalances, and protects the position. Built on Hyperliquid.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23221f19'/%3E%3Cpath d='M10 8v16M22 8v16M10 16h12' stroke='%23c98f66' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -188,7 +188,7 @@
   .rail-w { font-family: "Newsreader", serif; font-size: 21px; letter-spacing: -0.01em; }
   .rail-note { margin: 26px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--ink2); max-width: 30ch; }
 
-  #system h2 { margin-bottom: 56px; }
+  #system h2 { margin-bottom: 20px; }
   .loop-glyph { display: inline-block; width: 0.62em; height: 0.62em; margin-left: 16px; vertical-align: baseline; color: var(--accent); }
   .loop-glyph svg { width: 100%; height: 100%; display: block; animation: htSpin 16s linear infinite; }
   .loop-grid, .now-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 40px; }
@@ -203,6 +203,7 @@
   .loop-step p { margin: 0; font-size: 15px; line-height: 1.7; color: var(--ink2); }
   .loop-note { border-top: 1px solid var(--line); margin: 56px 0 0; padding-top: 20px; font-size: 15px; line-height: 1.7; color: var(--ink2); max-width: 62ch; }
 
+  .system-lead { font-size: 16.5px; line-height: 1.7; color: var(--ink2); max-width: 62ch; margin: 0 0 48px; }
   #interface h2 { margin-bottom: 20px; }
   .interface-lead { font-size: 16.5px; line-height: 1.7; color: var(--ink2); max-width: 62ch; margin: 0 0 48px; }
   .term { border: 1px solid var(--line); border-radius: 10px; background: var(--paper2); overflow: hidden; box-shadow: 0 30px 70px -50px rgba(0,0,0,0.35); transition: transform .35s ease-out; will-change: transform; }
@@ -369,8 +370,8 @@
   <div class="hero-fade"></div>
   <div class="wrap hero-inner">
     <h1 data-hero-anim="0" class="brand-hero" aria-label="Hyperion"><span aria-hidden="true"><span class="ltr" style="--i:0">H</span><span class="ltr" style="--i:1">y</span><span class="ltr" style="--i:2">p</span><span class="ltr" style="--i:3">e</span><span class="ltr" style="--i:4">r</span><span class="ltr" style="--i:5">i</span><span class="ltr" style="--i:6">o</span><span class="ltr" style="--i:7">n</span></span></h1>
-    <p data-hero-anim="2" class="tagline">An autonomous trading operator, built on Hyperliquid.</p>
-    <p data-hero-anim="3" class="lead">Hyperion runs a trading desk around the clock. It ingests markets continuously, reasons about them in writing, and executes toward long-term financial goals you state in plain language.</p>
+    <p data-hero-anim="2" class="tagline">An agentic operating system for expressing a market thesis.</p>
+    <p data-hero-anim="3" class="lead">You bring the thesis. Hyperion executes it: ingesting markets and headlines continuously, hedging, rebalancing, and protecting the position — or doing nothing at all, when nothing is the right move. Built on Hyperliquid.</p>
     <div data-hero-anim="4" class="cta-row">
       <a href="PITCH.md" download="hyperion-pitch.md" class="btn btn-primary" data-magnetic>Download pitch</a>
     </div>
@@ -392,7 +393,7 @@
       <ol class="rail" data-anim="rise" data-delay="1">
         <span class="rail-line" data-rail-line aria-hidden="true"></span>
         <li class="rail-i" data-rail-i><span class="rail-n">01</span><span class="rail-w">Attention</span></li>
-        <li class="rail-i" data-rail-i><span class="rail-n">02</span><span class="rail-w">Presence</span></li>
+        <li class="rail-i" data-rail-i><span class="rail-n">02</span><span class="rail-w">Narrative</span></li>
         <li class="rail-i" data-rail-i><span class="rail-n">03</span><span class="rail-w">Discipline</span></li>
       </ol>
       <p class="rail-note" data-anim="rise" data-delay="2">Judgment is never the one that runs out first.</p>
@@ -400,16 +401,16 @@
     <div class="copy">
       <div class="part" data-part>
         <p data-anim="rise">On-chain markets solved access. Anyone, anywhere, can hold a position on a venue open around the clock, with custody in their own hands.</p>
-        <p data-anim="rise"><span class="hl">Attention is what's still missing.</span> Someone still has to read the order book, funding, news, and flow at three in the morning, and still has to be at the screen when a limit order needs replacing before the market moves past it.</p>
-        <p data-anim="rise">And the surface keeps widening. Complexity compounds; the hours in a day don't. A single post can reprice a position before you've finished reading it, true or not, because the market takes it at face value first and verifies later.</p>
+        <p data-anim="rise"><span class="hl">Your attention surface hasn't scaled with the market.</span> Someone still has to read the order book, funding, news, and flow at three in the morning, and still has to be at the screen when a limit order needs replacing before the market moves past it.</p>
+        <p data-anim="rise">Market complexity has grown exponentially. Human attention hasn't. A single tweet can liquidate your position now — true or not, coherent or not. Markets price it at face value.</p>
       </div>
       <div class="part" data-part>
-        <p data-anim="rise"><span class="hl">A position is not a decision made once.</span> The narrative moving a market on Thursday is rarely the one that opened the trade on Monday, and an exit price fixed at entry stops describing the risk actually being carried. Holding a position properly means managing and hedging it against what the market believes today, which is work that never pauses.</p>
+        <p data-anim="rise"><span class="hl">Static exits don't understand narrative.</span> Your position shouldn't close red or green because the day did. It should be managed against the story actually moving the market, in real time, 24/7 — and an exit price fixed at entry stops describing that risk the moment the narrative shifts.</p>
         <p data-anim="rise">The value an agent actually adds is capacity: the ability to ingest order book state, news, and liquidity flows continuously, and hold all of it against a <span class="hl">mandate</span>, a goal, a horizon, and risk limits a trader already believes in.</p>
         <p data-anim="rise">It's the medium a thesis gets expressed through. You say what you want to hold, over what period, at what risk, and the agent handles the watching, the charts, and the limit orders.</p>
       </div>
       <div class="part" data-part>
-        <p data-anim="rise"><span class="hl">Theses fail less often than the people holding them.</span> Conviction is cheap at entry and expensive halfway through a drawdown, and most positions are closed by discomfort rather than by evidence. An operator carrying the mandate has nothing to feel: it sizes, waits, hedges, and executes the trade you said you wanted. When the read is that nothing should be done, it does nothing.</p>
+        <p data-anim="rise"><span class="hl">Discipline is the real edge — not the thesis.</span> Most people don't lose money because their thesis is wrong. They lose because they can't handle the volatility. Nerve is the bottleneck, not analysis. An operator carrying the mandate has nothing to feel: it sizes, waits, hedges, and executes the trade you said you wanted. When the read is that nothing should be done, it does nothing.</p>
       </div>
       <p data-anim="rise">State the outcome, delegate the mechanics. <span class="hl">The onboarding surface of trading is about to become language</span>, because the execution surface can run on its own now.</p>
       <p data-anim="rise">This pattern is spreading beyond trading. Travel platforms are shipping agents that search, book, and pay for a trip in one pass, with the transaction handled end to end by software. A crypto wallet lets software hold funds and move them directly, bypassing KYC at a bank, so agents already show up as counterparties on-chain.</p>
@@ -457,6 +458,7 @@
     <span class="section-label">System</span>
   </div>
   <h2 class="section-title">One loop, running continuously.<span class="loop-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9" stroke-dasharray="40 17"></circle></svg></span></h2>
+  <p data-anim="rise" class="system-lead">Hyperion is an agentic loop that starts with your mandate — never its own. Left alone, models converge to the median of the most crowded narrative. So Hyperion doesn't generate theses. It expresses yours: ingesting market data and headlines continuously, hedging, rebalancing, protecting your position — or doing nothing at all, when nothing is the right move.</p>
   <div class="loop-grid" data-anim="rise">
     <div class="loop-step">
       <div class="step-num">01 · INGEST</div>
@@ -1119,6 +1121,7 @@
 
     var system = humanViewEl.querySelector("#system");
     out += h("h2", system.querySelector(".section-title"));
+    out += p(system.querySelector(".system-lead"));
     system.querySelectorAll(".loop-step").forEach(function (step) {
       out += h("h3", step.querySelector("h3"));
       out += p(step.querySelector("p"));

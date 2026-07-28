@@ -6,7 +6,7 @@ Autonomous trading operator on Hyperliquid. Agents state a mandate in plain lang
 
 ## Status
 
-Hyperion is an early, alpha-stage prototype. The backend is functional — it places real orders on Hyperliquid (mainnet or testnet) through a real signer and risk-gated executor — and the TUI is a working but limited operator cockpit. It currently runs as a single-process, single-operator, single-account tool: one instance per config/`.env`, local NDJSON files for persistence, no containerized deployment, no CI, and no multi-tenant or multi-user model, so it is not scalable as-is. There is no billing or account layer, so it is not monetizable today. The web dashboard is a local client SPA you run yourself against your own backend, not a hosted product. The plan is to build a full end-to-end hosted web application that runs the entire pipeline (ingest → reason → execute → journal) as a multi-user product — that work has not started yet.
+Hyperion is an early, alpha-stage prototype. The backend is functional — it places real orders on Hyperliquid (mainnet or testnet) through a real signer and risk-gated executor — and the TUI is a working but limited operator cockpit. It currently runs as a single-process, single-operator, single-account tool: one instance per config/`.env`, local NDJSON files for persistence, no containerized deployment, no CI, and no multi-tenant or multi-user model, so it is not scalable as-is. There is no billing or account layer, so it is not monetizable today. The plan is to build a full end-to-end hosted web application that runs the entire pipeline (ingest → reason → execute → journal) as a multi-user product — that work has not started yet.
 
 ## Architecture
 
@@ -15,7 +15,6 @@ Hyperion is an early, alpha-stage prototype. The backend is functional — it pl
 - **Backend daemon** (`:8787`) — Market ingestion, position tracking, order execution, risk gates, event bus. Go, single module (`github.com/hyperagent/hyperagent`).
 - **MCP server** — `./hyperagent mcp` exposes Hyperliquid markets and trading as MCP tools over stdio. Claude (or any MCP client) reads data and places orders through the same risk gates as the daemon.
 - **TUI cockpit** — Operator terminal UI (separate Go module, `tui/`). Real-time feeds, watchlist, position view, decision journal, chat.
-- **Web dashboard** — Browser UI (`dashboard/`, React + Vite). Standalone market/portfolio views plus a live agent console that talks to the daemon over HTTP/WS.
 - **Reasoning orchestration** — Harness-first (Claude Code, Codex, `pi` CLIs, run as subprocesses with an env allowlist). Direct API (Claude, OpenAI, Deepseek) fallback. Thesis formation and execution policy are independently configurable roles.
 - **Append-only journal** — Every candidate, thesis, and fill recorded as NDJSON. Proof layer for reputation.
 
@@ -24,9 +23,8 @@ Hyperion is an early, alpha-stage prototype. The backend is functional — it pl
 ```
 backend/        Core daemon (Go). HTTP+WS on :8787, MCP server, execution, risk gates, journal.
 tui/            Cockpit UI (Go + Bubble Tea/Lipgloss v2). Live feeds, position tracking, chat.
-dashboard/      Web UI (React 19 + Vite + Tailwind). Market view, portfolio, agent console.
 docs/           Architecture, API reference, quickstart, design notes.
-pitch/          Landing page, pitch deck, YC application, media.
+pitch/          Landing page, pitch deck, media.
 SPEC.md         Spec for the change currently in flight.
 TASKS.md        Task/decision log for that change.
 ```
@@ -36,7 +34,6 @@ TASKS.md        Task/decision log for that change.
 ### Prerequisites
 
 - **Go 1.25.8** — pinned exactly in both `backend/go.mod` and `tui/go.mod`. If your local `go` is a different version, the toolchain auto-downloads 1.25.8 on first build; no action needed, just expect the extra download.
-- **Bun** (or Node + npm) — only needed for `dashboard/`. `bun.lock` is committed, so `bun install` is the intended path; `npm install` also works.
 - A Hyperliquid account. For real trading you need an **agent wallet** approved against your master account (see below); for read-only/dry-run use you only need a master address.
 
 ### 1. Backend daemon
@@ -93,23 +90,10 @@ One screen, five panels — MANDATE · MARKET PICTURE · EXECUTION · THESES · 
 
 Run TUI tests: `cd tui && go test ./...`.
 
-### 3. Web dashboard (optional)
-
-```bash
-cd dashboard
-bun install   # or: npm install
-bun run dev   # or: npm run dev — serves on http://localhost:5173
-```
-
-Three pages: a standalone market dashboard and portfolio/paper-trading view (no daemon required), plus `/dashboard/agent` — a live intelligence console (status, liquidity regime, theses, propose-mode approvals, decision log, chat) that requires the backend daemon running (`cd backend && ./hyperagent -headless -testnet`). Set `VITE_CORE_URL` in `dashboard/.env.local` to point at a non-default daemon address; it defaults to `http://127.0.0.1:8787`.
-
-Other scripts: `bun run build` (typecheck + Vite build), `bun run lint`, `bun run preview`, `bun run prices` (fetches OHLCV snapshots from Hyperliquid into `public/data/prices.json`).
-
 ## Tech Stack
 
 - **Backend:** Go, `internal/api` (HTTP+WS server), `internal/bus` (event bus), `internal/executor` (risk gates + signing), `internal/reasoner` (LLM engine + provider adapters), `internal/journal` (NDJSON audit log), `go-ethereum` (EIP-712 signing)
 - **TUI:** Go, Bubble Tea v2 / Lipgloss v2, `gorilla/websocket`
-- **Dashboard:** React 19, TypeScript, Vite 8, Tailwind 4, Recharts/D3, `react-grid-layout`
 - **Reasoning:** Harness-first (Claude Code, Codex, `pi`, run as subprocesses with an env allowlist); direct API (Claude, OpenAI, Deepseek) fallback
 - **Market Data:** Hyperliquid API (REST + WebSocket)
 - **Signing:** Custom EIP-712 implementation, verified byte-exact against Hyperliquid reference vectors
@@ -126,7 +110,7 @@ Other scripts: `bun run build` (typecheck + Vite build), `bun run lint`, `bun ru
 
 ## Development
 
-Cockpit build complete: five-panel layout, live feeds, thesis cards, chat-driven slash commands, mode toggle. Per `TASKS.md`, current work in flight adds `hyperagent doctor` and `hyperagent auth <harness>` subcommands for harness-provider setup/health checks. CI (`.github/workflows/ci.yml`) runs backend and TUI Go tests plus a dashboard build on every push and PR to `master`.
+Cockpit build complete: five-panel layout, live feeds, thesis cards, chat-driven slash commands, mode toggle. Per `TASKS.md`, current work in flight adds `hyperagent doctor` and `hyperagent auth <harness>` subcommands for harness-provider setup/health checks. CI (`.github/workflows/ci.yml`) runs backend and TUI Go tests on every push and PR to `master`.
 
 ## MCP Usage
 

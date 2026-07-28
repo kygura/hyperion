@@ -398,7 +398,7 @@ Switch between propose and autonomous.
 
 ## WebSocket API
 
-The TUI and dashboard connect via WebSocket for live updates.
+The TUI connects via WebSocket for live updates.
 
 ### Connect
 
@@ -618,7 +618,7 @@ Cancel an open order.
 
 ## Rate Limiting
 
-No built-in rate limits in the daemon; assumes trusted clients (TUI, dashboard, MCP).
+No built-in rate limits in the daemon; assumes trusted clients (TUI, MCP).
 
 For public deployments, add a reverse proxy (Cloudflare, nginx) to rate-limit.
 
