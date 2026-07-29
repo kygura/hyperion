@@ -256,9 +256,9 @@
   .ledger-row p { margin: 0; font-size: 15px; line-height: 1.7; color: var(--ink2); max-width: 76ch; }
   .ledger-row p strong { color: var(--ink); font-weight: 500; }
 
-  /* Why now */
-  #why .now-grid { grid-template-columns: 1fr 1fr; gap: 64px; }
-  #why .now-grid .loop-step h3 { font-size: 23px; }
+  /* Why now / Moat */
+  #why .now-grid, #moat .now-grid { grid-template-columns: 1fr 1fr; gap: 64px; }
+  #why .now-grid .loop-step h3, #moat .now-grid .loop-step h3 { font-size: 23px; }
   .punchline { margin: 78px auto 0; text-align: center; font-family: "Newsreader", serif; font-style: italic; font-size: clamp(24px, 3vw, 36px); line-height: 1.35; max-width: 26ch; }
   .punch-sub { margin: 22px auto 0; text-align: center; max-width: 56ch; font-size: 16px; line-height: 1.7; color: var(--ink2); }
 
@@ -310,7 +310,7 @@
     #thesis .grid, .loop-grid, .now-grid, .term-body { grid-template-columns: 1fr; }
     #thesis .sticky-col { position: static; }
     .rail-i { opacity: 1; } /* nothing to track once the column stops being sticky */
-    #why .now-grid { grid-template-columns: 1fr; }
+    #why .now-grid, #moat .now-grid { grid-template-columns: 1fr; }
     .ledger-row { grid-template-columns: 1fr; gap: 8px; }
     .term-side { border-left: none; border-top: 1px solid var(--line); }
     nav.mainnav { gap: 14px; }
@@ -344,6 +344,7 @@
       <a href="#thesis" class="nav-link">Thesis</a>
       <a href="#market" class="nav-link">Market</a>
       <a href="#system" class="nav-link">System</a>
+      <a href="#moat" class="nav-link">Moat</a>
       <a href="#contact" class="nav-link">Contact</a>
       <div class="view-switch" role="group" aria-label="View mode">
         <button id="view-human" type="button" class="view-btn is-active" aria-pressed="true">Human</button>
@@ -563,9 +564,31 @@
   <p data-anim="rise" class="punch-sub">What's missing at the crossing was never intelligence. It's execution worth handing a key to, and an interface pitched at a mandate instead of an order ticket.</p>
 </section>
 
+<section id="moat" class="page wrap">
+  <div data-anim="rise" class="section-head">
+    <span class="section-num">06</span>
+    <span class="section-label">Moat</span>
+  </div>
+  <h2 class="section-title">Built on proof, not on a platform.</h2>
+  <div class="now-grid" data-anim="rise" style="margin-top:56px;">
+    <div class="loop-step">
+      <div class="step-num">THEIR BET &middot; THE PLATFORM</div>
+      <h3>Win the venue, then the trade</h3>
+      <p>A handful of brokerages and exchanges have already shipped their own version of "an agent trades for you," betting that the brokerage itself is the durable interface. <span class="hl">The agent and the platform live and die together</span>: to use one, a trader first has to trust the other, its custody, its listing desk, its order book.</p>
+    </div>
+    <div class="loop-step">
+      <div class="step-num">MY BET &middot; THE INFRA</div>
+      <h3>Win the trade, not the venue</h3>
+      <p>Hyperion expresses and executes through Hyperliquid, a venue that's already proven itself at scale, with no custody fight left to win. Past Hyperliquid, <span class="hl">the system is infra-agnostic on purpose</span>: it's where the thesis gets expressed first, not the only place it's allowed to be.</p>
+    </div>
+  </div>
+  <p data-anim="rise" class="punchline">There's <span class="hl">no moat in the idea</span>.</p>
+  <p data-anim="rise" class="punch-sub">Any trader who started experimenting with autonomous agents early landed somewhere near this. What's defensible is narrower: executing a trader's judgment, not generating one — differentiation is execution and speed, not concept. No custody, no advice, just an operator executing a mandate you already hold.</p>
+</section>
+
 <section id="contact" class="page wrap" style="padding-bottom:90px;">
   <div data-anim="rise" class="section-head no-line" style="margin-bottom:0;">
-    <span class="section-num">06</span>
+    <span class="section-num">07</span>
     <span class="section-label">Contact</span>
   </div>
   <div data-anim="rise" class="contact-block">
@@ -1138,6 +1161,15 @@
     });
     out += p(why.querySelector(".punchline"));
     out += p(why.querySelector(".punch-sub"));
+
+    var moat = humanViewEl.querySelector("#moat");
+    out += h("h2", moat.querySelector(".section-title"));
+    moat.querySelectorAll(".loop-step").forEach(function (step) {
+      out += "<h3>" + txt(step.querySelector(".step-num")) + ": " + txt(step.querySelector("h3")) + "</h3>";
+      out += p(step.querySelector("p"));
+    });
+    out += p(moat.querySelector(".punchline"));
+    out += p(moat.querySelector(".punch-sub"));
 
     var contact = humanViewEl.querySelector("#contact");
     out += h("h2", contact.querySelector(".contact-block h2"));
