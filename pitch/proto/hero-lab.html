@@ -11,6 +11,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  /* Braille block glyphs for the instrument marks. IBM Plex Mono has no braille
+     and no block elements, so without this the marks would fall back to whatever
+     the viewer's machine happens to have. 1.3KB, all 256 cells, DejaVu (Bitstream
+     Vera / Arev license, freely redistributable). */
+  @font-face {
+    font-family: "Braille";
+    src: url("dejavu-braille.woff2") format("woff2");
+    font-display: block;
+  }
+
   /* Tokens copied verbatim from pitch.html — the lab must judge the art in the deck's own palette. */
   * { box-sizing: border-box; }
   body {
@@ -236,6 +246,17 @@
   var ASSETS = {
     eth: {
       sym: "ETH-PERP", px: 3412.5, tick: 0.5,
+      braille: [
+        "⠀⠀⠀⠀⢠⡄⡄",
+        "⠀⠀⠀⣠⣿⡇⣿⣄",
+        "⠀⠀⣰⣿⣿⡇⣿⣿⣆",
+        "⠀⣼⣿⣿⣿⡇⣿⣿⣿⣧",
+        "⠺⢿⣿⣿⣿⡇⣿⣿⣿⡿⠗",
+        "⠠⣄⠈⠛⠿⠇⠿⠛⠁⣠⠄",
+        "⠀⠈⢿⣶⣄⡀⣠⣶⡿⠃",
+        "⠀⠀⠀⠻⣿⡇⣿⠟",
+        "⠀⠀⠀⠀⠙⠃⠋"
+      ],
       art: [
         "     .:",
         "    .:#:",
@@ -253,6 +274,17 @@
     },
     btc: {
       sym: "BTC-PERP", px: 68240, tick: 5,
+      braille: [
+        "⠀⠀⣶⣶⠀⢰⣶⡆",
+        "⠀⠀⣿⣿⣶⣾⣿⣷⣶⣤⡀",
+        "⠀⠀⣿⣿⣿⠉⠉⢙⣿⣿⡇",
+        "⠀⠀⣿⣿⣿⣶⣶⣾⣿⣟⠁",
+        "⠀⠀⣿⣿⣿⠉⠉⠉⣿⣿⣷",
+        "⠀⠀⣿⣿⣿⣤⣤⣤⣿⣿⡿",
+        "⠀⠀⠛⠛⠛⠛⠛⠛⠛⠉",
+        "⠀⠀⣿⣿⠀⢸⣿⡇",
+        "⠀⠀⠿⠿⠀⠸⠿⠇"
+      ],
       art: [
         "  :#. :#",
         "  :##:##::",
@@ -270,6 +302,14 @@
     },
     sol: {
       sym: "SOL-PERP", px: 176.4, tick: 0.05,
+      braille: [
+        "⠀⣠⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⠆",
+        "⠴⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠟⠁",
+        "⠲⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⡀",
+        "⠀⠈⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠦",
+        "⠀⢀⣴⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⠖",
+        "⠰⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠿⠋"
+      ],
       art: [
         "  ##############",
         ":##############",
@@ -283,7 +323,12 @@
     }
   };
 
-  var ASSET_ROWS = 12;                 // tallest mark, used to size the block
+  var ASSET_ROWS = 12;                 // tallest ascii mark, used to size the block
+  // Measured from the subset font: a braille cell's dot lattice is 0.58em wide
+  // and 1.107em tall, with the first dot centre at +0.2175em / -0.7125em from
+  // the text origin. Drawing at that pitch keeps the dots on one even grid
+  // across cell boundaries instead of clumping per character.
+  var BR = { w: 0.58, h: 1.1067, rows: 9 };
 
   function createBook() {
     var TICK = 0.5;                    // price increment per level
@@ -313,7 +358,8 @@
           options: [["ink", "Ink"], ["duo", "Duo"], ["signal", "Signal"]] },
         { id: "asset", label: "Asset", type: "select", value: "eth",
           options: [["eth", "ETH"], ["btc", "BTC"], ["sol", "SOL"]] },
-        { id: "mark", label: "Mark", type: "check", value: true },
+        { id: "mark", label: "Mark", type: "select", value: "braille",
+          options: [["braille", "Braille"], ["ascii", "ASCII"], ["off", "Off"]] },
         { id: "labels", label: "Prices", type: "check", value: true }
       ],
       click: function (x, y, env) {
@@ -415,28 +461,35 @@
 
         // ── The instrument. Sits in the label lane above the ladder, clear of
         // both the wordmark below it and the top of the book beside it.
-        if (k.mark) {
+        if (k.mark !== "off") {
           // The block, ticker and venue line together must clear the wordmark,
           // which starts around 0.32h — so the mark is sized to the space it has.
-          var mCell = Math.min(cell * 1.15, (h * 0.19) / (ASSET_ROWS + 2.6));
+          var braille = k.mark === "braille";
+          var glyphs = braille ? asset.braille : asset.art;
+          var pitchX = braille ? BR.w : 0.62;
+          var pitchY = braille ? BR.h : 0.98;
+          var mCell = Math.min(cell * (braille ? 1.9 : 1.15),
+                               (h * 0.21) / (glyphs.length * pitchY + 2.6));
           var mWide = 0;
-          for (var ai = 0; ai < asset.art.length; ai++) mWide = Math.max(mWide, asset.art[ai].length);
+          for (var ai = 0; ai < glyphs.length; ai++) mWide = Math.max(mWide, glyphs[ai].length);
           // Right edge clears the price column; the block sits in the open field
           // above the wordmark, so it touches neither the copy nor the ladder.
           var mRight = labelX - cell * 8;
-          var mLeft = mRight - mWide * mCell * 0.62;
+          var mLeft = mRight - mWide * mCell * pitchX;
           var mTop = h * 0.1;
           ctx.textAlign = "left";
-          ctx.font = Math.round(mCell) + "px 'IBM Plex Mono', ui-monospace, monospace";
-          ctx.fillStyle = "rgba(" + ink + ",0.34)";
-          for (var ar = 0; ar < asset.art.length; ar++) {
-            var line = asset.art[ar];
+          ctx.textBaseline = braille ? "alphabetic" : "middle";
+          ctx.font = Math.round(mCell) + "px " + (braille ? "'Braille', monospace" : "'IBM Plex Mono', ui-monospace, monospace");
+          ctx.fillStyle = "rgba(" + ink + "," + (braille ? 0.42 : 0.34) + ")";
+          for (var ar = 0; ar < glyphs.length; ar++) {
+            var line = glyphs[ar];
             for (var ac = 0; ac < line.length; ac++) {
-              if (line[ac] === " ") continue;
-              ctx.fillText(line[ac], mLeft + ac * mCell * 0.62, mTop + ar * mCell * 0.98);
+              if (line[ac] === " " || line[ac] === "⠀") continue;
+              ctx.fillText(line[ac], mLeft + ac * mCell * pitchX, mTop + ar * mCell * pitchY);
             }
           }
-          var mBase = mTop + asset.art.length * mCell * 0.98;
+          ctx.textBaseline = "middle";
+          var mBase = mTop + glyphs.length * mCell * pitchY;
           ctx.textAlign = "right";
           ctx.font = Math.round(cell * 0.88) + "px 'IBM Plex Mono', ui-monospace, monospace";
           ctx.fillStyle = "rgba(" + ink + ",0.6)";
