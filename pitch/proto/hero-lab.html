@@ -229,22 +229,61 @@
   // The instrument the book belongs to, drawn as a glyph mark beside the ladder.
   // Prices and tick sizes are the real ones for each perp, so switching asset
   // changes what the label lane reads, not just the picture.
+  // Marks are rasterised from each logo's real geometry — the Ethereum
+  // octahedron's four facets, the Bitcoin B with its two prongs, Solana's three
+  // counter-slanted bars — sampled per character cell at a 0.6:1 cell ratio so
+  // the proportions survive the grid. Same three glyphs as the ladder: # : .
   var ASSETS = {
     eth: {
       sym: "ETH-PERP", px: 3412.5, tick: 0.5,
-      art: ["   /\\", "  /  \\", " /    \\", "/      \\", "\\      /", " \\    /", "  \\  /", "   \\/"]
+      art: [
+        "     .:",
+        "    .:#:",
+        "   .::##:",
+        "  .:::###:",
+        " .::::####:",
+        ".:::::#####:",
+        ".:::::#####:",
+        " ...::##:.::",
+        "  ::...:##.",
+        "   :::###.",
+        "    .:##",
+        "     .:"
+      ]
     },
     btc: {
       sym: "BTC-PERP", px: 68240, tick: 5,
-      art: [" # # ", "#### ", "#   #", "#### ", "#   #", "#### ", " # # "]
+      art: [
+        "  :#. :#",
+        "  :##:##::",
+        "  :########:",
+        "  :##:  :###",
+        "  :########.",
+        "  :###:#####",
+        "  :##:   ###.",
+        "  :###:#####",
+        "  :#######:",
+        "  :#. :#",
+        "  :#: ##.",
+        "  :#. :#"
+      ]
     },
     sol: {
       sym: "SOL-PERP", px: 176.4, tick: 0.05,
-      art: [" ______", "/_____/", " ______", "/_____/", " ______", "/_____/"]
+      art: [
+        "  ##############",
+        ":##############",
+        " :::::::::::::",
+        ":##############",
+        "  ##############",
+        "   :::::::::::::",
+        " :##############",
+        ":#############:"
+      ]
     }
   };
 
-  var ASSET_ROWS = 8;                  // tallest mark, used to size the block
+  var ASSET_ROWS = 12;                 // tallest mark, used to size the block
 
   function createBook() {
     var TICK = 0.5;                    // price increment per level
@@ -879,7 +918,7 @@
   var VARIANTS = {
     book: {
       key: "A", name: "The book, breathing", create: createBook,
-      caption: "Depth ladder · instrument mark · resting order inside the spread",
+      caption: "Depth ladder · resting order inside the spread",
       argues: "The market as the agent actually reads it — a ladder of resting size, not a price line. Hyperion's own limit order is staged inside the spread and filled, in accent, at the pinch where the eye already is. Sides can run monochrome, so the order is the only colour on screen, or be colour-coded by direction: asks above, bids below, with the lifted side flaring on each tick.",
       watch: [
         "Sides — Ink keeps all the colour for the operator's order; Signal names the direction but spends colour on the book. Signal reads best with the cyan or green accent, which pulls the order clear of the red side.",
