@@ -226,8 +226,29 @@
     signal: { name: "Signal", bid: ["61,122,77", "126,197,142"], ask: ["165,49,62", "224,113,124"] }
   };
 
+  // The instrument the book belongs to, drawn as a glyph mark beside the ladder.
+  // Prices and tick sizes are the real ones for each perp, so switching asset
+  // changes what the label lane reads, not just the picture.
+  var ASSETS = {
+    eth: {
+      sym: "ETH-PERP", px: 3412.5, tick: 0.5,
+      art: ["   /\\", "  /  \\", " /    \\", "/      \\", "\\      /", " \\    /", "  \\  /", "   \\/"]
+    },
+    btc: {
+      sym: "BTC-PERP", px: 68240, tick: 5,
+      art: [" # # ", "#### ", "#   #", "#### ", "#   #", "#### ", " # # "]
+    },
+    sol: {
+      sym: "SOL-PERP", px: 176.4, tick: 0.05,
+      art: [" ______", "/_____/", " ______", "/_____/", " ______", "/_____/"]
+    }
+  };
+
+  var ASSET_ROWS = 8;                  // tallest mark, used to size the block
+
   function createBook() {
     var TICK = 0.5;                    // price increment per level
+    var curAsset = null;
     var shiftAt = 0, bookOffset = 0;   // integer scroll of the ladder
     var mid = 3412.5;
     var cycleBase = null;              // first frame timestamp of the order loop
@@ -251,6 +272,9 @@
         { id: "speed", label: "Pace", min: 40, max: 200, step: 10, value: 100, suffix: "%" },
         { id: "sides", label: "Sides", type: "select", value: "signal",
           options: [["ink", "Ink"], ["duo", "Duo"], ["signal", "Signal"]] },
+        { id: "asset", label: "Asset", type: "select", value: "eth",
+          options: [["eth", "ETH"], ["btc", "BTC"], ["sol", "SOL"]] },
+        { id: "mark", label: "Mark", type: "check", value: true },
         { id: "labels", label: "Prices", type: "check", value: true }
       ],
       click: function (x, y, env) {
@@ -269,9 +293,13 @@
         var axisX = w * 0.5;
         var maxBar = w - axisX - cell;
         var midY = h * 0.46;
-        var gapHalf = rowH * 1.3;
+        var gapHalf = rowH * 2.4;        // a real lane: mid rule above, the operator's order below
+        var labelX = axisX - cell * 1.4; // one right-aligned lane for every label
         var levels = Math.min(k.depth, Math.floor((h * 0.44) / rowH));
         this.geo = { midY: midY, rowH: rowH };
+
+        var asset = ASSETS[k.asset] || ASSETS.eth;
+        if (asset !== curAsset) { curAsset = asset; mid = asset.px; TICK = asset.tick; bookOffset = 0; }
 
         if (cycleBase === null) cycleBase = now;
         if (env.moving && now - shiftAt > 900 / pace) {
@@ -319,11 +347,11 @@
             ctx.fillStyle = "rgba(" + rgb + "," + Math.min(0.95, a).toFixed(3) + ")";
             ctx.fillText(glyph, x, y);
           }
-          if (k.labels && idx % 4 === 0 && idx > 0) {
+          if (k.labels && idx % 4 === 0 && idx > 2) {   // idx > 2 keeps the mid label's air
             ctx.textAlign = "right";
             ctx.font = Math.round(cell * 0.82) + "px 'IBM Plex Mono', ui-monospace, monospace";
             ctx.fillStyle = "rgba(" + rgb + ",0.34)";
-            ctx.fillText(priceFmt.format(mid + level * TICK), axisX - cell * 1.1, y);
+            ctx.fillText(priceFmt.format(mid + level * TICK), labelX, y);
             ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
           }
         }
@@ -340,42 +368,83 @@
           var askY = Math.max(cell * 4, midY - gapHalf - (levels - 0.5) * rowH - rowH * 1.4);
           var bidY = Math.min(h - cell * 4, midY + gapHalf + (levels - 0.5) * rowH + rowH * 1.4);
           ctx.fillStyle = "rgba(" + sideColor(1) + ",0.62)";
-          ctx.fillText("ASK", axisX - cell * 1.1, askY);
+          ctx.fillText("ASK", labelX, askY);
           ctx.fillStyle = "rgba(" + sideColor(-1) + ",0.62)";
-          ctx.fillText("BID", axisX - cell * 1.1, bidY);
+          ctx.fillText("BID", labelX, bidY);
           ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
         }
 
-        // ── The spread: a dotted mid line, the quiet centre the order sits in.
+        // ── The instrument. Sits in the label lane above the ladder, clear of
+        // both the wordmark below it and the top of the book beside it.
+        if (k.mark) {
+          // The block, ticker and venue line together must clear the wordmark,
+          // which starts around 0.32h — so the mark is sized to the space it has.
+          var mCell = Math.min(cell * 1.15, (h * 0.19) / (ASSET_ROWS + 2.6));
+          var mWide = 0;
+          for (var ai = 0; ai < asset.art.length; ai++) mWide = Math.max(mWide, asset.art[ai].length);
+          // Right edge clears the price column; the block sits in the open field
+          // above the wordmark, so it touches neither the copy nor the ladder.
+          var mRight = labelX - cell * 8;
+          var mLeft = mRight - mWide * mCell * 0.62;
+          var mTop = h * 0.1;
+          ctx.textAlign = "left";
+          ctx.font = Math.round(mCell) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          ctx.fillStyle = "rgba(" + ink + ",0.34)";
+          for (var ar = 0; ar < asset.art.length; ar++) {
+            var line = asset.art[ar];
+            for (var ac = 0; ac < line.length; ac++) {
+              if (line[ac] === " ") continue;
+              ctx.fillText(line[ac], mLeft + ac * mCell * 0.62, mTop + ar * mCell * 0.98);
+            }
+          }
+          var mBase = mTop + asset.art.length * mCell * 0.98;
+          ctx.textAlign = "right";
+          ctx.font = Math.round(cell * 0.88) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          ctx.fillStyle = "rgba(" + ink + ",0.6)";
+          ctx.fillText(asset.sym, mRight, mBase + mCell * 1.1);
+          ctx.font = Math.round(cell * 0.72) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          ctx.fillStyle = "rgba(" + ink + ",0.3)";
+          ctx.fillText("HYPERLIQUID", mRight, mBase + mCell * 2.4);
+          ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
+        }
+
+        // ── The spread. The mid rule runs the full ladder and reaches back into
+        // the label lane, so the price it belongs to reads as part of the line.
         ctx.textAlign = "center";
-        ctx.fillStyle = "rgba(" + ink + ",0.2)";
-        for (var mx = axisX; mx < w; mx += cell * 2) ctx.fillText("·", mx + cell * 0.5, midY);
+        ctx.fillStyle = "rgba(" + ink + ",0.22)";
+        for (var mx = labelX + cell * 0.6; mx < w; mx += cell * 2) ctx.fillText("·", mx, midY);
         if (k.labels) {
           ctx.textAlign = "right";
-          ctx.font = Math.round(cell * 0.82) + "px 'IBM Plex Mono', ui-monospace, monospace";
-          ctx.fillStyle = "rgba(" + ink + ",0.46)";
-          ctx.fillText("MID " + priceFmt.format(mid), axisX - cell * 1.1, midY);
+          ctx.font = Math.round(cell * 0.74) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          ctx.fillStyle = "rgba(" + ink + ",0.4)";
+          ctx.fillText("MID", labelX, midY - rowH * 0.62);
+          ctx.font = Math.round(cell * 0.94) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          ctx.fillStyle = "rgba(" + ink + ",0.72)";
+          ctx.fillText(priceFmt.format(mid), labelX, midY + rowH * 0.24);
           ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
         }
 
         // ── Hyperion's order: staged inside the spread, rests, fills.
+        // It sits in its own lane below the mid rule, with the status tagged
+        // inline at the end of the order rather than stacked in the label lane.
         var period = 6200 / pace;
         var phase = env.moving ? ((now - cycleBase) % period) : period * 0.45;
-        var orderY = midY + rowH * 0.62;
-        var orderX = axisX + cell * 2.5;
+        var orderY = midY + gapHalf * 0.52;
+        var orderX = axisX + cell;
         if (phase > 500) {
           var age = phase - 500;
           var filled = age > 3400;
           var vis = filled ? Math.max(0, 1 - (age - 3400) / 1500) : Math.min(1, age / 260);
           if (vis > 0.01) {
             var pulse = filled ? 1 : 0.72 + 0.28 * Math.sin(now * 0.006);
+            var bar = ">" + (filled ? "######" : "#####");
             ctx.textAlign = "left";
             ctx.fillStyle = "rgba(" + acc + "," + (vis * pulse * 0.95).toFixed(3) + ")";
-            ctx.fillText(">" + (filled ? "######" : "#####"), orderX, orderY);
-            ctx.textAlign = "right";
-            ctx.font = Math.round(cell * 0.82) + "px 'IBM Plex Mono', ui-monospace, monospace";
-            ctx.fillStyle = "rgba(" + acc + "," + (vis * 0.8).toFixed(3) + ")";
-            ctx.fillText((filled ? "FILLED" : "LIMIT") + " 0.8 @ " + priceFmt.format(mid - TICK * 0.5), axisX - cell * 1.1, orderY + rowH * 1.15);
+            ctx.fillText(bar, orderX, orderY);
+            ctx.font = Math.round(cell * 0.8) + "px 'IBM Plex Mono', ui-monospace, monospace";
+            ctx.fillStyle = "rgba(" + acc + "," + (vis * 0.78).toFixed(3) + ")";
+            ctx.fillText((filled ? "FILLED" : "RESTING") + " 0.8 @ " + priceFmt.format(mid - TICK),
+              orderX + cell * (bar.length + 1.2), orderY);
             ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
           }
           if (filled && age < 3560) {
@@ -810,10 +879,11 @@
   var VARIANTS = {
     book: {
       key: "A", name: "The book, breathing", create: createBook,
-      caption: "Depth ladder · resting order inside the spread",
+      caption: "Depth ladder · instrument mark · resting order inside the spread",
       argues: "The market as the agent actually reads it — a ladder of resting size, not a price line. Hyperion's own limit order is staged inside the spread and filled, in accent, at the pinch where the eye already is. Sides can run monochrome, so the order is the only colour on screen, or be colour-coded by direction: asks above, bids below, with the lifted side flaring on each tick.",
       watch: [
         "Sides — Ink keeps all the colour for the operator's order; Signal names the direction but spends colour on the book. Signal reads best with the cyan or green accent, which pulls the order clear of the red side.",
+        "Asset — the mark, ticker and venue line name the instrument the book belongs to. Prices and tick sizes are the real ones per perp, so the label lane changes with it.",
         "Does the wedge silhouette stay legible behind the headline at the top-right?",
         "Is the order loop readable in one pass, or does it need a longer rest phase?"
       ],
