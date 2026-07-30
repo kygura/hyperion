@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hyperion — hero lab</title>
+<meta name="description" content="Side-by-side prototypes of alternative hero ASCII art for the Hyperion pitch deck.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23221f19'/%3E%3Cpath d='M10 8v16M22 8v16M10 16h12' stroke='%23c98f66' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Tokens copied verbatim from pitch.html — the lab must judge the art in the deck's own palette. */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: var(--paper);
+    color: var(--ink);
+    --paper: #f5f2ea;
+    --paper2: #fbf9f3;
+    --ink: #221f19;
+    --ink2: rgba(34,31,25,0.58);
+    --line: rgba(34,31,25,0.16);
+    --accent: #9a5b38;
+    --ease-out: cubic-bezier(.2,.7,.2,1);
+  }
+  body[data-theme="dark"] {
+    --paper: #161411;
+    --paper2: #1d1a16;
+    --ink: #eae5da;
+    --ink2: rgba(234,229,218,0.56);
+    --line: rgba(234,229,218,0.15);
+    --accent: #c98f66;
+  }
+  body[data-palette="cyan"] { --accent: #0d8f83; }
+  body[data-palette="cyan"][data-theme="dark"] { --accent: #4fd8c4; }
+  body[data-palette="green"] { --accent: #3f7d4f; }
+  body[data-palette="green"][data-theme="dark"] { --accent: #7cc98f; }
+
+  .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .wrap { width: min(1240px, 92vw); margin: 0 auto; }
+
+  /* ── Lab chrome ─────────────────────────────────────────────── */
+  .lab-bar {
+    position: sticky; top: 0; z-index: 40;
+    background: color-mix(in srgb, var(--paper2) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .lab-row { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; padding: 12px 0; }
+  .lab-row + .lab-row { border-top: 1px solid var(--line); }
+  .lab-id { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
+  .lab-id b { font-weight: 500; color: var(--accent); }
+  .lab-id span { color: var(--ink2); margin-left: 10px; letter-spacing: 0.1em; text-transform: none; }
+  .spacer { margin-left: auto; }
+
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+  .seg button {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em;
+    background: transparent; color: var(--ink2); border: 0; border-right: 1px solid var(--line);
+    padding: 8px 14px; cursor: pointer; white-space: nowrap; transition: background .18s, color .18s;
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button:hover { color: var(--ink); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--paper2); }
+  .seg button b { font-weight: 500; }
+
+  .swatches { display: flex; gap: 7px; align-items: center; }
+  .swatch { width: 15px; height: 15px; border-radius: 50%; border: 1px solid var(--line); background: var(--sw); cursor: pointer; padding: 0; }
+  .swatch[aria-pressed="true"] { outline: 1px solid var(--ink); outline-offset: 2px; }
+
+  .knobs { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
+  .knob { display: flex; align-items: center; gap: 9px; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink2); }
+  .knob input[type="range"] { width: 108px; accent-color: var(--accent); }
+  .knob input[type="checkbox"] { accent-color: var(--accent); }
+  .knob output { color: var(--ink); font-variant-numeric: tabular-nums; min-width: 3ch; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── Hero frame — mirrors pitch.html's hero geometry ────────── */
+  .stage { display: flex; flex-direction: column; }
+  .hero { position: relative; min-height: 84vh; display: flex; align-items: flex-end; overflow: hidden; border-bottom: 1px solid var(--line); }
+  .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+  .hero-fade { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, var(--paper) 96%); pointer-events: none; }
+  .hero-inner { position: relative; width: 100%; padding: 120px 0 84px; pointer-events: none; }
+  .brand-hero { font-size: clamp(64px, 11vw, 156px); line-height: 0.92; letter-spacing: -0.02em; margin: 0 0 22px; }
+  .tagline { font-family: "Newsreader", serif; font-style: italic; font-weight: 400; font-size: clamp(19px, 2.3vw, 27px); line-height: 1.45; max-width: 34ch; margin: 0 0 26px; }
+  .lead { font-size: 17px; line-height: 1.65; color: var(--ink2); max-width: 55ch; margin: 0 0 40px; }
+  .btn { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.1em; padding: 13px 22px; border-radius: 3px; background: var(--accent); color: var(--paper2); text-decoration: none; pointer-events: auto; }
+  .hero-tag {
+    position: absolute; top: 26px; left: 0; right: 0; pointer-events: none;
+    font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink2);
+  }
+  .hero-tag .wrap { display: flex; gap: 14px; align-items: baseline; }
+  .hero-tag b { color: var(--accent); font-weight: 500; }
+
+  /* Compare mode: three frames stacked, copy reduced so the art carries the read. */
+  .hero.compact { min-height: 52vh; }
+  .hero.compact .hero-inner { padding: 74px 0 40px; }
+  .hero.compact .brand-hero { font-size: clamp(40px, 5.4vw, 74px); margin-bottom: 14px; }
+  .hero.compact .tagline { font-size: 17px; margin-bottom: 0; }
+  .hero.compact .lead, .hero.compact .cta-row { display: none; }
+
+  /* ── Notes ──────────────────────────────────────────────────── */
+  .notes { padding: 66px 0 96px; }
+  .notes-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 30px; }
+  .notes-head h2 { font-family: "Newsreader", serif; font-weight: 400; font-size: 32px; margin: 0; letter-spacing: -0.01em; }
+  .notes-head .tag { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.16em; color: var(--accent); text-transform: uppercase; }
+  .notes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; }
+  .note h3 { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink2); font-weight: 400; margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .note p { font-size: 15px; line-height: 1.68; margin: 0 0 12px; color: var(--ink); }
+  .note p.dim { color: var(--ink2); }
+  .note ul { margin: 0; padding-left: 18px; font-size: 15px; line-height: 1.68; color: var(--ink); }
+  .note li { margin-bottom: 8px; }
+  .hint { margin-top: 46px; padding-top: 20px; border-top: 1px solid var(--line); font-family: "IBM Plex Mono", monospace; font-size: 11px; line-height: 2; letter-spacing: 0.06em; color: var(--ink2); }
+  .hint kbd { font-family: inherit; border: 1px solid var(--line); border-radius: 3px; padding: 1px 6px; color: var(--ink); }
+
+  @media (max-width: 860px) {
+    .notes-grid { grid-template-columns: 1fr; }
+    .lab-row { gap: 14px; }
+    .knob input[type="range"] { width: 84px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lab-bar { backdrop-filter: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="lab-bar">
+  <div class="wrap lab-row">
+    <div class="lab-id"><b>Hyperion</b> hero lab <span>prototypes — not the live deck</span></div>
+    <div class="seg spacer" role="group" aria-label="Hero variant">
+      <button type="button" data-variant="book"><b>A</b> &nbsp;Order book</button>
+      <button type="button" data-variant="vigil"><b>B</b> &nbsp;Vigil field</button>
+      <button type="button" data-variant="tape"><b>C</b> &nbsp;Current tape</button>
+      <button type="button" data-variant="compare">Compare</button>
+    </div>
+    <div class="swatches" role="group" aria-label="Accent palette">
+      <button type="button" class="swatch" data-palette="orange" style="--sw:#9a5b38" aria-label="Orange accent"></button>
+      <button type="button" class="swatch" data-palette="cyan" style="--sw:#0d8f83" aria-label="Cyan accent"></button>
+      <button type="button" class="swatch" data-palette="green" style="--sw:#3f7d4f" aria-label="Green accent"></button>
+    </div>
+    <div class="seg" role="group" aria-label="View controls">
+      <button type="button" id="theme-toggle">Dark</button>
+      <button type="button" id="motion-toggle" aria-pressed="false">Pause</button>
+    </div>
+  </div>
+  <div class="wrap lab-row" id="knob-row">
+    <div class="knobs" id="knobs"></div>
+  </div>
+</header>
+
+<main>
+  <div class="stage" id="stage"></div>
+  <section class="wrap notes" id="notes"></section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var body = document.body;
+  var stage = document.getElementById("stage");
+  var notesEl = document.getElementById("notes");
+  var knobsEl = document.getElementById("knobs");
+  var knobRow = document.getElementById("knob-row");
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var paused = false;
+
+  /* ── Shared noise + color helpers (same routines the deck's hero uses) ── */
+  function hash3(x, y, z) {
+    var n = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(z, 1440662683);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    n = n ^ (n >>> 16);
+    return (n >>> 0) / 4294967296;
+  }
+  function vnoise3(x, y, z) {
+    var xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+    var xf = x - xi, yf = y - yi, zf = z - zi;
+    var u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+    function h(a, b, c) { return hash3(xi + a, yi + b, zi + c); }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    var x00 = lerp(h(0, 0, 0), h(1, 0, 0), u);
+    var x10 = lerp(h(0, 1, 0), h(1, 1, 0), u);
+    var x01 = lerp(h(0, 0, 1), h(1, 0, 1), u);
+    var x11 = lerp(h(0, 1, 1), h(1, 1, 1), u);
+    return lerp(lerp(x00, x10, v), lerp(x01, x11, v), w);
+  }
+  function fbm(x, y, t) {
+    return vnoise3(x, y, t) * 0.62 + vnoise3(x * 2.4 + 11.3, y * 2.4 + 7.7, t * 1.4 + 3.1) * 0.38;
+  }
+  function hexToRgb(hex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec((hex || "").trim());
+    if (!m) return null;
+    var n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function smoothstep(a, b, x) {
+    var t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  }
+  var priceFmt = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  /* ══════════════════════════════════════════════════════════════
+     A — THE BOOK, BREATHING
+     A depth ladder: asks above, bids below, size as glyph run length.
+     The whole book is ink; the only accent-coloured thing on screen is
+     Hyperion's own resting order, staged inside the spread.
+     ══════════════════════════════════════════════════════════════ */
+  function createBook() {
+    var TICK = 0.5;                    // price increment per level
+    var shiftAt = 0, bookOffset = 0;   // integer scroll of the ladder
+    var mid = 3412.5;
+    var cycleBase = null;              // first frame timestamp of the order loop
+    var userOrders = [];
+
+    // Resting size at a level: smooth breathing, plus rare persistent walls.
+    function sizeAt(level, t) {
+      var idx = Math.abs(level);
+      var breathe = fbm(level * 0.26, 2.1, t * 0.00022);
+      var depth = 0.2 + Math.min(1, idx / 18) * 0.44;       // book thickens away from touch
+      var wall = hash3(level, 91, 17) > 0.93 ? 1.9 : 1;
+      return Math.max(0.06, depth * (0.52 + breathe * 0.72) * wall);
+    }
+
+    return {
+      knobs: [
+        { id: "cell", label: "Glyph", min: 7, max: 15, step: 1, value: 10 },
+        { id: "depth", label: "Depth", min: 6, max: 40, step: 1, value: 30 },
+        { id: "weight", label: "Weight", min: 50, max: 180, step: 5, value: 100, suffix: "%" },
+        { id: "speed", label: "Pace", min: 40, max: 200, step: 10, value: 100, suffix: "%" },
+        { id: "labels", label: "Prices", type: "check", value: true }
+      ],
+      click: function (x, y, env) {
+        var g = this.geo;
+        if (!g) return;
+        var row = Math.round((y - g.midY) / g.rowH);
+        userOrders.push({ row: row, t0: env.now });
+        if (userOrders.length > 3) userOrders.shift();
+      },
+      frame: function (ctx, env) {
+        var w = env.w, h = env.h, dpr = env.dpr, now = env.now, k = env.knobs;
+        var cell = k.cell * dpr;
+        var rowH = cell * 1.32;
+        var pace = k.speed / 100;
+        // Axis sits just right of where the wordmark ends; bars run to the edge, full bleed.
+        var axisX = w * 0.5;
+        var maxBar = w - axisX - cell;
+        var midY = h * 0.46;
+        var gapHalf = rowH * 1.3;
+        var levels = Math.min(k.depth, Math.floor((h * 0.44) / rowH));
+        this.geo = { midY: midY, rowH: rowH };
+
+        if (cycleBase === null) cycleBase = now;
+        if (env.moving && now - shiftAt > 900 / pace) {
+          shiftAt = now;
+          var dir = fbm(bookOffset * 0.4, 8.2, bookOffset * 0.11) > 0.5 ? 1 : -1;
+          bookOffset += dir;
+          mid += dir * TICK;
+        }
+
+        ctx.textBaseline = "middle";
+        ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
+        var ink = env.ink, acc = env.acc;
+
+        // ── The ladder. Each level is a run of glyphs; the tail frays to ':' then '.'
+        function drawLevel(level, y, side) {
+          var idx = Math.abs(level);
+          var size = sizeAt(level + bookOffset, now) * (k.weight / 100);
+          var cells = Math.max(1, Math.round((size * maxBar) / cell));
+          cells = Math.min(cells, Math.floor(maxBar / cell));
+          var alpha = Math.max(0.13, 0.52 - idx * 0.011) * (side > 0 ? 1 : 0.94);
+          ctx.textAlign = "center";
+          for (var c = 0; c < cells; c++) {
+            var x = axisX + cell * (c + 0.5);
+            var tail = cells - c;
+            var glyph = tail > 3 ? "#" : (tail > 1 ? ":" : ".");
+            var a = tail > 3 ? alpha : alpha * (tail > 1 ? 0.7 : 0.42);
+            ctx.fillStyle = "rgba(" + ink + "," + a.toFixed(3) + ")";
+            ctx.fillText(glyph, x, y);
+          }
+          if (k.labels && idx % 4 === 0 && idx > 0) {
+            ctx.textAlign = "right";
+            ctx.font = Math.round(cell * 0.82) + "px 'IBM Plex Mono', ui-monospace, monospace";
+            ctx.fillStyle = "rgba(" + ink + ",0.3)";
+            ctx.fillText(priceFmt.format(mid + level * TICK * -1), axisX - cell * 1.1, y);
+            ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          }
+        }
+
+        for (var i = 1; i <= levels; i++) {
+          drawLevel(i, midY - gapHalf - (i - 0.5) * rowH, 1);    // asks, above
+          drawLevel(-i, midY + gapHalf + (i - 0.5) * rowH, -1);  // bids, below
+        }
+
+        // ── The spread: a dotted mid line, the quiet centre the order sits in.
+        ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(" + ink + ",0.2)";
+        for (var mx = axisX; mx < w; mx += cell * 2) ctx.fillText("·", mx + cell * 0.5, midY);
+        if (k.labels) {
+          ctx.textAlign = "right";
+          ctx.font = Math.round(cell * 0.82) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          ctx.fillStyle = "rgba(" + ink + ",0.46)";
+          ctx.fillText("MID " + priceFmt.format(mid), axisX - cell * 1.1, midY);
+          ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
+        }
+
+        // ── Hyperion's order: staged inside the spread, rests, fills.
+        var period = 6200 / pace;
+        var phase = env.moving ? ((now - cycleBase) % period) : period * 0.45;
+        var orderY = midY + rowH * 0.62;
+        var orderX = axisX + cell * 2.5;
+        if (phase > 500) {
+          var age = phase - 500;
+          var filled = age > 3400;
+          var vis = filled ? Math.max(0, 1 - (age - 3400) / 1500) : Math.min(1, age / 260);
+          if (vis > 0.01) {
+            var pulse = filled ? 1 : 0.72 + 0.28 * Math.sin(now * 0.006);
+            ctx.textAlign = "left";
+            ctx.fillStyle = "rgba(" + acc + "," + (vis * pulse * 0.95).toFixed(3) + ")";
+            ctx.fillText(">" + (filled ? "######" : "#####"), orderX, orderY);
+            ctx.textAlign = "right";
+            ctx.font = Math.round(cell * 0.82) + "px 'IBM Plex Mono', ui-monospace, monospace";
+            ctx.fillStyle = "rgba(" + acc + "," + (vis * 0.8).toFixed(3) + ")";
+            ctx.fillText((filled ? "FILLED" : "LIMIT") + " 0.8 @ " + priceFmt.format(mid - TICK * 0.5), axisX - cell * 1.1, orderY + rowH * 1.15);
+            ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          }
+          if (filled && age < 3560) {
+            var ra = (age - 3400) / 900;
+            ctx.strokeStyle = "rgba(" + acc + "," + ((1 - ra) * 0.5).toFixed(3) + ")";
+            ctx.lineWidth = 1.4 * dpr;
+            ctx.beginPath();
+            ctx.arc(orderX + cell * 3, orderY, (5 + ra * 60) * dpr, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+
+        // ── The viewer's own orders, placed by clicking a level.
+        ctx.textAlign = "left";
+        for (var u = userOrders.length - 1; u >= 0; u--) {
+          var uo = userOrders[u], ua = (now - uo.t0) / 2600;
+          if (ua > 1) { userOrders.splice(u, 1); continue; }
+          var uy = midY + uo.row * rowH;
+          var ux = axisX + cell * 2.5;
+          var ufill = ua > 0.45;
+          ctx.fillStyle = "rgba(" + acc + "," + ((1 - ua) * 0.9).toFixed(3) + ")";
+          ctx.fillText(">" + (ufill ? "#####" : "###"), ux, uy);
+          if (ufill) {
+            var ur = (ua - 0.45) / 0.45;
+            if (ur <= 1) {
+              ctx.strokeStyle = "rgba(" + acc + "," + ((1 - ur) * 0.42).toFixed(3) + ")";
+              ctx.lineWidth = 1.4 * dpr;
+              ctx.beginPath();
+              ctx.arc(ux + cell * 3, uy, (5 + ur * 52) * dpr, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+    };
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     B — THE VIGIL
+     A field of market noise, nearly all of it asleep. One lens of
+     attention sweeps; under it, noise resolves into readable figures.
+     Accent appears only when the operator writes a decision — including
+     the decision to do nothing.
+     ══════════════════════════════════════════════════════════════ */
+  function createVigil() {
+    var field = null, fCols = 0, fRows = 0, fCell = 0;
+    var DIM = [".", "·", "'", ",", "`", ":"];
+    var SHARP = "0123456789.,%+-|#><".split("");
+    var DECISIONS = [
+      "no action — inside mandate",
+      "funding flip logged",
+      "re-quoted 8 bps lower",
+      "hedge staged, 0.4 ETH",
+      "drawdown 2.1% of 8%",
+      "no action — thesis unchanged"
+    ];
+    var decision = null, lastDecisionAt = 0, decisionIdx = 0;
+    var clockSec = 2 * 3600 + 41 * 60;
+    var lastNow = 0;
+
+    function buildField(cols, rows) {
+      field = new Float32Array(cols * rows);
+      var glyphs = new Uint8Array(cols * rows);
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          var n = fbm(c * 0.085, r * 0.15, 0.5);
+          field[r * cols + c] = n;
+          glyphs[r * cols + c] = Math.floor(hash3(c, r, 7) * DIM.length) % DIM.length;
+        }
+      }
+      field.glyphs = glyphs;
+      fCols = cols; fRows = rows;
+    }
+
+    return {
+      knobs: [
+        { id: "cell", label: "Glyph", min: 8, max: 18, step: 1, value: 12 },
+        { id: "lens", label: "Lens", min: 8, max: 42, step: 2, value: 18, suffix: "%" },
+        { id: "speed", label: "Sweep", min: 30, max: 200, step: 10, value: 100, suffix: "%" },
+        { id: "clock", label: "Clock", type: "check", value: true }
+      ],
+      click: function (x, y, env) {
+        decision = { x: x, y: y, t0: env.now, text: DECISIONS[decisionIdx++ % DECISIONS.length] };
+      },
+      frame: function (ctx, env) {
+        var w = env.w, h = env.h, dpr = env.dpr, now = env.now, k = env.knobs;
+        var cell = k.cell * dpr;
+        var cols = Math.ceil(w / cell) + 1, rows = Math.ceil(h / cell) + 1;
+        if (!field || fCols !== cols || fRows !== rows || fCell !== cell) { buildField(cols, rows); fCell = cell; }
+        var dt = lastNow ? Math.min(120, now - lastNow) : 16;
+        lastNow = now;
+        var pace = k.speed / 100;
+        var ink = env.ink, acc = env.acc;
+
+        // The lens wanders on a slow Lissajous, trailing two fading ghosts.
+        var t = (env.moving ? now : 8200) * 0.00016 * pace;
+        function lensAt(tt) {
+          return {
+            x: w * (0.5 + 0.34 * Math.sin(tt * 1.7)),
+            y: h * (0.44 + 0.26 * Math.sin(tt * 2.6 + 1.1))
+          };
+        }
+        var L0 = lensAt(t), L1 = lensAt(t - 0.09), L2 = lensAt(t - 0.19);
+        var R = Math.min(w, h) * (k.lens / 100) * 1.5;
+        var R2 = R * R;
+        var drift = env.moving ? (now * 0.00004 * pace) : 0;
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
+        var glyphs = field.glyphs;
+        var driftCols = Math.floor(drift * fCols);
+
+        for (var r = 0; r < rows; r++) {
+          var y = r * cell + cell * 0.5;
+          for (var c = 0; c < cols; c++) {
+            var sc = (c + driftCols) % fCols;
+            var n = field[r * fCols + sc];
+            var a = smoothstep(0.5, 0.9, n) * 0.17;
+            var x = c * cell + cell * 0.5;
+            var dx0 = x - L0.x, dy0 = y - L0.y;
+            var d0 = dx0 * dx0 + dy0 * dy0;
+            var lensW = 0;
+            if (d0 < R2) lensW = 1 - Math.sqrt(d0) / R;
+            else {
+              var dx1 = x - L1.x, dy1 = y - L1.y, d1 = dx1 * dx1 + dy1 * dy1;
+              if (d1 < R2) lensW = (1 - Math.sqrt(d1) / R) * 0.42;
+              else {
+                var dx2 = x - L2.x, dy2 = y - L2.y, d2 = dx2 * dx2 + dy2 * dy2;
+                if (d2 < R2) lensW = (1 - Math.sqrt(d2) / R) * 0.18;
+              }
+            }
+            var glyph;
+            if (lensW > 0.06) {
+              a += lensW * lensW * 0.62 + smoothstep(0.35, 0.8, n) * lensW * 0.3;
+              glyph = SHARP[(Math.floor(hash3(sc, r, 23) * 991) + (lensW > 0.5 ? Math.floor(now * 0.002) : 0)) % SHARP.length];
+            } else {
+              glyph = DIM[glyphs[r * fCols + sc]];
+            }
+            if (a < 0.035) continue;
+            ctx.fillStyle = "rgba(" + ink + "," + Math.min(0.9, a).toFixed(3) + ")";
+            ctx.fillText(glyph, x, y);
+          }
+        }
+
+        // A decision, written on a steady cadence at the centre of attention.
+        if (env.moving && now - lastDecisionAt > 4200 / pace) {
+          lastDecisionAt = now;
+          decision = { x: L0.x, y: L0.y, t0: now, text: DECISIONS[decisionIdx++ % DECISIONS.length] };
+        }
+        if (!decision && !env.moving) decision = { x: L0.x, y: L0.y, t0: now - 900, text: DECISIONS[0] };
+        if (decision) {
+          var age = (now - decision.t0) / 3000;
+          if (age <= 1) {
+            var fade = 1 - smoothstep(0.6, 1, age);
+            var ring = Math.min(1, age / 0.36);
+            ctx.strokeStyle = "rgba(" + acc + "," + ((1 - ring) * 0.45).toFixed(3) + ")";
+            ctx.lineWidth = 1.4 * dpr;
+            ctx.beginPath();
+            ctx.arc(decision.x, decision.y, (5 + ring * 54) * dpr, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = "rgba(" + acc + "," + (fade * 0.95).toFixed(3) + ")";
+            ctx.beginPath();
+            ctx.arc(decision.x, decision.y, 2.4 * dpr, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.textAlign = "left";
+            ctx.font = Math.round(cell * 0.92) + "px 'IBM Plex Mono', ui-monospace, monospace";
+            ctx.fillStyle = "rgba(" + acc + "," + (fade * 0.72).toFixed(3) + ")";
+            ctx.fillText(decision.text, decision.x + cell * 1.4, decision.y);
+          }
+        }
+
+        // The hour the desk is awake at.
+        if (k.clock) {
+          if (env.moving) clockSec = (clockSec + dt * 0.014) % 86400;
+          var hh = Math.floor(clockSec / 3600), mm = Math.floor((clockSec % 3600) / 60), ss = Math.floor(clockSec % 60);
+          function pad(v) { return v < 10 ? "0" + v : String(v); }
+          ctx.textAlign = "right";
+          ctx.font = Math.round(cell * 0.95) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          ctx.fillStyle = "rgba(" + ink + ",0.42)";
+          ctx.fillText(pad(hh) + ":" + pad(mm) + ":" + pad(ss) + "  ·  DESK AWAKE", w - 40 * dpr, 54 * dpr);
+        }
+      }
+    };
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     C — CURRENT TAPE (baseline, ported from pitch.html)
+     ══════════════════════════════════════════════════════════════ */
+  function createTape() {
+    var candles = [], candleSeed = 0, priceWalk = 0.5, lastCandleAt = 0, marks = [];
+    function nextCandle() {
+      candleSeed++;
+      var drift = (fbm(candleSeed * 0.12, 3.7, candleSeed * 0.4) - 0.5) * 0.09;
+      var open = priceWalk;
+      var close = Math.min(0.95, Math.max(0.05, open + drift));
+      var vol = 0.015 + hash3(candleSeed, 4, 71) * 0.05;
+      priceWalk = close;
+      return {
+        open: open, close: close,
+        high: Math.min(0.98, Math.max(open, close) + hash3(candleSeed, 5, 71) * vol),
+        low: Math.max(0.02, Math.min(open, close) - hash3(candleSeed, 6, 71) * vol)
+      };
+    }
+    return {
+      knobs: [{ id: "cell", label: "Glyph", min: 7, max: 14, step: 1, value: 9 }],
+      click: function (x, y, env) {
+        marks.push({ x: x, y: y, t0: env.now });
+        if (marks.length > 4) marks.shift();
+      },
+      frame: function (ctx, env) {
+        var w = env.w, hgt = env.h, dpr = env.dpr, now = env.now;
+        var ink = env.ink, acc = env.acc;
+        var cellPx = env.knobs.cell * dpr;
+        var target = Math.max(8, Math.round(w / cellPx));
+        while (candles.length < target) candles.push(nextCandle());
+        while (candles.length > target) candles.shift();
+        if (env.moving && now - lastCandleAt > 640) {
+          lastCandleAt = now;
+          candles.push(nextCandle());
+          candles.shift();
+        }
+        var lo = 1, hi = 0;
+        for (var cq = 0; cq < candles.length; cq++) {
+          lo = Math.min(lo, candles[cq].low);
+          hi = Math.max(hi, candles[cq].high);
+        }
+        var span = Math.max(0.1, hi - lo);
+        var chartTop = hgt * 0.16, chartBot = hgt * 0.8;
+        function yOf(p) { return chartBot - ((p - lo) / span) * (chartBot - chartTop); }
+        var R = Math.min(w, hgt) * 0.24;
+        var lastC = candles[candles.length - 1];
+        var ax = w - cellPx * 0.5, ay = yOf(lastC.close);
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = Math.round(cellPx) + "px 'IBM Plex Mono', ui-monospace, monospace";
+        var rowH = cellPx;
+        for (var ci = 0; ci < candles.length; ci++) {
+          var cd = candles[ci];
+          var x = w - (candles.length - ci) * cellPx + cellPx * 0.5;
+          var yO = yOf(cd.open), yC = yOf(cd.close), yH = yOf(cd.high), yL = yOf(cd.low);
+          var up = cd.close >= cd.open;
+          var bodyTop = Math.min(yO, yC), bodyBot = Math.max(yO, yC);
+          var dCenter = Math.hypot(x - ax, (bodyTop + bodyBot) / 2 - ay);
+          var wgtC = Math.max(0, 1 - dCenter / R);
+          ctx.fillStyle = "rgba(" + (up ? acc : ink) + "," + Math.min(0.95, (up ? 0.48 : 0.3) + wgtC * 0.4).toFixed(3) + ")";
+          var rTop = Math.round(yH / rowH), rBot = Math.round(yL / rowH);
+          for (var ry = rTop; ry <= rBot; ry++) {
+            var yPix = ry * rowH + rowH * 0.5;
+            if (yPix >= bodyTop - rowH * 0.5 && yPix <= bodyBot + rowH * 0.5) continue;
+            ctx.fillText("|", x, yPix);
+          }
+          var bTop = Math.round(bodyTop / rowH), bBot = Math.round(bodyBot / rowH);
+          for (var ry2 = bTop; ry2 <= bBot; ry2++) ctx.fillText(up ? "#" : ":", x, ry2 * rowH + rowH * 0.5);
+        }
+        var pulse = env.moving ? (0.5 + 0.5 * Math.sin(now * 0.005)) : 0.6;
+        ctx.fillStyle = "rgba(" + acc + "," + (0.12 + pulse * 0.12).toFixed(3) + ")";
+        ctx.beginPath();
+        ctx.arc(ax, ay, (5 + pulse * 5) * dpr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(" + acc + ",0.9)";
+        ctx.beginPath();
+        ctx.arc(ax, ay, 2.4 * dpr, 0, Math.PI * 2);
+        ctx.fill();
+        if (env.moving) {
+          var period = 2600, fired = now - (now % period), age0 = (now - fired) / 1400;
+          if (age0 <= 1) {
+            ctx.strokeStyle = "rgba(" + acc + "," + ((1 - age0) * 0.4).toFixed(3) + ")";
+            ctx.lineWidth = 1.4 * dpr;
+            ctx.beginPath();
+            ctx.arc(ax, ay, (5 + age0 * 52) * dpr, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+        for (var mi = marks.length - 1; mi >= 0; mi--) {
+          var mk = marks[mi], age = (now - mk.t0) / 1100;
+          if (age > 1) { marks.splice(mi, 1); continue; }
+          ctx.strokeStyle = "rgba(" + acc + "," + ((1 - age) * 0.5).toFixed(3) + ")";
+          ctx.lineWidth = 1.4 * dpr;
+          ctx.beginPath();
+          ctx.arc(mk.x, mk.y, (6 + age * 46) * dpr, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    };
+  }
+
+  /* ── Variant registry ──────────────────────────────────────── */
+  var VARIANTS = {
+    book: {
+      key: "A", name: "The book, breathing", create: createBook,
+      caption: "Depth ladder · resting order inside the spread",
+      argues: "The market as the agent actually reads it — a ladder of resting size, not a price line. Every glyph on screen is ink; the only accent-coloured thing is Hyperion's own limit order, staged inside the spread and filled. Boldness spent in exactly one place, on the thing being sold.",
+      watch: [
+        "Does the wedge silhouette stay legible behind the headline at the top-right?",
+        "Is the order loop readable in one pass, or does it need a longer rest phase?",
+        "Price labels: credibility, or clutter competing with the tagline?"
+      ],
+      risk: "Still market-data wallpaper. It is further from 'chart' than the tape, but a stranger has to be told what a depth ladder is."
+    },
+    vigil: {
+      key: "B", name: "The vigil", create: createVigil,
+      caption: "Attention as a lens · 03:00 · decisions in accent",
+      argues: "Sells attention rather than trading. The field is asleep; one lens sweeps and, under it alone, noise resolves into legible figures. Decisions are written in accent on a cadence — and roughly a third of them read 'no action', which is the Discipline section made visual.",
+      watch: [
+        "Is the resting field dim enough to sit behind copy, and still visible at all on a projector?",
+        "Does the lens read as attention, or as a flashlight/spotlight cliché?",
+        "The clock: does '03:14 · DESK AWAKE' earn its place or over-explain?"
+      ],
+      risk: "Most abstract of the three. Explains the thesis, not the product — a viewer who scrolls no further learns that something is watching, not that it trades."
+    },
+    tape: {
+      key: "C", name: "Current tape", create: createTape,
+      caption: "Baseline · what's live on the deck today",
+      argues: "What ships today: an ASCII candlestick tape with a pulsing core and a firing ring at the live edge. Included unchanged so the comparison is honest.",
+      watch: [
+        "Against A and B, how quickly does it read as a generic trading product?",
+        "It repeats the chart motif already used by the terminal in section 04."
+      ],
+      risk: "Shows price — the one thing the pitch never claims to predict."
+    }
+  };
+
+  /* ── Engine ────────────────────────────────────────────────── */
+  var instances = [];
+
+  function mount(variantId, compact) {
+    var v = VARIANTS[variantId];
+    var section = document.createElement("section");
+    section.className = "hero" + (compact ? " compact" : "");
+    section.innerHTML =
+      '<canvas></canvas>' +
+      '<div class="hero-fade"></div>' +
+      '<div class="hero-tag"><div class="wrap"><b>' + v.key + '</b><span>' + v.name + ' — ' + v.caption + '</span></div></div>' +
+      '<div class="wrap hero-inner">' +
+        '<h1 class="brand-hero">Hyperion</h1>' +
+        '<p class="tagline">An autonomous trading operator, built on Hyperliquid.</p>' +
+        '<p class="lead">Hyperion runs a trading desk around the clock. It ingests markets continuously, reasons about them in writing, and executes toward long-term financial goals you state in plain language.</p>' +
+        '<div class="cta-row"><a class="btn" href="#notes">Download pitch</a></div>' +
+      '</div>';
+    stage.appendChild(section);
+
+    var canvas = section.querySelector("canvas");
+    var ctx = canvas.getContext("2d");
+    var renderer = v.create();
+    var knobs = {};
+    renderer.knobs.forEach(function (kn) { knobs[kn.id] = kn.value; });
+
+    var inst = { id: variantId, canvas: canvas, ctx: ctx, renderer: renderer, knobs: knobs, dpr: 1, visible: true };
+
+    var ro = new ResizeObserver(function () {
+      inst.dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.round(canvas.clientWidth * inst.dpr));
+      canvas.height = Math.max(1, Math.round(canvas.clientHeight * inst.dpr));
+      draw(inst, performance.now());
+    });
+    ro.observe(canvas);
+    inst.ro = ro;
+
+    var io = new IntersectionObserver(function (e) { inst.visible = e[0].isIntersecting; });
+    io.observe(canvas);
+    inst.io = io;
+
+    canvas.addEventListener("click", function (e) {
+      if (!renderer.click) return;
+      var r = canvas.getBoundingClientRect();
+      renderer.click((e.clientX - r.left) * inst.dpr, (e.clientY - r.top) * inst.dpr, envFor(inst, performance.now()));
+      draw(inst, performance.now());
+    });
+
+    instances.push(inst);
+    return inst;
+  }
+
+  function envFor(inst, now) {
+    var cs = getComputedStyle(body);
+    var dark = body.getAttribute("data-theme") === "dark";
+    var aRgb = hexToRgb(cs.getPropertyValue("--accent")) || (dark ? [201, 143, 102] : [154, 91, 56]);
+    return {
+      w: inst.canvas.width, h: inst.canvas.height, dpr: inst.dpr, now: now,
+      moving: !reduced && !paused,
+      dark: dark,
+      ink: dark ? "234,229,218" : "34,31,25",
+      acc: aRgb[0] + "," + aRgb[1] + "," + aRgb[2],
+      knobs: inst.knobs
+    };
+  }
+
+  function draw(inst, now) {
+    if (!inst.canvas.width) return;
+    inst.ctx.clearRect(0, 0, inst.canvas.width, inst.canvas.height);
+    inst.renderer.frame(inst.ctx, envFor(inst, now));
+  }
+
+  var last = 0;
+  function loop(now) {
+    requestAnimationFrame(loop);
+    if (reduced || paused) return;
+    if (now - last < 33) return;
+    last = now;
+    for (var i = 0; i < instances.length; i++) if (instances[i].visible) draw(instances[i], now);
+  }
+  requestAnimationFrame(loop);
+
+  function teardown() {
+    instances.forEach(function (i) { i.ro.disconnect(); i.io.disconnect(); });
+    instances = [];
+    stage.innerHTML = "";
+  }
+
+  /* ── Knob + notes rendering ────────────────────────────────── */
+  function renderKnobs(inst) {
+    knobsEl.innerHTML = "";
+    if (!inst) { knobRow.style.display = "none"; return; }
+    knobRow.style.display = "";
+    inst.renderer.knobs.forEach(function (kn) {
+      var wrapEl = document.createElement("label");
+      wrapEl.className = "knob";
+      if (kn.type === "check") {
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!kn.value;
+        cb.addEventListener("change", function () { inst.knobs[kn.id] = cb.checked; draw(inst, performance.now()); });
+        wrapEl.appendChild(document.createTextNode(kn.label));
+        wrapEl.appendChild(cb);
+      } else {
+        var rangeEl = document.createElement("input");
+        rangeEl.type = "range";
+        rangeEl.min = kn.min; rangeEl.max = kn.max; rangeEl.step = kn.step; rangeEl.value = kn.value;
+        var out = document.createElement("output");
+        out.textContent = kn.value + (kn.suffix || "");
+        rangeEl.addEventListener("input", function () {
+          inst.knobs[kn.id] = Number(rangeEl.value);
+          out.textContent = rangeEl.value + (kn.suffix || "");
+          draw(inst, performance.now());
+        });
+        wrapEl.appendChild(document.createTextNode(kn.label));
+        wrapEl.appendChild(rangeEl);
+        wrapEl.appendChild(out);
+      }
+      knobsEl.appendChild(wrapEl);
+    });
+  }
+
+  function renderNotes(variantId) {
+    var ids = variantId === "compare" ? ["book", "vigil", "tape"] : [variantId];
+    var html = "";
+    ids.forEach(function (id) {
+      var v = VARIANTS[id];
+      html +=
+        '<div class="notes-head"><span class="tag">' + v.key + '</span><h2>' + v.name + '</h2></div>' +
+        '<div class="notes-grid">' +
+          '<div class="note"><h3>What it argues</h3><p>' + v.argues + '</p></div>' +
+          '<div class="note"><h3>Watch for</h3><ul><li>' + v.watch.join("</li><li>") + '</li></ul></div>' +
+          '<div class="note"><h3>Where it is weak</h3><p class="dim">' + v.risk + '</p></div>' +
+        '</div>';
+      if (ids.length > 1) html += '<div style="height:52px"></div>';
+    });
+    html += '<p class="hint">' +
+      'Click the art to place an order (A), write a decision (B), or drop a pulse (C).<br>' +
+      '<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> switch variant &nbsp;·&nbsp; <kbd>4</kbd> compare all &nbsp;·&nbsp; <kbd>T</kbd> theme &nbsp;·&nbsp; <kbd>Space</kbd> pause' +
+      '</p>';
+    notesEl.innerHTML = html;
+  }
+
+  /* ── View switching ───────────────────────────────────────── */
+  var current = "book";
+  function setVariant(id) {
+    current = id;
+    teardown();
+    if (id === "compare") {
+      mount("book", true); mount("vigil", true); mount("tape", true);
+      renderKnobs(null);
+    } else {
+      renderKnobs(mount(id, false));
+    }
+    renderNotes(id);
+    document.querySelectorAll("[data-variant]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-variant") === id));
+    });
+    try { history.replaceState(null, "", "?v=" + id); } catch (e) { /* file:// */ }
+  }
+  document.querySelectorAll("[data-variant]").forEach(function (b) {
+    b.addEventListener("click", function () { setVariant(b.getAttribute("data-variant")); });
+  });
+
+  /* ── Theme, palette, motion ───────────────────────────────── */
+  var themeBtn = document.getElementById("theme-toggle");
+  function applyTheme(mode) {
+    body.setAttribute("data-theme", mode);
+    themeBtn.textContent = mode === "dark" ? "Light" : "Dark";
+    instances.forEach(function (i) { draw(i, performance.now()); });
+  }
+  themeBtn.addEventListener("click", function () {
+    applyTheme(body.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  });
+  applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+
+  function applyPalette(p) {
+    body.setAttribute("data-palette", p);
+    document.querySelectorAll("[data-palette]").forEach(function (b) {
+      if (b.tagName === "BUTTON") b.setAttribute("aria-pressed", String(b.getAttribute("data-palette") === p));
+    });
+    instances.forEach(function (i) { draw(i, performance.now()); });
+  }
+  document.querySelectorAll("button[data-palette]").forEach(function (b) {
+    b.addEventListener("click", function () { applyPalette(b.getAttribute("data-palette")); });
+  });
+  applyPalette("orange");
+
+  var motionBtn = document.getElementById("motion-toggle");
+  function setPaused(p) {
+    paused = p;
+    motionBtn.textContent = p ? "Play" : "Pause";
+    motionBtn.setAttribute("aria-pressed", String(p));
+    instances.forEach(function (i) { draw(i, performance.now()); });
+  }
+  motionBtn.addEventListener("click", function () { setPaused(!paused); });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.target.matches("input, textarea")) return;
+    var map = { "1": "book", "2": "vigil", "3": "tape", "4": "compare" };
+    if (map[e.key]) setVariant(map[e.key]);
+    else if (e.key === "t" || e.key === "T") applyTheme(body.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    else if (e.key === " ") { e.preventDefault(); setPaused(!paused); }
+  });
+
+  var initial = (location.search.match(/[?&]v=(\w+)/) || [])[1];
+  var known = initial === "compare" || Object.prototype.hasOwnProperty.call(VARIANTS, initial);
+  setVariant(known ? initial : "book");
+})();
+</script>
+</body>
+</html>
