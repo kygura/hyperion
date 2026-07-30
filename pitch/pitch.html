@@ -1031,6 +1031,38 @@
   var reviewLabelEl = document.getElementById("review-label");
   var logListEl = document.getElementById("log-list");
 
+  var sparkLineEl = document.querySelector("[data-spark]");
+  var sparkFillEl = document.querySelector(".spark polygon");
+  var sparkDotEl = document.querySelector(".spark-dot");
+  var sparkXs = [0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120, 130];
+  var sparkYs = [34, 30, 31, 26, 27, 22, 24, 18, 20, 14, 15, 10];
+  var sparkRaf = null;
+
+  function sparkPoints(ys) {
+    return sparkXs.map(function (x, i) { return x + "," + ys[i].toFixed(1); }).join(" ");
+  }
+  function applySpark(ys) {
+    sparkLineEl.setAttribute("points", sparkPoints(ys));
+    sparkFillEl.setAttribute("points", sparkPoints(ys) + " 130,44 0,44");
+    var lastX = sparkXs[sparkXs.length - 1];
+    var lastY = ys[ys.length - 1];
+    sparkDotEl.style.left = (lastX / 132 * 100).toFixed(1) + "%";
+    sparkDotEl.style.top = (lastY / 44 * 100).toFixed(1) + "%";
+  }
+  function animateSparkTo(targetYs, duration) {
+    var startYs = sparkYs.slice();
+    var t0 = performance.now();
+    if (sparkRaf) cancelAnimationFrame(sparkRaf);
+    function step(now) {
+      var t = Math.min(1, (now - t0) / duration);
+      var eased = 1 - Math.pow(1 - t, 3);
+      applySpark(startYs.map(function (y, i) { return y + (targetYs[i] - y) * eased; }));
+      if (t < 1) { sparkRaf = requestAnimationFrame(step); }
+      else { sparkYs = targetYs; sparkRaf = null; }
+    }
+    sparkRaf = requestAnimationFrame(step);
+  }
+
   function fmtClock(sec) {
     sec = ((sec % 86400) + 86400) % 86400;
     var h = Math.floor(sec / 3600);
@@ -1100,6 +1132,8 @@
       pnl = pnl + (Math.random() - 0.45) * 0.22;
       pnl = Math.max(0.9, Math.min(3.1, pnl));
       pnlLabelEl.textContent = "+" + pnl.toFixed(1) + "%";
+      var y = 36 - ((pnl - 0.9) / (3.1 - 0.9)) * 28;
+      animateSparkTo(sparkYs.slice(1).concat([y]), 900);
     }, 2600);
   } else {
     reviewLabelEl.textContent = fmtClock(reviewLeft);
