@@ -76,6 +76,11 @@
   .knob { display: flex; align-items: center; gap: 9px; font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink2); }
   .knob input[type="range"] { width: 108px; accent-color: var(--accent); }
   .knob input[type="checkbox"] { accent-color: var(--accent); }
+  .knob select {
+    font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: 0.1em;
+    color: var(--ink); background: transparent; border: 1px solid var(--line);
+    border-radius: 3px; padding: 3px 6px; cursor: pointer;
+  }
   .knob output { color: var(--ink); font-variant-numeric: tabular-nums; min-width: 3ch; }
   button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -211,11 +216,22 @@
      The whole book is ink; the only accent-coloured thing on screen is
      Hyperion's own resting order, staged inside the spread.
      ══════════════════════════════════════════════════════════════ */
+  // Side palettes as [light, dark] rgb triples. "ink" keeps the book monochrome
+  // so the operator's order is the only colour; the others encode direction.
+  var SIDE_SCHEMES = {
+    ink:    { name: "Ink", bid: null, ask: null },
+    duo:    { name: "Duo",    bid: ["63,125,79", "124,201,143"], ask: ["13,143,131", "79,216,196"] },
+    // Signal's red is pulled cool of the terracotta accent so the operator's
+    // own order stays distinguishable from the ask side.
+    signal: { name: "Signal", bid: ["61,122,77", "126,197,142"], ask: ["165,49,62", "224,113,124"] }
+  };
+
   function createBook() {
     var TICK = 0.5;                    // price increment per level
     var shiftAt = 0, bookOffset = 0;   // integer scroll of the ladder
     var mid = 3412.5;
     var cycleBase = null;              // first frame timestamp of the order loop
+    var lastLift = null;               // which side the last tick took out
     var userOrders = [];
 
     // Resting size at a level: smooth breathing, plus rare persistent walls.
@@ -233,6 +249,8 @@
         { id: "depth", label: "Depth", min: 6, max: 40, step: 1, value: 30 },
         { id: "weight", label: "Weight", min: 50, max: 180, step: 5, value: 100, suffix: "%" },
         { id: "speed", label: "Pace", min: 40, max: 200, step: 10, value: 100, suffix: "%" },
+        { id: "sides", label: "Sides", type: "select", value: "signal",
+          options: [["ink", "Ink"], ["duo", "Duo"], ["signal", "Signal"]] },
         { id: "labels", label: "Prices", type: "check", value: true }
       ],
       click: function (x, y, env) {
@@ -261,11 +279,28 @@
           var dir = fbm(bookOffset * 0.4, 8.2, bookOffset * 0.11) > 0.5 ? 1 : -1;
           bookOffset += dir;
           mid += dir * TICK;
+          lastLift = { dir: dir, t0: now };
         }
 
         ctx.textBaseline = "middle";
         ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
         var ink = env.ink, acc = env.acc;
+
+        // Side colouring. Ink keeps the accent as the only colour on screen;
+        // the other schemes trade that for a direction you can read at a glance.
+        var scheme = SIDE_SCHEMES[k.sides] || SIDE_SCHEMES.ink;
+        var tone = env.dark ? 1 : 0;
+        function sideColor(side) {
+          var c = side > 0 ? scheme.ask : scheme.bid;
+          return c ? c[tone] : ink;
+        }
+        // The side that just got lifted flares briefly, so direction reads in motion.
+        function sideFlare(side) {
+          if (!lastLift || scheme === SIDE_SCHEMES.ink) return 0;
+          var lifted = lastLift.dir > 0 ? 1 : -1;      // price up = asks taken
+          if (lifted !== side) return 0;
+          return Math.max(0, 1 - (now - lastLift.t0) / 520) * 0.34;
+        }
 
         // ── The ladder. Each level is a run of glyphs; the tail frays to ':' then '.'
         function drawLevel(level, y, side) {
@@ -273,21 +308,22 @@
           var size = sizeAt(level + bookOffset, now) * (k.weight / 100);
           var cells = Math.max(1, Math.round((size * maxBar) / cell));
           cells = Math.min(cells, Math.floor(maxBar / cell));
-          var alpha = Math.max(0.13, 0.52 - idx * 0.011) * (side > 0 ? 1 : 0.94);
+          var alpha = Math.max(0.13, 0.52 - idx * 0.011) * (side > 0 ? 1 : 0.94) + sideFlare(side);
+          var rgb = sideColor(side);
           ctx.textAlign = "center";
           for (var c = 0; c < cells; c++) {
             var x = axisX + cell * (c + 0.5);
             var tail = cells - c;
             var glyph = tail > 3 ? "#" : (tail > 1 ? ":" : ".");
             var a = tail > 3 ? alpha : alpha * (tail > 1 ? 0.7 : 0.42);
-            ctx.fillStyle = "rgba(" + ink + "," + a.toFixed(3) + ")";
+            ctx.fillStyle = "rgba(" + rgb + "," + Math.min(0.95, a).toFixed(3) + ")";
             ctx.fillText(glyph, x, y);
           }
           if (k.labels && idx % 4 === 0 && idx > 0) {
             ctx.textAlign = "right";
             ctx.font = Math.round(cell * 0.82) + "px 'IBM Plex Mono', ui-monospace, monospace";
-            ctx.fillStyle = "rgba(" + ink + ",0.3)";
-            ctx.fillText(priceFmt.format(mid + level * TICK * -1), axisX - cell * 1.1, y);
+            ctx.fillStyle = "rgba(" + rgb + ",0.34)";
+            ctx.fillText(priceFmt.format(mid + level * TICK), axisX - cell * 1.1, y);
             ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
           }
         }
@@ -295,6 +331,19 @@
         for (var i = 1; i <= levels; i++) {
           drawLevel(i, midY - gapHalf - (i - 0.5) * rowH, 1);    // asks, above
           drawLevel(-i, midY + gapHalf + (i - 0.5) * rowH, -1);  // bids, below
+        }
+
+        // Side legend, so the colouring is named rather than guessed at.
+        if (k.labels && scheme !== SIDE_SCHEMES.ink) {
+          ctx.textAlign = "right";
+          ctx.font = Math.round(cell * 0.8) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          var askY = Math.max(cell * 4, midY - gapHalf - (levels - 0.5) * rowH - rowH * 1.4);
+          var bidY = Math.min(h - cell * 4, midY + gapHalf + (levels - 0.5) * rowH + rowH * 1.4);
+          ctx.fillStyle = "rgba(" + sideColor(1) + ",0.62)";
+          ctx.fillText("ASK", axisX - cell * 1.1, askY);
+          ctx.fillStyle = "rgba(" + sideColor(-1) + ",0.62)";
+          ctx.fillText("BID", axisX - cell * 1.1, bidY);
+          ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
         }
 
         // ── The spread: a dotted mid line, the quiet centre the order sits in.
@@ -762,11 +811,11 @@
     book: {
       key: "A", name: "The book, breathing", create: createBook,
       caption: "Depth ladder · resting order inside the spread",
-      argues: "The market as the agent actually reads it — a ladder of resting size, not a price line. Every glyph on screen is ink; the only accent-coloured thing is Hyperion's own limit order, staged inside the spread and filled. Boldness spent in exactly one place, on the thing being sold.",
+      argues: "The market as the agent actually reads it — a ladder of resting size, not a price line. Hyperion's own limit order is staged inside the spread and filled, in accent, at the pinch where the eye already is. Sides can run monochrome, so the order is the only colour on screen, or be colour-coded by direction: asks above, bids below, with the lifted side flaring on each tick.",
       watch: [
+        "Sides — Ink keeps all the colour for the operator's order; Signal names the direction but spends colour on the book. Signal reads best with the cyan or green accent, which pulls the order clear of the red side.",
         "Does the wedge silhouette stay legible behind the headline at the top-right?",
-        "Is the order loop readable in one pass, or does it need a longer rest phase?",
-        "Price labels: credibility, or clutter competing with the tagline?"
+        "Is the order loop readable in one pass, or does it need a longer rest phase?"
       ],
       risk: "Still market-data wallpaper. It is further from 'chart' than the tape, but a stranger has to be told what a depth ladder is."
     },
@@ -899,7 +948,18 @@
     inst.renderer.knobs.forEach(function (kn) {
       var wrapEl = document.createElement("label");
       wrapEl.className = "knob";
-      if (kn.type === "check") {
+      if (kn.type === "select") {
+        var sel = document.createElement("select");
+        kn.options.forEach(function (opt) {
+          var o = document.createElement("option");
+          o.value = opt[0]; o.textContent = opt[1];
+          if (opt[0] === kn.value) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.addEventListener("change", function () { inst.knobs[kn.id] = sel.value; draw(inst, performance.now()); });
+        wrapEl.appendChild(document.createTextNode(kn.label));
+        wrapEl.appendChild(sel);
+      } else if (kn.type === "check") {
         var cb = document.createElement("input");
         cb.type = "checkbox";
         cb.checked = !!kn.value;
