@@ -76,19 +76,19 @@ The curves cross exactly at "agents that trade." What's missing at the crossing 
 
 ## Why this isn't already solved
 
-Agentic trading isn't novel on its own — it went mainstream this cycle. A handful of brokerages and exchanges have already shipped their own version of "an agent trades for you," each betting that the brokerage itself is the durable interface.
+Agentic trading went mainstream this cycle. Several brokerages and exchanges now ship their own version of "an agent trades for you," built as a feature of their own venue.
 
-That bet carries a cost most of them don't advertise: the agent and the platform live and die together. To use the agent, a trader first has to trust the exchange underneath it — its custody, its listing desk, its order book — and the company has to spend as much effort convincing capital to trust the venue as it spends building the agent.
+That approach ties the agent to the platform: to use it, a trader has to trust the exchange underneath — its custody, its listing desk, its order book — not just the agent sitting on top of it.
 
-Hyperion doesn't make that bet. It expresses and executes through Hyperliquid, a venue that's already proven itself at scale: $4.4T cleared, no broker, no listing desk, no key custodian to win over. That trust fight is already won, and it was won without me having to win it.
+Hyperion takes a different path. It expresses and executes through Hyperliquid, a venue that's already proven itself at scale: $4.4T cleared, no broker, no listing desk, no key custodian to win over. The trust question is already settled there.
 
 Past Hyperliquid, the system is infra-agnostic on purpose. The mandate, the reasoning loop, and the risk gates don't care which venue sits on the other end of the signed order. Hyperliquid is where the thesis gets expressed first — not the only place it's allowed to be.
 
 ## Moat
 
-There isn't one in the idea itself. Any trader who started experimenting with autonomous agents early landed somewhere near this; dressing the concept up as defensible would be dishonest.
+There isn't one in the idea itself. Enough traders have started experimenting with autonomous agents that the concept alone won't hold up as a moat.
 
-What's defensible is narrower: I sell execution of a trader's judgment, not the judgment itself. Every "agent trades for you" product shipping right now is selling the opposite — a thesis, a signal, a recommendation — which is a bigger, vaguer claim than an operator that only executes what you already decided. That's also why the differentiation is execution and speed, not concept: the scoped signing, the hard risk gates, and the track record somebody else can verify are things that get built and proven, not thought of. Whoever proves it first, with real capital and a public journal, holds the position.
+What's defensible is narrower: I sell execution of a trader's judgment, not the judgment itself. That's a smaller, more concrete claim than a recommendation engine — and the scoped signing, the hard risk gates, and a track record somebody else can verify are things that get built and proven, not just described. Whoever proves it first, with real capital and a public journal, holds the position.
 
 It's also a lighter regulatory bucket than a service that generates recommendations: no custody, no advice, just an operator executing a mandate the trader already holds.
 
