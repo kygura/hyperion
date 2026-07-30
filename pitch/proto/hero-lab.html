@@ -135,7 +135,8 @@
     <div class="seg spacer" role="group" aria-label="Hero variant">
       <button type="button" data-variant="book"><b>A</b> &nbsp;Order book</button>
       <button type="button" data-variant="vigil"><b>B</b> &nbsp;Vigil field</button>
-      <button type="button" data-variant="tape"><b>C</b> &nbsp;Current tape</button>
+      <button type="button" data-variant="corona"><b>C</b> &nbsp;Corona</button>
+      <button type="button" data-variant="tape">Current tape</button>
       <button type="button" data-variant="compare">Compare</button>
     </div>
     <div class="swatches" role="group" aria-label="Accent palette">
@@ -513,7 +514,150 @@
   }
 
   /* ══════════════════════════════════════════════════════════════
-     C — CURRENT TAPE (baseline, ported from pitch.html)
+     C — THE CORONA
+     Hyperion is the Titan of watchfulness, the one who never sets.
+     A sun drawn in glyph density: ink corona, accent core. The rays
+     carry market ticks *inward* — the market feeds the operator — and
+     the core fires one pulse back out when it executes.
+     ══════════════════════════════════════════════════════════════ */
+  function createCorona() {
+    var geoKey = "", R = 0, cx = 0, cy = 0;
+    var rad = null, cosA = null, sinA = null, grain = null, gCols = 0, gRows = 0;
+    var packets = [], lastPacketAt = 0, seed = 0;
+    var lastFireAt = 0, fires = [];
+
+    // Polar geometry per cell is fixed until the frame or the knobs change.
+    function buildGeo(cols, rows, cell, rays) {
+      var n = cols * rows;
+      rad = new Float32Array(n); cosA = new Float32Array(n); sinA = new Float32Array(n); grain = new Float32Array(n);
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          var i = r * cols + c;
+          var dx = (c * cell + cell * 0.5) - cx;
+          var dy = (r * cell + cell * 0.5) - cy;
+          rad[i] = Math.hypot(dx, dy) / R;
+          var a = Math.atan2(dy, dx) * rays;
+          cosA[i] = Math.cos(a); sinA[i] = Math.sin(a);
+          grain[i] = fbm(c * 0.11, r * 0.18, 1.7);
+        }
+      }
+      gCols = cols; gRows = rows;
+    }
+
+    return {
+      knobs: [
+        { id: "cell", label: "Glyph", min: 7, max: 16, step: 1, value: 10 },
+        { id: "size", label: "Radius", min: 14, max: 52, step: 2, value: 26, suffix: "%" },
+        { id: "rays", label: "Rays", min: 3, max: 18, step: 1, value: 9 },
+        { id: "flow", label: "Flow", min: 30, max: 200, step: 10, value: 100, suffix: "%" },
+        { id: "horizon", label: "Horizon", type: "check", value: false }
+      ],
+      click: function (x, y, env) {
+        fires.push({ t0: env.now });
+        if (fires.length > 3) fires.shift();
+      },
+      frame: function (ctx, env) {
+        var w = env.w, h = env.h, dpr = env.dpr, now = env.now, k = env.knobs;
+        var cell = k.cell * dpr;
+        var cols = Math.ceil(w / cell) + 1, rows = Math.ceil(h / cell) + 1;
+        var ink = env.ink, acc = env.acc;
+        var pace = k.flow / 100;
+
+        // The sun sits right of the copy column and slightly high — a disc
+        // that never quite sets rather than one centred like a logo.
+        cx = w * 0.68;
+        cy = h * (k.horizon ? 0.5 : 0.44);
+        R = Math.min(w, h) * (k.size / 100) * 1.35;
+        var key = cols + "x" + rows + ":" + cell + ":" + k.rays + ":" + Math.round(cx) + ":" + Math.round(cy) + ":" + Math.round(R);
+        if (key !== geoKey) { buildGeo(cols, rows, cell, k.rays); geoKey = key; }
+
+        var rot = env.moving ? now * 0.00013 * pace : 1.4;
+        var cosRot = Math.cos(rot), sinRot = Math.sin(rot);
+        var breath = env.moving ? 0.5 + 0.5 * Math.sin(now * 0.0009) : 0.7;
+        var CORE = 0.4, LIMB = 0.47;
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
+
+        for (var r2 = 0; r2 < gRows; r2++) {
+          var y = r2 * cell + cell * 0.5;
+          for (var c2 = 0; c2 < gCols; c2++) {
+            var i = r2 * gCols + c2;
+            var rr = rad[i];
+            if (rr > 1.5) continue;
+            var d, core = rr < CORE;
+            if (core) {
+              d = 0.88 + breath * 0.12;                                  // the disc: solid, breathing
+            } else if (rr < LIMB) {
+              d = 0.9;                                                   // the limb: a hard edge against the corona
+            } else {
+              var spoke = 0.5 + 0.5 * (cosA[i] * cosRot - sinA[i] * sinRot);
+              d = Math.exp(-(rr - LIMB) * 3.4) * (0.26 + 0.74 * spoke) * (0.82 + grain[i] * 0.3);
+            }
+            if (d < 0.06) continue;
+            var x = c2 * cell + cell * 0.5;
+            var glyph = d > 0.58 ? "#" : (d > 0.28 ? ":" : ".");
+            if (core) {
+              ctx.fillStyle = "rgba(" + acc + "," + Math.min(0.95, d * 0.92).toFixed(3) + ")";
+            } else {
+              ctx.fillStyle = "rgba(" + ink + "," + Math.min(0.82, d * 0.8).toFixed(3) + ")";
+            }
+            ctx.fillText(glyph, x, y);
+          }
+        }
+
+        // Ticks travelling inward along the rays: the market being ingested.
+        if (env.moving && now - lastPacketAt > 260 / pace) {
+          lastPacketAt = now;
+          seed++;
+          // Snapped to a ray, so a tick is visibly travelling down a spoke.
+          var lane = Math.floor(hash3(seed, 13, 5) * k.rays);
+          packets.push({
+            ang: (lane / k.rays) * Math.PI * 2 - rot / k.rays,
+            t0: now,
+            txt: String(Math.floor(hash3(seed, 27, 9) * 9000) + 1000).slice(0, 2 + Math.floor(hash3(seed, 31, 3) * 3))
+          });
+          if (packets.length > 26) packets.shift();
+        }
+        ctx.font = Math.round(cell * 0.92) + "px 'IBM Plex Mono', ui-monospace, monospace";
+        for (var p = packets.length - 1; p >= 0; p--) {
+          var pk = packets[p];
+          var age = (now - pk.t0) / (2400 / pace);
+          if (age > 1) { packets.splice(p, 1); continue; }
+          var pr = 1.3 - age * (1.3 - LIMB);
+          var pa = Math.min(1, age * 2.4) * (1 - smoothstep(0.84, 1, age)) * 0.9;
+          var px = cx + Math.cos(pk.ang) * pr * R;
+          var py = cy + Math.sin(pk.ang) * pr * R;
+          ctx.fillStyle = "rgba(" + ink + "," + pa.toFixed(3) + ")";
+          ctx.fillText(pk.txt, px, py);
+        }
+
+        // One pulse back out when the operator executes.
+        if (env.moving && now - lastFireAt > 5200 / pace) { lastFireAt = now; fires.push({ t0: now }); }
+        for (var f = fires.length - 1; f >= 0; f--) {
+          var fa = (now - fires[f].t0) / 1500;
+          if (fa > 1) { fires.splice(f, 1); continue; }
+          ctx.strokeStyle = "rgba(" + acc + "," + ((1 - fa) * 0.4).toFixed(3) + ")";
+          ctx.lineWidth = 1.4 * dpr;
+          ctx.beginPath();
+          ctx.arc(cx, cy, (LIMB * R) + fa * R * 0.85, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Optional horizon — the sun that does not set.
+        if (k.horizon) {
+          ctx.textAlign = "center";
+          ctx.font = Math.round(cell) + "px 'IBM Plex Mono', ui-monospace, monospace";
+          ctx.fillStyle = "rgba(" + ink + ",0.22)";
+          for (var hx = 0; hx < w; hx += cell) ctx.fillText("-", hx + cell * 0.5, h * 0.82);
+        }
+      }
+    };
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     BASELINE — CURRENT TAPE (ported from pitch.html)
      ══════════════════════════════════════════════════════════════ */
   function createTape() {
     var candles = [], candleSeed = 0, priceWalk = 0.5, lastCandleAt = 0, marks = [];
@@ -637,8 +781,19 @@
       ],
       risk: "Most abstract of the three. Explains the thesis, not the product — a viewer who scrolls no further learns that something is watching, not that it trades."
     },
+    corona: {
+      key: "C", name: "The corona", create: createCorona,
+      caption: "Hyperion as a sun · ticks travelling inward · accent core",
+      argues: "Leans on the name. Hyperion is the Titan of watchfulness, father of Helios — the one who never sets. A sun drawn in glyph density, ink corona around an accent core, with market ticks travelling inward along the rays and a single pulse fired back out when the operator executes. The only one of the three that doubles as a reusable brand mark: favicon, OG image, deck cover.",
+      watch: [
+        "Does the inward flow read as ingest, or does the eye just see a sun?",
+        "Ray count: 9 gives a corona, under 6 reads as a compass rose, over 14 as a halftone dot.",
+        "Horizon on/off — it makes the 'never sets' reading explicit, at the cost of looking illustrative."
+      ],
+      risk: "Says the least about what the product does. A viewer who scrolls no further learns the company has a good logo, not that it trades. Strongest as an identity mark, weakest as an argument."
+    },
     tape: {
-      key: "C", name: "Current tape", create: createTape,
+      key: "—", name: "Current tape", create: createTape,
       caption: "Baseline · what's live on the deck today",
       argues: "What ships today: an ASCII candlestick tape with a pulsing core and a firing ring at the live edge. Included unchanged so the comparison is honest.",
       watch: [
@@ -771,7 +926,7 @@
   }
 
   function renderNotes(variantId) {
-    var ids = variantId === "compare" ? ["book", "vigil", "tape"] : [variantId];
+    var ids = variantId === "compare" ? ["book", "vigil", "corona", "tape"] : [variantId];
     var html = "";
     ids.forEach(function (id) {
       var v = VARIANTS[id];
@@ -785,8 +940,8 @@
       if (ids.length > 1) html += '<div style="height:52px"></div>';
     });
     html += '<p class="hint">' +
-      'Click the art to place an order (A), write a decision (B), or drop a pulse (C).<br>' +
-      '<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> switch variant &nbsp;·&nbsp; <kbd>4</kbd> compare all &nbsp;·&nbsp; <kbd>T</kbd> theme &nbsp;·&nbsp; <kbd>Space</kbd> pause' +
+      'Click the art to place an order (A), write a decision (B), fire the core (C), or drop a pulse (tape).<br>' +
+      '<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> concepts &nbsp;·&nbsp; <kbd>4</kbd> current tape &nbsp;·&nbsp; <kbd>5</kbd> compare all &nbsp;·&nbsp; <kbd>T</kbd> theme &nbsp;·&nbsp; <kbd>Space</kbd> pause' +
       '</p>';
     notesEl.innerHTML = html;
   }
@@ -797,7 +952,7 @@
     current = id;
     teardown();
     if (id === "compare") {
-      mount("book", true); mount("vigil", true); mount("tape", true);
+      mount("book", true); mount("vigil", true); mount("corona", true); mount("tape", true);
       renderKnobs(null);
     } else {
       renderKnobs(mount(id, false));
@@ -847,7 +1002,7 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.target.matches("input, textarea")) return;
-    var map = { "1": "book", "2": "vigil", "3": "tape", "4": "compare" };
+    var map = { "1": "book", "2": "vigil", "3": "corona", "4": "tape", "5": "compare" };
     if (map[e.key]) setVariant(map[e.key]);
     else if (e.key === "t" || e.key === "T") applyTheme(body.getAttribute("data-theme") === "dark" ? "light" : "dark");
     else if (e.key === " ") { e.preventDefault(); setPaused(!paused); }
