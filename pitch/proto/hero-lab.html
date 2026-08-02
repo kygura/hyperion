@@ -111,6 +111,19 @@
   .hero-tag .wrap { display: flex; gap: 14px; align-items: baseline; }
   .hero-tag b { color: var(--accent); font-weight: 500; }
 
+  /* Showcase: the chosen hero on its own, no lab chrome, full viewport. */
+  body.showcase .lab-bar, body.showcase .notes { display: none; }
+  body.showcase .hero { min-height: 100vh; border-bottom: 0; }
+  body.showcase .hero-tag { display: none; }
+  .showcase-theme {
+    position: fixed; right: 22px; bottom: 20px; z-index: 50; display: none;
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em;
+    background: transparent; color: var(--ink2); border: 1px solid var(--line);
+    border-radius: 3px; padding: 8px 14px; cursor: pointer;
+  }
+  body.showcase .showcase-theme { display: block; }
+  .showcase-theme:hover { color: var(--ink); }
+
   /* Compare mode: three frames stacked, copy reduced so the art carries the read. */
   .hero.compact { min-height: 52vh; }
   .hero.compact .hero-inner { padding: 74px 0 40px; }
@@ -173,6 +186,7 @@
   <div class="stage" id="stage"></div>
   <section class="wrap notes" id="notes"></section>
 </main>
+<button type="button" class="showcase-theme" id="showcase-theme">Dark</button>
 
 <script>
 (function () {
@@ -185,6 +199,8 @@
   var knobRow = document.getElementById("knob-row");
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var paused = false;
+  // Showcase strips the lab down to the chosen hero: variant A, ETH, no chrome.
+  var SHOWCASE = window.HERO_SHOWCASE === true || /[?&]showcase=1/.test(location.search);
 
   /* ── Shared noise + color helpers (same routines the deck's hero uses) ── */
   function hash3(x, y, z) {
@@ -970,7 +986,7 @@
   /* ── Variant registry ──────────────────────────────────────── */
   var VARIANTS = {
     book: {
-      key: "A", name: "The book, breathing", create: createBook,
+      key: "A", name: "The book, breathing", chosen: true, create: createBook,
       caption: "Depth ladder · resting order inside the spread",
       argues: "The market as the agent actually reads it — a ladder of resting size, not a price line. Hyperion's own limit order is staged inside the spread and filled, in accent, at the pinch where the eye already is. Sides can run monochrome, so the order is the only colour on screen, or be colour-coded by direction: asks above, bids below, with the lifted side flaring on each tick.",
       watch: [
@@ -1105,7 +1121,7 @@
   /* ── Knob + notes rendering ────────────────────────────────── */
   function renderKnobs(inst) {
     knobsEl.innerHTML = "";
-    if (!inst) { knobRow.style.display = "none"; return; }
+    if (!inst || SHOWCASE) { knobRow.style.display = "none"; return; }
     knobRow.style.display = "";
     inst.renderer.knobs.forEach(function (kn) {
       var wrapEl = document.createElement("label");
@@ -1153,7 +1169,8 @@
     ids.forEach(function (id) {
       var v = VARIANTS[id];
       html +=
-        '<div class="notes-head"><span class="tag">' + v.key + '</span><h2>' + v.name + '</h2></div>' +
+        '<div class="notes-head"><span class="tag">' + v.key + '</span><h2>' + v.name + '</h2>' +
+        (v.chosen ? '<span class="tag" style="margin-left:auto">Chosen</span>' : '') + '</div>' +
         '<div class="notes-grid">' +
           '<div class="note"><h3>What it argues</h3><p>' + v.argues + '</p></div>' +
           '<div class="note"><h3>Watch for</h3><ul><li>' + v.watch.join("</li><li>") + '</li></ul></div>' +
@@ -1230,9 +1247,21 @@
     else if (e.key === " ") { e.preventDefault(); setPaused(!paused); }
   });
 
-  var initial = (location.search.match(/[?&]v=(\w+)/) || [])[1];
-  var known = initial === "compare" || Object.prototype.hasOwnProperty.call(VARIANTS, initial);
-  setVariant(known ? initial : "book");
+  var showcaseBtn = document.getElementById("showcase-theme");
+  showcaseBtn.addEventListener("click", function () {
+    applyTheme(body.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    showcaseBtn.textContent = body.getAttribute("data-theme") === "dark" ? "Light" : "Dark";
+  });
+
+  if (SHOWCASE) {
+    body.classList.add("showcase");
+    setVariant("book");
+    showcaseBtn.textContent = body.getAttribute("data-theme") === "dark" ? "Light" : "Dark";
+  } else {
+    var initial = (location.search.match(/[?&]v=(\w+)/) || [])[1];
+    var known = initial === "compare" || Object.prototype.hasOwnProperty.call(VARIANTS, initial);
+    setVariant(known ? initial : "book");
+  }
 })();
 </script>
 </body>
