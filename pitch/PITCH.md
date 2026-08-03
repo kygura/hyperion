@@ -21,7 +21,7 @@ And the surface keeps widening. Complexity compounds; the hours in a day don't. 
 
 A position is not a decision made once. The narrative moving a market on Thursday is rarely the one that opened the trade on Monday, and an exit price fixed at entry stops describing the risk actually being carried. Holding a position properly means managing and hedging it against what the market believes today, which is work that never pauses.
 
-The value an agent adds is capacity, not intelligence. It ingests order book state, news, and liquidity flows around the clock, and holds all of it against a **mandate**: a goal, a horizon, and risk limits a trader already holds, not a bot's fixed strategy.
+The value an agent adds is capacity, not intelligence. It ingests order book state, news, and liquidity flows around the clock, and holds all of it against a **mandate**: a goal, a horizon, and risk limits the trader already holds.
 
 It's the medium through which a trader expresses a thesis. You say what you want to hold, over what period, at what risk, and the agent does the watching.
 
@@ -78,17 +78,17 @@ The curves cross exactly at "agents that trade." What's missing at the crossing 
 
 Agentic trading went mainstream this cycle. Several brokerages and exchanges now ship their own version of "an agent trades for you," built as a feature of their own venue.
 
-That approach ties the agent to the platform: to use it, a trader has to trust the exchange underneath — its custody, its listing desk, its order book — not just the agent sitting on top of it.
+That approach ties the agent to the platform: to use it, a trader has to trust the exchange underneath too — its custody, its listing desk, its order book.
 
 Hyperion takes a different path. It expresses and executes through Hyperliquid, a venue that's already proven itself at scale: $4.4T cleared, no broker, no listing desk, no key custodian to win over. The trust question is already settled there.
 
-Past Hyperliquid, the system is infra-agnostic on purpose. The mandate, the reasoning loop, and the risk gates don't care which venue sits on the other end of the signed order. Hyperliquid is where the thesis gets expressed first — not the only place it's allowed to be.
+Past Hyperliquid, the system is infra-agnostic on purpose. The mandate, the reasoning loop, and the risk gates don't care which venue sits on the other end of the signed order. Hyperliquid is where the thesis gets expressed first, not the only place it's allowed to be.
 
 ## Moat
 
 There isn't one in the idea itself. Enough traders have started experimenting with autonomous agents that the concept alone won't hold up as a moat.
 
-What's defensible is narrower: I sell execution of a trader's judgment, not the judgment itself. That's a smaller, more concrete claim than a recommendation engine — and the scoped signing, the hard risk gates, and a track record somebody else can verify are things that get built and proven, not just described. Whoever proves it first, with real capital and a public journal, holds the position.
+What's defensible is narrower: I sell execution of a trader's judgment, not the judgment itself. That's a smaller, more concrete claim than a recommendation engine, and harder to fake. Scoped signing, hard risk gates, a track record somebody else can verify — those have to actually get built. Whoever builds them first, with real capital and a public journal, holds the position.
 
 It's also a lighter regulatory bucket than a service that generates recommendations: no custody, no advice, just an operator executing a mandate the trader already holds.
 

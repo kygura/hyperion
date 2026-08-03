@@ -24,6 +24,7 @@
     --ink2: rgba(34,31,25,0.58);
     --line: rgba(34,31,25,0.16);
     --accent: #9a5b38;
+    --hero-3d: #c94f2c; /* fixed extrusion color for the hero wordmark — same contrast against paper in both themes, unaffected by theme or accent-palette switches */
     --ease-out: cubic-bezier(.2,.7,.2,1);
     --ease-draw: cubic-bezier(.65,0,.35,1);
   }
@@ -144,8 +145,16 @@
   .hero-fade { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, var(--paper) 96%); pointer-events: none; }
   .hero-inner { position: relative; width: 100%; padding-top: 120px; padding-bottom: 84px; pointer-events: none; }
   .hero-inner .cta-row { pointer-events: auto; }
-  .hero .brand-hero { font-size: clamp(64px, 11vw, 156px); line-height: 0.92; letter-spacing: -0.02em; margin: 0 0 22px; overflow: hidden; padding-top: 0.08em; padding-bottom: 0.06em; }
+  .hero .brand-hero {
+    font-size: clamp(64px, 11vw, 156px); line-height: 0.92; letter-spacing: -0.02em; margin: 0 0 22px; overflow: hidden; padding-top: 0.08em; padding-bottom: 0.06em;
+    perspective: 900px;
+    text-shadow:
+      1px 1px 0 var(--hero-3d), 2px 2px 0 var(--hero-3d), 3px 3px 0 var(--hero-3d),
+      4px 4px 0 var(--hero-3d), 5px 5px 0 var(--hero-3d), 6px 6px 0 var(--hero-3d),
+      8px 9px 14px rgba(0,0,0,.3);
+  }
   .brand-hero .ltr { display: inline-block; transform: translateY(112%); animation: htLtr 1s var(--ease-out) forwards; animation-delay: calc(.14s + var(--i) * .045s); }
+  .brand-hero-tilt { display: inline-block; transform-style: preserve-3d; transition: transform .4s var(--ease-out); will-change: transform; }
   .hero .tagline { font-family: "Newsreader", serif; font-style: italic; font-weight: 400; font-size: clamp(19px, 2.3vw, 27px); line-height: 1.45; color: var(--ink); max-width: 34ch; margin: 0 0 26px; }
   .hero p.lead { font-size: 17px; line-height: 1.65; color: var(--ink2); max-width: 55ch; margin: 0 0 40px; }
   .cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
@@ -369,7 +378,7 @@
   <canvas id="feed"></canvas>
   <div class="hero-fade"></div>
   <div class="wrap hero-inner">
-    <h1 data-hero-anim="0" class="brand-hero" aria-label="Hyperion"><span aria-hidden="true"><span class="ltr" style="--i:0">H</span><span class="ltr" style="--i:1">y</span><span class="ltr" style="--i:2">p</span><span class="ltr" style="--i:3">e</span><span class="ltr" style="--i:4">r</span><span class="ltr" style="--i:5">i</span><span class="ltr" style="--i:6">o</span><span class="ltr" style="--i:7">n</span></span></h1>
+    <h1 data-hero-anim="0" class="brand-hero" aria-label="Hyperion"><span aria-hidden="true" class="brand-hero-tilt"><span class="ltr" style="--i:0">H</span><span class="ltr" style="--i:1">y</span><span class="ltr" style="--i:2">p</span><span class="ltr" style="--i:3">e</span><span class="ltr" style="--i:4">r</span><span class="ltr" style="--i:5">i</span><span class="ltr" style="--i:6">o</span><span class="ltr" style="--i:7">n</span></span></h1>
     <p data-hero-anim="2" class="tagline">An autonomous trading operator, built on Hyperliquid.</p>
     <p data-hero-anim="3" class="lead">Hyperion runs a trading desk around the clock. It ingests markets continuously, reasons about them in writing, and executes toward long-term financial goals you state in plain language.</p>
     <div data-hero-anim="4" class="cta-row">
@@ -583,7 +592,7 @@
     </div>
   </div>
   <p data-anim="rise" class="punchline">There's <span class="hl">no moat in the idea</span>.</p>
-  <p data-anim="rise" class="punch-sub">Enough traders have started experimenting with autonomous agents that the concept alone won't hold up on its own. What's defensible is narrower: executing a trader's judgment, not generating one. No custody, no advice, just an operator executing a mandate you already hold.</p>
+  <p data-anim="rise" class="punch-sub">Enough traders have started experimenting with autonomous agents that the concept alone won't hold up on its own. What's defensible is narrower: executing a trader's judgment instead of generating one, with no custody and no advice — just an operator working a mandate the trader already holds.</p>
 </section>
 
 <section id="contact" class="page wrap" style="padding-bottom:90px;">
@@ -791,6 +800,21 @@
       el.addEventListener("mouseup", function () { pressed = false; render(); });
       el.addEventListener("mouseleave", function () { pressed = false; dx = 0; dy = 0; el.style.transform = ""; });
     });
+  }
+
+  // Hero wordmark tilt — a light 3D parallax on the extruded "Hyperion" mark
+  if (!reduced && canHover) {
+    var heroTilt = document.querySelector(".brand-hero-tilt");
+    var heroEl = document.querySelector(".hero");
+    if (heroTilt && heroEl) {
+      heroEl.addEventListener("mousemove", function (e) {
+        var r = heroTilt.getBoundingClientRect();
+        var rx = ((e.clientY - (r.top + r.height / 2)) / (r.height / 2)) * -6;
+        var ry = ((e.clientX - (r.left + r.width / 2)) / (r.width / 2)) * 8;
+        heroTilt.style.transform = "rotateX(" + rx.toFixed(2) + "deg) rotateY(" + ry.toFixed(2) + "deg)";
+      });
+      heroEl.addEventListener("mouseleave", function () { heroTilt.style.transform = ""; });
+    }
   }
 
   // Market field canvas — ascii order-book depth ladder
