@@ -29,9 +29,11 @@ It's the medium through which a trader expresses a thesis. You say what you want
 
 Theses fail less often than the people holding them. Conviction is cheap at entry and expensive halfway through a drawdown, and most positions are closed by discomfort rather than by evidence. An operator carrying the mandate has nothing to feel: it sizes, waits, hedges, and executes the trade you said you wanted. When the read is that nothing should be done, it does nothing.
 
+This is why Hyperion automates, and never delegates. An agent asked to form and hold its own view has no persistent stake in it: every prompt re-derives a probability distribution over whatever narrative is loudest in its context, which is why these systems converge to the median and reverse the moment a headline shifts that distribution. That isn't autonomy, it's panic wearing better prose. Automation was never asked to have a view. The thesis gets fixed once, at the point of maximum clarity, when you set it, and the system's only job is holding that line against noise — a tractable engineering problem, not the unsolved one of machine conviction.
+
 ---
 
-State the outcome, delegate the mechanics. The onboarding surface of trading is becoming language, because the execution surface no longer needs a person babysitting it.
+State the outcome, automate the mechanics — never the thesis. The onboarding surface of trading is becoming language, because the execution surface no longer needs a person babysitting it.
 
 Travel platforms ship agents that search, book, and pay for a trip in one pass, no human touching the transaction. Software holds a crypto wallet and moves funds without passing KYC at a bank, so agents show up as counterparties on-chain.
 
@@ -40,7 +42,7 @@ Markets are the sharpest edge of that shift: liquid, quantifiable, adversarial, 
 ## Product: one loop, running continuously
 
 1. **Ingest.** A constant read of order books, funding, open interest, positions, and flow on Hyperliquid, normalized into one live picture of the market.
-2. **Reason.** Judgment in writing. The agent weighs the picture against your mandate (horizon, targets, risk limits) and reasons every decision in writing before acting on it.
+2. **Reason.** Judgment in writing. The agent weighs the picture against your mandate — never against a thesis of its own — and reasons every decision in writing before acting on it.
 3. **Execute.** Direct to the venue. The system sizes, stages, and places orders on Hyperliquid through hard-coded risk gates, and results feed back into the picture as the loop continues.
 
 The loop is inspectable end to end. You can read every decision the agent has made, and you can stop it at any time.
@@ -76,9 +78,9 @@ The curves cross exactly at "agents that trade." What's missing at the crossing 
 
 ## Why this isn't already solved
 
-Agentic trading went mainstream this cycle. Several brokerages and exchanges now ship their own version of "an agent trades for you," built as a feature of their own venue.
+Agentic trading went mainstream this cycle. Several brokerages and exchanges now ship their own version of "an agent trades for you" — usually pitched as the agent forming its own thesis, not carrying yours. That's the harder, unsolved problem (machine conviction) sold as the easier one (execution): an LLM asked to hold a view has no persistent stake in it, so it re-derives a probability distribution over the loudest narrative on every prompt and reverses the moment a headline shifts it. Automation doesn't have that problem, because it was never asked to have a view.
 
-That approach ties the agent to the platform: to use it, a trader has to trust the exchange underneath — its custody, its listing desk, its order book — not just the agent sitting on top of it.
+That approach also ties the agent to the platform: to use it, a trader has to trust the exchange underneath — its custody, its listing desk, its order book — not just the agent sitting on top of it.
 
 Hyperion takes a different path. It expresses and executes through Hyperliquid, a venue that's already proven itself at scale: $4.4T cleared, no broker, no listing desk, no key custodian to win over. The trust question is already settled there.
 
@@ -88,7 +90,7 @@ Past Hyperliquid, the system is infra-agnostic on purpose. The mandate, the reas
 
 There isn't one in the idea itself. Enough traders have started experimenting with autonomous agents that the concept alone won't hold up as a moat.
 
-What's defensible is narrower: I sell execution of a trader's judgment, not the judgment itself. That's a smaller, more concrete claim than a recommendation engine — and the scoped signing, the hard risk gates, and a track record somebody else can verify are things that get built and proven, not just described. Whoever proves it first, with real capital and a public journal, holds the position.
+What's defensible is narrower: I sell execution of a trader's judgment, not the judgment itself — automation, not delegation. That's a smaller, more concrete claim than a recommendation engine — and the scoped signing, the hard risk gates, and a track record somebody else can verify are things that get built and proven, not just described. Whoever proves it first, with real capital and a public journal, holds the position.
 
 It's also a lighter regulatory bucket than a service that generates recommendations: no custody, no advice, just an operator executing a mandate the trader already holds.
 
