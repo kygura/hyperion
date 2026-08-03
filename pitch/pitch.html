@@ -24,7 +24,6 @@
     --ink2: rgba(34,31,25,0.58);
     --line: rgba(34,31,25,0.16);
     --accent: #9a5b38;
-    --hero-3d: #c94f2c; /* fixed extrusion color for the hero wordmark — same contrast against paper in both themes, unaffected by theme or accent-palette switches */
     --ease-out: cubic-bezier(.2,.7,.2,1);
     --ease-draw: cubic-bezier(.65,0,.35,1);
   }
@@ -149,8 +148,8 @@
     font-size: clamp(64px, 11vw, 156px); line-height: 0.92; letter-spacing: -0.02em; margin: 0 0 22px; overflow: hidden; padding-top: 0.08em; padding-bottom: 0.06em;
     perspective: 900px;
     text-shadow:
-      1px 1px 0 var(--hero-3d), 2px 2px 0 var(--hero-3d), 3px 3px 0 var(--hero-3d),
-      4px 4px 0 var(--hero-3d), 5px 5px 0 var(--hero-3d), 6px 6px 0 var(--hero-3d),
+      1px 1px 0 var(--accent), 2px 2px 0 var(--accent), 3px 3px 0 var(--accent),
+      4px 4px 0 var(--accent), 5px 5px 0 var(--accent), 6px 6px 0 var(--accent),
       8px 9px 14px rgba(0,0,0,.3);
   }
   .brand-hero .ltr { display: inline-block; transform: translateY(112%); animation: htLtr 1s var(--ease-out) forwards; animation-delay: calc(.14s + var(--i) * .045s); }
