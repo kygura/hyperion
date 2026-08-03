@@ -867,6 +867,8 @@
     var accentHex = cs.getPropertyValue("--accent").trim();
     var aRgb = hexToRgb(accentHex) || (dark ? [201, 143, 102] : [154, 91, 56]);
     var acc = aRgb[0] + "," + aRgb[1] + "," + aRgb[2];
+    var bidRgb = dark ? "124,201,143" : "63,125,79";    // bid liquidity — green, independent of the accent palette
+    var askRgb = dark ? "224,135,135" : "178,59,59";    // ask liquidity — red, independent of the accent palette
 
     // Depth ladder: one column per cell, bid liquidity builds left of the touch, ask liquidity builds right.
     var cellPx = CELL * dpr;
@@ -900,7 +902,7 @@
       if (rows < 1) continue;
       var dCenter = Math.abs(x - ax);
       var wgtC = Math.max(0, 1 - dCenter / R);
-      ctx.fillStyle = "rgba(" + (bid ? acc : inkRgb) + "," + Math.min(0.95, (bid ? 0.48 : 0.3) + wgtC * 0.4).toFixed(3) + ")";
+      ctx.fillStyle = "rgba(" + (bid ? bidRgb : askRgb) + "," + Math.min(0.95, 0.42 + wgtC * 0.4).toFixed(3) + ")";
       for (var ry = 0; ry < rows; ry++) {
         ctx.fillText(bid ? "#" : ":", x, chartBot - ry * rowH - rowH * 0.5);
       }
