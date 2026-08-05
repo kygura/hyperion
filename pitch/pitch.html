@@ -147,14 +147,8 @@
   .hero .brand-hero {
     font-size: clamp(64px, 11vw, 156px); line-height: 0.92; letter-spacing: -0.02em; margin: 0 0 22px; overflow: hidden; padding-top: 0.08em; padding-bottom: 0.06em;
     perspective: 900px;
-    text-shadow:
-      1px 1px 0 color-mix(in srgb, var(--accent) 55%, transparent),
-      2px 2px 0 color-mix(in srgb, var(--accent) 55%, transparent),
-      3px 3px 0 color-mix(in srgb, var(--accent) 55%, transparent),
-      4px 4px 0 color-mix(in srgb, var(--accent) 55%, transparent),
-      5px 5px 0 color-mix(in srgb, var(--accent) 55%, transparent),
-      6px 6px 0 color-mix(in srgb, var(--accent) 55%, transparent),
-      8px 9px 14px rgba(0,0,0,.3);
+    color: var(--ink);
+    font-weight: 500;
   }
   .brand-hero .ltr { display: inline-block; transform: translateY(112%); animation: htLtr 1s var(--ease-out) forwards; animation-delay: calc(.14s + var(--i) * .045s); }
   .brand-hero-tilt { display: inline-block; transform-style: preserve-3d; transition: transform .4s var(--ease-out); will-change: transform; }
