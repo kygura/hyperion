@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/hyperagent/hyperagent/internal/bus"
 	"github.com/hyperagent/hyperagent/internal/config"
+	"github.com/hyperagent/hyperagent/internal/metrics"
 	"github.com/hyperagent/hyperagent/internal/store"
 )
 
@@ -32,6 +34,37 @@ func testDeps(t *testing.T, mutate func(*config.Config)) Deps {
 		Exec:    nil,
 		Cfg:     cfg,
 		Version: "test",
+	}
+}
+
+// TestNewServerSubscribesBeforeReturning guards against a regression of the
+// bug behind the CI flake in TestVerdictsEndpoint: bus.topic.publish only
+// fans out to subscribers already registered at call time, so if NewServer
+// registered its bus subscriptions from inside the runCaches goroutine
+// instead of synchronously before returning, a publish landing right after
+// construction could race the goroutine's startup and be silently dropped.
+// This test publishes immediately after NewServer with no sleep or
+// intervening httptest server in between, so it would fail intermittently
+// (and near-certainly under -race, which slows goroutine scheduling) if that
+// race were reintroduced.
+func TestNewServerSubscribesBeforeReturning(t *testing.T) {
+	d := testDeps(t, nil)
+	s := NewServer(d)
+
+	d.Bus.PublishVerdict(metrics.Verdict{Asset: "BTC", Action: metrics.ActionHold, Confidence: 0.5})
+
+	deadline := time.Now().Add(time.Second)
+	for {
+		s.state.mu.RLock()
+		n := len(s.state.verdicts)
+		s.state.mu.RUnlock()
+		if n == 1 {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("verdict published immediately after NewServer was never observed (subscription race?)")
+		}
+		time.Sleep(time.Millisecond)
 	}
 }
 

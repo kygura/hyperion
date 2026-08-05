@@ -117,8 +117,41 @@ func NewServer(d Deps) *Server {
 		},
 	}
 	s.routes()
-	go s.runCaches()
+
+	// Subscriptions are registered here, synchronously, rather than inside the
+	// runCaches goroutine below: bus.topic.publish only fans out to subscribers
+	// already registered at call time, so a publish arriving before the
+	// goroutine got scheduled to its Subscribe* calls would be dropped for
+	// good. Doing it before NewServer returns means the Server is never in a
+	// state where it exists but can still lose events it should have caught.
+	caches := s.subscribeCaches()
+	go s.runCaches(caches)
 	return s
+}
+
+// cacheChannels holds the bus subscriptions runCaches drains. Subscribing is
+// split out from the drain loop so NewServer can register every topic before
+// any caller has a chance to publish to it.
+type cacheChannels struct {
+	status   <-chan bus.StatusEvent
+	digests  <-chan metrics.Digest
+	verdicts <-chan metrics.Verdict
+	bars     <-chan metrics.Bar
+	journal  <-chan bus.JournalEvent
+	mids     <-chan metrics.MidSnapshot
+	theses   <-chan metrics.Thesis
+}
+
+func (s *Server) subscribeCaches() cacheChannels {
+	return cacheChannels{
+		status:   s.deps.Bus.SubscribeStatus(8),
+		digests:  s.deps.Bus.SubscribeDigests(16),
+		verdicts: s.deps.Bus.SubscribeVerdicts(16),
+		bars:     s.deps.Bus.SubscribeBars(32),
+		journal:  s.deps.Bus.SubscribeJournal(32),
+		mids:     s.deps.Bus.SubscribeMids(32),
+		theses:   s.deps.Bus.SubscribeTheses(16),
+	}
 }
 
 // routes registers every handler on the mux. Kept as one method so the route
@@ -155,14 +188,14 @@ func (s *Server) routes() {
 // It also fans every event it consumes out to registered WS clients (Task 6)
 // — one subscription set, two consumers (the request-handler caches and the
 // WS broadcast), rather than a second parallel subscription goroutine.
-func (s *Server) runCaches() {
-	statusCh := s.deps.Bus.SubscribeStatus(8)
-	digestsCh := s.deps.Bus.SubscribeDigests(16)
-	verdictsCh := s.deps.Bus.SubscribeVerdicts(16)
-	barsCh := s.deps.Bus.SubscribeBars(32)
-	journalCh := s.deps.Bus.SubscribeJournal(32)
-	midsCh := s.deps.Bus.SubscribeMids(32)
-	thesesCh := s.deps.Bus.SubscribeTheses(16)
+func (s *Server) runCaches(ch cacheChannels) {
+	statusCh := ch.status
+	digestsCh := ch.digests
+	verdictsCh := ch.verdicts
+	barsCh := ch.bars
+	journalCh := ch.journal
+	midsCh := ch.mids
+	thesesCh := ch.theses
 	for {
 		select {
 		case ev, ok := <-statusCh:
