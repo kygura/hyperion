@@ -817,14 +817,10 @@
     var dark = body.getAttribute("data-theme") === "dark";
     var inkRgb = dark ? "234,229,218" : "34,31,25";
     var accentHex = cs.getPropertyValue("--accent").trim();
-    var aRgb = hexToRgb(accentHex) || (dark ? [201, 143, 102] : [154, 91, 56]);
+    var aRgb = hexToRgb(accentHex) || (dark ? [124, 201, 143] : [63, 125, 79]);
     var acc = aRgb[0] + "," + aRgb[1] + "," + aRgb[2];
     var bidRgb = acc;                                   // bid liquidity glyphs — tinted with the accent
     var askRgb = dark ? "224,135,135" : "178,59,59";    // ask liquidity — red, independent of the accent
-
-    // Wash the field with the accent so the ascii art's backdrop tracks the palette picker, not just its glyphs.
-    ctx.fillStyle = "rgba(" + acc + "," + (dark ? 0.12 : 0.07) + ")";
-    ctx.fillRect(0, 0, w, hgt);
 
     // Depth ladder: one column per cell, bid liquidity builds left of the touch, ask liquidity builds right.
     var cellPx = CELL * dpr;
