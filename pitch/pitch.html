@@ -146,12 +146,11 @@
   .hero-inner .cta-row { pointer-events: auto; }
   .hero .brand-hero {
     font-size: clamp(64px, 11vw, 156px); line-height: 0.92; letter-spacing: -0.02em; margin: 0 0 22px; overflow: hidden; padding-top: 0.08em; padding-bottom: 0.2em;
-    perspective: 900px;
     color: var(--ink);
     font-weight: 500;
   }
   .brand-hero .ltr { display: inline-block; transform: translateY(112%); animation: htLtr 1s var(--ease-out) forwards; animation-delay: calc(.14s + var(--i) * .045s); }
-  .brand-hero-tilt { display: inline-block; transform-style: preserve-3d; transition: transform .4s var(--ease-out); will-change: transform; }
+  .brand-hero-tilt { display: inline-block; }
   .hero .tagline { font-family: "Newsreader", serif; font-style: italic; font-weight: 400; font-size: clamp(19px, 2.3vw, 27px); line-height: 1.45; color: var(--ink); max-width: 34ch; margin: 0 0 26px; }
   .hero p.lead { font-size: 17px; line-height: 1.65; color: var(--ink2); max-width: 55ch; margin: 0 0 40px; }
   .cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
@@ -800,21 +799,6 @@
     });
   }
 
-  // Hero wordmark tilt — a light 3D parallax on the extruded "Hyperion" mark
-  if (!reduced && canHover) {
-    var heroTilt = document.querySelector(".brand-hero-tilt");
-    var heroEl = document.querySelector(".hero");
-    if (heroTilt && heroEl) {
-      heroEl.addEventListener("mousemove", function (e) {
-        var r = heroTilt.getBoundingClientRect();
-        var rx = ((e.clientY - (r.top + r.height / 2)) / (r.height / 2)) * -6;
-        var ry = ((e.clientX - (r.left + r.width / 2)) / (r.width / 2)) * 8;
-        heroTilt.style.transform = "rotateX(" + rx.toFixed(2) + "deg) rotateY(" + ry.toFixed(2) + "deg)";
-      });
-      heroEl.addEventListener("mouseleave", function () { heroTilt.style.transform = ""; });
-    }
-  }
-
   // Market field canvas — ascii order-book depth ladder
   function handleMarketClick(e) {
     if (reduced) return;
@@ -891,6 +875,10 @@
     var acc = aRgb[0] + "," + aRgb[1] + "," + aRgb[2];
     var bidRgb = dark ? "124,201,143" : "63,125,79";    // bid liquidity — green, independent of the accent palette
     var askRgb = dark ? "224,135,135" : "178,59,59";    // ask liquidity — red, independent of the accent palette
+
+    // Wash the field with the accent so the ascii art's backdrop tracks the palette picker, not just its glyphs.
+    ctx.fillStyle = "rgba(" + acc + "," + (dark ? 0.12 : 0.07) + ")";
+    ctx.fillRect(0, 0, w, hgt);
 
     // Depth ladder: one column per cell, bid liquidity builds left of the touch, ask liquidity builds right.
     var cellPx = CELL * dpr;
