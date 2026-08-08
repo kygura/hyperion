@@ -23,7 +23,7 @@
     --ink: #221f19;
     --ink2: rgba(34,31,25,0.58);
     --line: rgba(34,31,25,0.16);
-    --accent: #9a5b38;
+    --accent: #3f7d4f;
     --ease-out: cubic-bezier(.2,.7,.2,1);
     --ease-draw: cubic-bezier(.65,0,.35,1);
   }
@@ -33,7 +33,7 @@
     --ink: #eae5da;
     --ink2: rgba(234,229,218,0.56);
     --line: rgba(234,229,218,0.15);
-    --accent: #c98f66;
+    --accent: #7cc98f;
   }
   @media (prefers-color-scheme: dark) {
     body:not([data-theme]) {
@@ -42,17 +42,8 @@
       --ink: #eae5da;
       --ink2: rgba(234,229,218,0.56);
       --line: rgba(234,229,218,0.15);
-      --accent: #c98f66;
+      --accent: #7cc98f;
     }
-  }
-  /* Palettes — swap the accent via ?palette=cyan|green (see initPalette) */
-  body[data-palette="cyan"] { --accent: #0d8f83; }
-  body[data-palette="cyan"][data-theme="dark"] { --accent: #4fd8c4; }
-  body[data-palette="green"] { --accent: #3f7d4f; }
-  body[data-palette="green"][data-theme="dark"] { --accent: #7cc98f; }
-  @media (prefers-color-scheme: dark) {
-    body[data-palette="cyan"]:not([data-theme]) { --accent: #4fd8c4; }
-    body[data-palette="green"]:not([data-theme]) { --accent: #7cc98f; }
   }
   /* Full-screen circular reveal for the theme toggle (native View Transitions API) */
   @media (prefers-reduced-motion: no-preference) {
@@ -128,16 +119,6 @@
   .nav-link:hover::after, .nav-link.is-active::after { right: 0; }
   #theme-toggle { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink2); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
   #theme-toggle:hover { color: var(--ink); border-color: var(--ink2); }
-
-  .palette-select { position: relative; }
-  .palette-select summary { list-style: none; cursor: pointer; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
-  .palette-select summary::-webkit-details-marker { display: none; }
-  .palette-select summary:hover { border-color: var(--ink2); }
-  .palette-select[open] summary { border-color: var(--ink2); }
-  .swatch-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
-  .palette-pop { position: absolute; top: calc(100% + 8px); right: 0; display: flex; gap: 8px; padding: 8px; background: var(--paper2); border: 1px solid var(--line); border-radius: 999px; z-index: 30; animation: htRise .18s var(--ease-out); }
-  .swatch { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line); background: var(--sw); cursor: pointer; padding: 0; }
-  .swatch[aria-current="true"] { box-shadow: 0 0 0 2px var(--paper2), 0 0 0 3px var(--ink2); }
 
   .hero { position: relative; min-height: 86vh; display: flex; align-items: flex-end; overflow: hidden; }
   .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; }
@@ -355,14 +336,6 @@
         <button id="view-human" type="button" class="view-btn is-active" aria-pressed="true">Human</button>
         <button id="view-agent" type="button" class="view-btn" aria-pressed="false">Agent</button>
       </div>
-      <details id="palette-select" class="palette-select">
-        <summary aria-label="Choose accent palette"><span class="swatch-dot"></span></summary>
-        <div class="palette-pop" role="group" aria-label="Accent palette">
-          <button type="button" class="swatch" data-palette="orange" style="--sw:#9a5b38" aria-label="Orange"></button>
-          <button type="button" class="swatch" data-palette="cyan" style="--sw:#0d8f83" aria-label="Cyan"></button>
-          <button type="button" class="swatch" data-palette="green" style="--sw:#3f7d4f" aria-label="Green"></button>
-        </div>
-      </details>
       <button id="theme-toggle" type="button">Dark</button>
     </nav>
   </div>
@@ -677,33 +650,6 @@
     t.finished.then(function () { themeBtn.disabled = false; });
   });
 
-  // Palette — swap the accent color via the header swatch picker (or ?palette=cyan|green|orange), persisted after that
-  var PALETTES = ["orange", "cyan", "green"];
-  var paletteSelect = document.getElementById("palette-select");
-  var swatches = document.querySelectorAll(".swatch");
-  function setPalette(palette, persist) {
-    body.setAttribute("data-palette", palette);
-    swatches.forEach(function (s) { s.setAttribute("aria-current", s.dataset.palette === palette ? "true" : "false"); });
-    if (persist) { try { localStorage.setItem("hyperion-palette", palette); } catch (e) {} }
-    if (!motionOn()) drawFrame(performance.now());
-  }
-  (function initPalette() {
-    var qp = new URLSearchParams(window.location.search).get("palette");
-    var stored;
-    try { stored = localStorage.getItem("hyperion-palette"); } catch (e) { stored = null; }
-    var palette = PALETTES.indexOf(qp) !== -1 ? qp : (PALETTES.indexOf(stored) !== -1 ? stored : "orange");
-    setPalette(palette, PALETTES.indexOf(qp) !== -1);
-  })();
-  swatches.forEach(function (s) {
-    s.addEventListener("click", function () {
-      setPalette(s.dataset.palette, true);
-      paletteSelect.open = false;
-    });
-  });
-  document.addEventListener("click", function (e) {
-    if (paletteSelect.open && !paletteSelect.contains(e.target)) paletteSelect.open = false;
-  });
-
   function motionOn() { return !reduced; }
 
   // Scroll reveals
@@ -873,8 +819,8 @@
     var accentHex = cs.getPropertyValue("--accent").trim();
     var aRgb = hexToRgb(accentHex) || (dark ? [201, 143, 102] : [154, 91, 56]);
     var acc = aRgb[0] + "," + aRgb[1] + "," + aRgb[2];
-    var bidRgb = dark ? "124,201,143" : "63,125,79";    // bid liquidity — green, independent of the accent palette
-    var askRgb = dark ? "224,135,135" : "178,59,59";    // ask liquidity — red, independent of the accent palette
+    var bidRgb = acc;                                   // bid liquidity glyphs — tinted with the accent
+    var askRgb = dark ? "224,135,135" : "178,59,59";    // ask liquidity — red, independent of the accent
 
     // Wash the field with the accent so the ascii art's backdrop tracks the palette picker, not just its glyphs.
     ctx.fillStyle = "rgba(" + acc + "," + (dark ? 0.12 : 0.07) + ")";
