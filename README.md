@@ -8,6 +8,15 @@ Autonomous trading operator on Hyperliquid. Agents state a mandate in plain lang
 
 Hyperion is an early, alpha-stage prototype. The backend is functional — it places real orders on Hyperliquid (mainnet or testnet) through a real signer and risk-gated executor — and the TUI is a working but limited operator cockpit. It currently runs as a single-process, single-operator, single-account tool: one instance per config/`.env`, local NDJSON files for persistence, no containerized deployment, no CI, and no multi-tenant or multi-user model, so it is not scalable as-is. There is no billing or account layer, so it is not monetizable today. The web dashboard is a local client SPA you run yourself against your own backend, not a hosted product. The plan is to build a full end-to-end hosted web application that runs the entire pipeline (ingest → reason → execute → journal) as a multi-user product — that work has not started yet.
 
+## JEV strategy runtime (prototype, in flight)
+
+A second reasoning path is being scaffolded: strategies as plug-ins that ask
+[Jev](https://typesafe.ai) (TypeSafe AI's System One decision model) typed
+questions and map the calibrated answers to intents in code, gated by a
+Governor and executed through a chain-agnostic venue interface. The TUI
+becomes the operator console for it; the web console lives in `hypertrade`.
+See `docs/jev/SPEC.md`, `docs/jev/PROTOCOL.md`, and `docs/jev/RESEARCH.md`.
+
 ## Architecture
 
 **Full loop:** ingest → reason → execute → journal
