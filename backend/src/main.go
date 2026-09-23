@@ -42,6 +42,7 @@ import (
 	strategyrt "github.com/hyperagent/hyperagent/internal/strategy/runtime"
 	"github.com/hyperagent/hyperagent/internal/strategy/venue"
 	hlvenue "github.com/hyperagent/hyperagent/internal/strategy/venue/hyperliquid"
+	monadvenue "github.com/hyperagent/hyperagent/internal/strategy/venue/monad"
 	"github.com/hyperagent/hyperagent/internal/strategy/venue/paper"
 	"github.com/hyperagent/hyperagent/internal/telegram"
 	"github.com/hyperagent/hyperagent/internal/thesis"
@@ -347,11 +348,25 @@ func buildStrategyRuntime(cfg config.Config, b *bus.Bus, jr *journal.Journal, re
 	if err != nil {
 		return nil, err
 	}
+	gov := strategyrt.NewGovernor(cfg.Strategy.Governor, store.OpenCount)
+	venues := map[string]venue.Venue{hlvenue.ID: hl, paper.ID: pv}
+	if mc := cfg.Strategy.Venues.Monad; mc.Enabled {
+		mv, err := buildMonadVenue(mc, func() float64 { return gov.Settings().MaxNotionalUSD })
+		if err != nil {
+			return nil, err
+		}
+		venues[monadvenue.ID] = mv
+		mode := "read-only (no MONAD key)"
+		if mv.HasSigner() {
+			mode = "signer " + mv.Address().Hex()
+		}
+		log.Printf("strategy: monad venue enabled (%s, %s)", mc.Network, mode)
+	}
 	rt, err := strategyrt.New(strategyrt.Config{
 		Strategies: registry.All(),
-		Venues:     map[string]venue.Venue{hlvenue.ID: hl, paper.ID: pv},
+		Venues:     venues,
 		Decider:    d,
-		Governor:   strategyrt.NewGovernor(cfg.Strategy.Governor, store.OpenCount),
+		Governor:   gov,
 		Store:      store,
 		Bus:        b,
 		Journal:    jr,
@@ -362,6 +377,47 @@ func buildStrategyRuntime(cfg config.Config, b *bus.Bus, jr *journal.Journal, re
 	}
 	log.Printf("strategy runtime: %d strategies, decider=%s, governor=%s", len(registry.Names()), cfg.Strategy.Decider.Kind, cfg.Strategy.Governor.Mode)
 	return rt, nil
+}
+
+// buildMonadVenue maps [strategy.venues.monad] onto the EVM venue. The RPC
+// URL comes from the env var rpc_url_env names (MONAD_RPC_URL), else
+// rpc_url, else the network default; the key only from private_key_env.
+// govCap is the governor's live max_notional_usd, which the venue enforces
+// itself because the executor's risk gates never see Monad orders.
+func buildMonadVenue(mc config.MonadVenue, govCap func() float64) (*monadvenue.Venue, error) {
+	rpcURL := mc.RPCURL
+	if mc.RPCURLEnv != "" {
+		if v := strings.TrimSpace(os.Getenv(mc.RPCURLEnv)); v != "" {
+			rpcURL = v
+		}
+	}
+	key := ""
+	if mc.PrivateKeyEnv != "" {
+		key = strings.TrimSpace(os.Getenv(mc.PrivateKeyEnv))
+	}
+	vc := monadvenue.Config{
+		Network:        mc.Network,
+		RPCURL:         rpcURL,
+		ChainID:        mc.ChainID,
+		PrivateKeyHex:  key,
+		Quoter:         mc.Quoter,
+		Router:         mc.Router,
+		SlippageBps:    mc.SlippageBps,
+		MaxNotionalUSD: mc.MaxNotionalUSD,
+		ReceiptTimeout: mc.ReceiptTimeout.Duration,
+	}
+	if mc.QuoteToken != "" {
+		vc.Quote = monadvenue.Token{Symbol: mc.QuoteSymbol, Address: mc.QuoteToken, Decimals: mc.QuoteDecimals}
+	}
+	for _, p := range mc.Pairs {
+		vc.Pairs = append(vc.Pairs, monadvenue.Pair{
+			Symbol: p.Symbol,
+			Token:  monadvenue.Token{Symbol: p.Symbol, Address: p.Token, Decimals: p.Decimals},
+			Fee:    p.Fee,
+			Probe:  p.Probe,
+		})
+	}
+	return monadvenue.New(vc, monadvenue.WithNotionalCap(govCap))
 }
 
 // buildGateRules maps the [gate] config section onto the gate's rule set.

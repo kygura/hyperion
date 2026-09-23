@@ -23,7 +23,9 @@ var RegimeRotationManifest = strategy.Manifest{
 	Name:        "Regime rotation",
 	Version:     "0.1.0",
 	Description: "Classify the majors' regime (risk_on / risk_off / chop) and rebalance BTC and ETH toward that regime's target weights.",
-	Venues:      []string{"hyperliquid", "paper"},
+	// monad: spot-only, so negative (short) target weights are refused by
+	// the venue; use long-only weights and params.markets = ["ETH", "MON"].
+	Venues:      []string{"hyperliquid", "paper", "monad"},
 	Cadence:     "1h",
 	Markets:     []string{"BTC", "ETH", "SOL", "HYPE"},
 	Params: []strategy.ParamSpec{

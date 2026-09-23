@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -38,7 +39,101 @@ type Strategy struct {
 	DecisionsDir string                    `toml:"decisions_dir"`
 	Decider      StrategyDecider           `toml:"decider"`
 	Governor     strategy.GovernorSettings `toml:"governor"`
+	Venues       StrategyVenues            `toml:"venues"`
 	Configs      []strategy.StrategyConfig `toml:"configs"`
+}
+
+// StrategyVenues holds the optional venues beyond hyperliquid and paper
+// (which are always wired). Each is off unless enabled.
+type StrategyVenues struct {
+	Monad MonadVenue `toml:"monad"`
+}
+
+// MonadVenue configures the Monad EVM venue (docs/jev/RESEARCH-monad.md):
+// Uniswap v3 spot swaps over JSON-RPC. The RPC URL comes from the env var
+// RPCURLEnv names, else RPCURL, else the network's public endpoint. The
+// signer comes only from PrivateKeyEnv (never stored in this file, never a
+// Hyperliquid key). Empty addresses and pairs take the network defaults.
+type MonadVenue struct {
+	Enabled        bool        `toml:"enabled"`
+	Network        string      `toml:"network"`         // mainnet | testnet
+	RPCURL         string      `toml:"rpc_url"`         // optional; env wins
+	RPCURLEnv      string      `toml:"rpc_url_env"`     // default MONAD_RPC_URL
+	ChainID        int64       `toml:"chain_id"`        // 0 → 143 mainnet / 10143 testnet
+	PrivateKeyEnv  string      `toml:"private_key_env"` // default MONAD_PRIVATE_KEY
+	Quoter         string      `toml:"quoter"`          // Uniswap v3 QuoterV2
+	Router         string      `toml:"router"`          // Uniswap v3 SwapRouter02
+	QuoteSymbol    string      `toml:"quote_symbol"`    // USD-pegged quote token
+	QuoteToken     string      `toml:"quote_token"`
+	QuoteDecimals  int         `toml:"quote_decimals"`
+	SlippageBps    float64     `toml:"slippage_bps"`
+	MaxNotionalUSD float64     `toml:"max_notional_usd"` // venue cap; the governor's global cap also applies
+	ReceiptTimeout Duration    `toml:"receipt_timeout"`
+	Pairs          []MonadPair `toml:"pairs"`
+}
+
+// MonadPair maps a strategy-facing symbol onto a base token and pool fee.
+type MonadPair struct {
+	Symbol   string  `toml:"symbol"`
+	Token    string  `toml:"token"`
+	Decimals int     `toml:"decimals"`
+	Fee      uint32  `toml:"fee"`   // 100 | 500 | 3000 | 10000
+	Probe    float64 `toml:"probe"` // base units quoted for the mark (default 1)
+}
+
+// hyperliquidKeyEnvs are the Hyperliquid signer variables; the Monad venue
+// refuses to read its key from any of them.
+var hyperliquidKeyEnvs = map[string]bool{"HL_AGENT_KEY": true, "HL_MASTER_KEY": true}
+
+func (m MonadVenue) validate() error {
+	if m.Network != "mainnet" && m.Network != "testnet" {
+		return fmt.Errorf("config: strategy.venues.monad.network must be mainnet|testnet, got %q", m.Network)
+	}
+	if hyperliquidKeyEnvs[strings.ToUpper(strings.TrimSpace(m.PrivateKeyEnv))] {
+		return fmt.Errorf("config: strategy.venues.monad.private_key_env must not be a Hyperliquid key variable (%s)", m.PrivateKeyEnv)
+	}
+	if m.SlippageBps < 0 || m.SlippageBps > 1000 {
+		return fmt.Errorf("config: strategy.venues.monad.slippage_bps must be in [0,1000], got %v", m.SlippageBps)
+	}
+	if m.MaxNotionalUSD < 0 {
+		return fmt.Errorf("config: strategy.venues.monad.max_notional_usd must be >= 0")
+	}
+	for _, a := range []struct{ name, v string }{{"quoter", m.Quoter}, {"router", m.Router}, {"quote_token", m.QuoteToken}} {
+		if a.v != "" && !isHexAddress(a.v) {
+			return fmt.Errorf("config: strategy.venues.monad.%s %q is not a 0x address", a.name, a.v)
+		}
+	}
+	seen := map[string]bool{}
+	for i, p := range m.Pairs {
+		if strings.TrimSpace(p.Symbol) == "" {
+			return fmt.Errorf("config: strategy.venues.monad.pairs[%d] has no symbol", i)
+		}
+		if seen[strings.ToUpper(p.Symbol)] {
+			return fmt.Errorf("config: strategy.venues.monad.pairs has duplicate symbol %q", p.Symbol)
+		}
+		seen[strings.ToUpper(p.Symbol)] = true
+		if !isHexAddress(p.Token) {
+			return fmt.Errorf("config: strategy.venues.monad.pairs[%s].token %q is not a 0x address", p.Symbol, p.Token)
+		}
+		switch p.Fee {
+		case 0, 100, 500, 3000, 10000:
+		default:
+			return fmt.Errorf("config: strategy.venues.monad.pairs[%s].fee must be 100|500|3000|10000, got %d", p.Symbol, p.Fee)
+		}
+	}
+	return nil
+}
+
+func isHexAddress(s string) bool {
+	if len(s) != 42 || !strings.HasPrefix(s, "0x") && !strings.HasPrefix(s, "0X") {
+		return false
+	}
+	for _, c := range s[2:] {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F') {
+			return false
+		}
+	}
+	return true
 }
 
 // StrategyDecider selects the decider: "jev" (TypeSafe HTTP, key from the
@@ -307,6 +402,14 @@ func Default() Config {
 				MaxNotionalUSD: 1000,
 				MaxOpenIntents: 5,
 			},
+			Venues: StrategyVenues{Monad: MonadVenue{
+				Enabled:        false,
+				Network:        "mainnet",
+				RPCURLEnv:      "MONAD_RPC_URL",
+				PrivateKeyEnv:  "MONAD_PRIVATE_KEY",
+				SlippageBps:    50,
+				ReceiptTimeout: Duration{30 * time.Second},
+			}},
 		},
 	}
 }
@@ -382,6 +485,9 @@ func (c Config) validate() error {
 	}
 	if err := c.Strategy.Governor.Validate(); err != nil {
 		return fmt.Errorf("config: strategy.governor: %w", err)
+	}
+	if err := c.Strategy.Venues.Monad.validate(); err != nil {
+		return err
 	}
 	seen := map[string]bool{}
 	for i, sc := range c.Strategy.Configs {

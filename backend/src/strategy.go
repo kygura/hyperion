@@ -127,13 +127,17 @@ func strategyRun(args []string, stdout, stderr io.Writer) error {
 	venues := map[string]venue.Venue{"paper": pv, "hyperliquid": hl}
 
 	// Force the paper venue for the dry run: hyperliquid needs a master
-	// address for positions and a signer for anything else.
+	// address for positions and a signer for anything else. Configs on a
+	// venue the CLI does not wire (e.g. monad) also fall back to paper so
+	// runtime validation does not refuse the whole set.
 	configs := cfg.Strategy.Configs
 	found := false
 	for i := range configs {
 		if configs[i].ID == id {
 			configs[i].Venue = "paper"
 			found = true
+		} else if _, ok := venues[configs[i].Venue]; !ok {
+			configs[i].Venue = "paper"
 		}
 	}
 	if !found {

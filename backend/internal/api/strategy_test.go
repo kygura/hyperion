@@ -18,6 +18,7 @@ import (
 	"github.com/hyperagent/hyperagent/internal/strategy/registry"
 	"github.com/hyperagent/hyperagent/internal/strategy/runtime"
 	"github.com/hyperagent/hyperagent/internal/strategy/venue"
+	"github.com/hyperagent/hyperagent/internal/strategy/venue/monad"
 	"github.com/hyperagent/hyperagent/internal/strategy/venue/paper"
 )
 
@@ -348,5 +349,59 @@ func TestStrategyRun503WhenJevKeyMissing(t *testing.T) {
 	}
 	if len(store.List(10, "")) != 0 {
 		t.Error("record written despite unavailable decider")
+	}
+}
+
+// TestStrategyVenuesReportsMonad: with the monad venue wired (read-only,
+// pointed at a minimal JSON-RPC stub) GET /api/strategy/venues reports it
+// as kind evm / chain monad with its chain id and head block in meta.
+func TestStrategyVenuesReportsMonad(t *testing.T) {
+	rpc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			ID     json.RawMessage `json:"id"`
+			Method string          `json:"method"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		result := map[string]string{"eth_chainId": "0x8f", "eth_blockNumber": "0x64"}[req.Method]
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": req.ID, "result": result})
+	}))
+	defer rpc.Close()
+	mv, err := monad.New(monad.Config{RPCURL: rpc.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pv := paper.New()
+	store, _ := runtime.NewDecisionStore("")
+	rt, err := runtime.New(runtime.Config{
+		Strategies: registry.All(),
+		Venues:     map[string]venue.Venue{"paper": pv, "monad": mv},
+		Decider:    fake.New(nil),
+		Store:      store,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	deps := testDeps(t, nil)
+	deps.Strategy = rt
+	srv := httptest.NewServer(NewServer(deps).Handler())
+	defer srv.Close()
+
+	code, body := do(t, srv, http.MethodGet, "/api/strategy/venues", nil)
+	var out struct {
+		Venues []venue.VenueStatus `json:"venues"`
+	}
+	if err := json.Unmarshal(body, &out); err != nil || code != http.StatusOK || len(out.Venues) != 2 {
+		t.Fatalf("venues = %d %s", code, body)
+	}
+	m := out.Venues[0]
+	if m.ID != "monad" || m.Kind != "evm" || m.Chain != "monad" || m.Status != "connected" || strings.Join(m.Capabilities, ",") != "spot" {
+		t.Errorf("monad = %+v", m)
+	}
+	if m.Meta["chain_id"] != float64(143) || m.Meta["head_block"] != float64(100) || m.Meta["protocol"] != "uniswap_v3" {
+		t.Errorf("meta = %+v", m.Meta)
+	}
+	if !strings.Contains(string(body), `"positions":[]`) {
+		t.Errorf("positions must serialise as [] not null: %s", body)
 	}
 }

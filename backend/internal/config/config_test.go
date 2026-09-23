@@ -385,3 +385,66 @@ func TestStrategySectionDefaultsAndRoundTrip(t *testing.T) {
 		t.Errorf("bad decider kind: err = %v", err)
 	}
 }
+
+// TestMonadVenueSection: the venue is off by default with the documented
+// env names; an explicit section with pairs parses and round-trips; the
+// Hyperliquid key variables and malformed values are refused.
+func TestMonadVenueSection(t *testing.T) {
+	d := Default().Strategy.Venues.Monad
+	if d.Enabled || d.Network != "mainnet" || d.RPCURLEnv != "MONAD_RPC_URL" || d.PrivateKeyEnv != "MONAD_PRIVATE_KEY" || d.SlippageBps != 50 || d.ReceiptTimeout.Duration != 30*time.Second {
+		t.Fatalf("monad defaults = %+v", d)
+	}
+
+	path := filepath.Join(t.TempDir(), "config.toml")
+	body := `
+[markets]
+  visualized = ["BTC"]
+[strategy.venues.monad]
+  enabled = true
+  network = "testnet"
+  chain_id = 10143
+  max_notional_usd = 100
+  receipt_timeout = "12s"
+  [[strategy.venues.monad.pairs]]
+    symbol = "MON"
+    token = "0xFb8bf4c1CC7a94c73D209a149eA2AbEa852BC541"
+    decimals = 18
+    fee = 3000
+`
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	m := cfg.Strategy.Venues.Monad
+	if !m.Enabled || m.Network != "testnet" || m.ChainID != 10143 || m.MaxNotionalUSD != 100 || m.ReceiptTimeout.Duration != 12*time.Second || len(m.Pairs) != 1 || m.Pairs[0].Fee != 3000 {
+		t.Fatalf("monad = %+v", m)
+	}
+	if m.PrivateKeyEnv != "MONAD_PRIVATE_KEY" || m.SlippageBps != 50 {
+		t.Errorf("unset fields should keep defaults: %+v", m)
+	}
+	saved := filepath.Join(t.TempDir(), "saved.toml")
+	if err := Save(saved, cfg); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Load(saved)
+	if err != nil || got.Strategy.Venues.Monad.Network != "testnet" || len(got.Strategy.Venues.Monad.Pairs) != 1 {
+		t.Fatalf("round trip = %+v, %v", got.Strategy.Venues.Monad, err)
+	}
+
+	for name, section := range map[string]string{
+		"hl key":   "private_key_env = \"HL_AGENT_KEY\"",
+		"network":  "network = \"devnet\"",
+		"slippage": "slippage_bps = 5000",
+		"router":   "router = \"0x123\"",
+		"fee":      "[[strategy.venues.monad.pairs]]\n  symbol = \"MON\"\n  token = \"0xFb8bf4c1CC7a94c73D209a149eA2AbEa852BC541\"\n  fee = 42",
+	} {
+		bad := filepath.Join(t.TempDir(), "bad.toml")
+		_ = os.WriteFile(bad, []byte("[markets]\n  visualized = [\"BTC\"]\n[strategy.venues.monad]\n  "+section+"\n"), 0o600)
+		if _, err := Load(bad); err == nil || !strings.Contains(err.Error(), "venues.monad") {
+			t.Errorf("%s: err = %v", name, err)
+		}
+	}
+}

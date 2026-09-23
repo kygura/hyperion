@@ -77,7 +77,20 @@ objects; clients render `what` when it is an object.
 
 // VenueStatus
 { "id": "paper", "kind": "paper", "chain": "none", "status": "connected", "capabilities": ["perps"], "positions": [ { "market": "ETH", "size_usd": -250, "entry": 3100.5, "mark": 3080.2, "upnl_usd": 1.6 } ] }
+{ "id": "monad", "kind": "evm", "chain": "monad", "status": "connected", "capabilities": ["spot", "execute"],
+  "positions": [ { "market": "MON", "size_usd": 42.1, "entry": 0, "mark": 0.0263, "upnl_usd": 0 } ],
+  "meta": { "network": "mainnet", "chain_id": 143, "head_block": 41234567, "native_balance": 3.2, "native_symbol": "MON",
+            "address": "0x…", "protocol": "uniswap_v3" } }
+// status ∈ connected | degraded | disconnected   (disconnected = RPC/API unreachable, "offline" in the UIs)
+// error: optional string, set when status is not connected
+// meta: optional object of venue-specific facts; clients may ignore it. evm venues report network,
+//       chain_id, head_block, native_balance/native_symbol (with a signer), address (with a signer), protocol.
+// Spot venues report balances as long positions valued at the venue's own quote; entry and upnl_usd are 0
+// when the venue cannot know them.
 ```
+
+Executed verdicts from on-chain venues append the settling transaction:
+`"reason": "buy MON $100.00 @ 0.0251 tx=0x…"`.
 
 ## HTTP (core, bearer token as the existing API)
 
