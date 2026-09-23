@@ -55,6 +55,7 @@ objects; clients render `what` when it is an object.
 {
   "id": "01J…", "strategy_id": "funding_skew", "venue": "paper", "market": "ETH",
   "action": "open_short",     // open_long | open_short | close | scale | rebalance | hold
+  "side": "sell",             // optional: buy | sell; set for open/close/scale/rebalance so the venue knows direction
   "size_usd": 250, "target_weight": null, "price_limit": null,
   "reason": "funding_extreme=0.93 direction=fade_short crowding=1.35",
   "confidence": 0.71

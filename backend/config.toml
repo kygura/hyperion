@@ -95,3 +95,35 @@
   addr = "127.0.0.1:8787"
   token = ""
   cors_origins = ["http://localhost:5173"]
+
+[strategy]
+  enabled = true
+  decisions_dir = "./data/decisions"
+  [strategy.decider]
+    kind = "jev"                          # jev | fake
+    model = "jev-latest"
+    base_url = "https://api.typesafe.ai"
+    api_key_env = "TYPESAFE_API_KEY"
+  [strategy.governor]
+    mode = "manual"                       # manual | threshold | auto
+    min_confidence = 0.75
+    max_notional_usd = 1000.0
+    max_open_intents = 5
+
+[[strategy.configs]]
+  id = "funding_skew"
+  enabled = false
+  venue = "paper"
+  [strategy.configs.params]
+    size_usd = 250.0
+    min_p = 0.8
+  [strategy.configs.governor]
+    min_confidence = 0.75
+
+[[strategy.configs]]
+  id = "regime_rotation"
+  enabled = false
+  venue = "paper"
+  [strategy.configs.params]
+    nav_usd = 1000.0
+    min_conviction = 1.0

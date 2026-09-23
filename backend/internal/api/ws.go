@@ -19,8 +19,12 @@ const (
 )
 
 // wsFrame is the envelope every WS message uses: {"topic":"...","data":...}.
+// Type duplicates Topic: PROTOCOL.md names the discriminator "type" for the
+// strategy.* events while the legacy cockpit reads "topic"; emitting both
+// keeps every consumer working off one envelope.
 type wsFrame struct {
 	Topic string `json:"topic"`
+	Type  string `json:"type"`
 	Data  any    `json:"data"`
 }
 
@@ -162,7 +166,7 @@ func (s *Server) writePump(c *wsClient) {
 // worth taking the server down for, and every producer here is an internal
 // bus event, not user input.
 func (s *Server) broadcast(topic string, data any) {
-	b, err := json.Marshal(wsFrame{Topic: topic, Data: data})
+	b, err := json.Marshal(wsFrame{Topic: topic, Type: topic, Data: data})
 	if err != nil {
 		return
 	}

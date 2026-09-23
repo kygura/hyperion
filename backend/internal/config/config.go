@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/hyperagent/hyperagent/internal/strategy"
 )
 
 // Config is the full application configuration.
@@ -26,6 +27,27 @@ type Config struct {
 	Storage    Storage    `toml:"storage"`
 	MarketData MarketData `toml:"marketdata"`
 	API        API        `toml:"api"`
+	Strategy   Strategy   `toml:"strategy"`
+}
+
+// Strategy configures the Jev-driven strategy runtime (docs/jev/SPEC.md
+// "Config"). Enabled=false leaves the legacy pipeline untouched and mounts
+// no /api/strategy routes. DecisionsDir holds one NDJSON file per day.
+type Strategy struct {
+	Enabled      bool                      `toml:"enabled"`
+	DecisionsDir string                    `toml:"decisions_dir"`
+	Decider      StrategyDecider           `toml:"decider"`
+	Governor     strategy.GovernorSettings `toml:"governor"`
+	Configs      []strategy.StrategyConfig `toml:"configs"`
+}
+
+// StrategyDecider selects the decider: "jev" (TypeSafe HTTP, key from the
+// environment variable APIKeyEnv names) or "fake" (scripted, no network).
+type StrategyDecider struct {
+	Kind      string `toml:"kind"`
+	Model     string `toml:"model"`
+	BaseURL   string `toml:"base_url"`
+	APIKeyEnv string `toml:"api_key_env"`
 }
 
 // MarketData configures the historical backfill sources independent of
@@ -270,6 +292,22 @@ func Default() Config {
 			Addr:        "127.0.0.1:8787",
 			CORSOrigins: []string{"http://localhost:5173"},
 		},
+		Strategy: Strategy{
+			Enabled:      true,
+			DecisionsDir: "./data/decisions",
+			Decider: StrategyDecider{
+				Kind:      "jev",
+				Model:     "jev-latest",
+				BaseURL:   "https://api.typesafe.ai",
+				APIKeyEnv: "TYPESAFE_API_KEY",
+			},
+			Governor: strategy.GovernorSettings{
+				Mode:           strategy.ModeManual,
+				MinConfidence:  0.75,
+				MaxNotionalUSD: 1000,
+				MaxOpenIntents: 5,
+			},
+		},
 	}
 }
 
@@ -338,6 +376,25 @@ func (c Config) validate() error {
 	}
 	if c.API.Enabled && c.API.Token == "" && !isLoopbackAddr(c.API.Addr) {
 		return fmt.Errorf("api: refusing to bind non-loopback %s without [api] token", c.API.Addr)
+	}
+	if k := c.Strategy.Decider.Kind; k != "jev" && k != "fake" {
+		return fmt.Errorf("config: strategy.decider.kind must be jev|fake, got %q", k)
+	}
+	if err := c.Strategy.Governor.Validate(); err != nil {
+		return fmt.Errorf("config: strategy.governor: %w", err)
+	}
+	seen := map[string]bool{}
+	for i, sc := range c.Strategy.Configs {
+		if sc.ID == "" {
+			return fmt.Errorf("config: strategy.configs[%d] has no id", i)
+		}
+		if seen[sc.ID] {
+			return fmt.Errorf("config: strategy.configs has duplicate id %q", sc.ID)
+		}
+		seen[sc.ID] = true
+		if err := sc.Governor.Validate(); err != nil {
+			return fmt.Errorf("config: strategy.configs[%s].governor: %w", sc.ID, err)
+		}
 	}
 	return nil
 }

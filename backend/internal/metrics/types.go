@@ -71,6 +71,7 @@ type AssetCtx struct {
 	OpenInterest float64 // in base-asset units
 	Premium      float64 // (mark - oracle) / oracle
 	DayVolume    float64
+	PrevDayPrice float64 // mark 24h ago (HL prevDayPx); 0 when the feed omits it
 	Time         time.Time
 }
 

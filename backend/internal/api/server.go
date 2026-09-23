@@ -20,6 +20,7 @@ import (
 	"github.com/hyperagent/hyperagent/internal/metrics"
 	"github.com/hyperagent/hyperagent/internal/reasoner"
 	"github.com/hyperagent/hyperagent/internal/store"
+	strategyrt "github.com/hyperagent/hyperagent/internal/strategy/runtime"
 	"github.com/hyperagent/hyperagent/internal/thesis"
 )
 
@@ -41,6 +42,10 @@ type Deps struct {
 	// Theses is the live thesis store backing GET /api/theses; nil serves an
 	// empty snapshot (a daemon wired without the thesis pipeline, or tests).
 	Theses *thesis.Store
+
+	// Strategy is the Jev-driven strategy runtime behind /api/strategy/*;
+	// nil (strategy.enabled=false) makes every strategy route return 503.
+	Strategy *strategyrt.Runner
 
 	// SaveConfig persists a mutation to config.toml under the caller's own
 	// guard (mutex + atomic write); nil disables persistence (settings still
@@ -140,6 +145,7 @@ type cacheChannels struct {
 	journal  <-chan bus.JournalEvent
 	mids     <-chan metrics.MidSnapshot
 	theses   <-chan metrics.Thesis
+	strategy <-chan bus.StrategyEvent
 }
 
 func (s *Server) subscribeCaches() cacheChannels {
@@ -151,6 +157,7 @@ func (s *Server) subscribeCaches() cacheChannels {
 		journal:  s.deps.Bus.SubscribeJournal(32),
 		mids:     s.deps.Bus.SubscribeMids(32),
 		theses:   s.deps.Bus.SubscribeTheses(16),
+		strategy: s.deps.Bus.SubscribeStrategy(64),
 	}
 }
 
@@ -180,6 +187,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("PUT /api/providers/{name}/key", s.handlePutProviderKey)
 	s.mux.HandleFunc("GET /api/thesis/{coin}", s.handleThesis)
 	s.mux.HandleFunc("GET /api/theses", s.handleTheses)
+	s.strategyRoutes()
 }
 
 // runCaches is the single owner of serverState: it subscribes once per topic
@@ -196,6 +204,7 @@ func (s *Server) runCaches(ch cacheChannels) {
 	journalCh := ch.journal
 	midsCh := ch.mids
 	thesesCh := ch.theses
+	strategyCh := ch.strategy
 	for {
 		select {
 		case ev, ok := <-statusCh:
@@ -255,6 +264,13 @@ func (s *Server) runCaches(ch cacheChannels) {
 			// coin's thesis was invalidated; the snapshot endpoint stays the
 			// authority on reconnect.
 			s.broadcast("thesis", t)
+		case ev, ok := <-strategyCh:
+			if !ok {
+				return
+			}
+			// strategy.decision / strategy.verdict / strategy.config /
+			// strategy.governor / strategy.venue, payload as published.
+			s.broadcast(ev.Type, ev.Data)
 		}
 	}
 }

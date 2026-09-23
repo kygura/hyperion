@@ -33,11 +33,20 @@ dry-run decision can be produced end to end with the fake decider.
 | # | Task | Status |
 |---|------|--------|
 | P0 | Research Jev API + write docs/jev/SPEC.md, PROTOCOL.md | done |
-| P1 | Core: `backend/internal/strategy/*`, api handlers, config, CLI | in progress (agent) |
-| P2 | Terminal: `tui/internal/operator`, apiclient additions, default in main | in progress (agent) |
-| P3 | Web: `hypertrade` protocol schemas, `/api/engine` proxy, pages | in progress (agent) |
-| P4 | Research: docs/jev/RESEARCH.md | in progress (agent) |
-| P5 | Integrate, verify (go/bun builds + tests), README updates, commit, PRs | open |
+| P1 | Core: `backend/internal/strategy/*`, api handlers, config, CLI | done (21 pkgs green, dry run works with fake decider) |
+| P2 | Terminal: `tui/internal/operator`, apiclient additions, default in main | done |
+| P3 | Web: `hypertrade` protocol schemas, `/api/engine` proxy, pages | done (kygura/hypertrade#2) |
+| P4 | Research: docs/jev/RESEARCH.md | done |
+| P5 | Integrate, verify (go/bun builds + tests), README updates, commit, PRs | done (kygura/hyperion#19, kygura/hypertrade#2) |
+
+## Known limits of the scaffold
+
+- Hyperliquid `Place` routes through the existing executor when one is wired;
+  reduce-only buys (closing a short) return not-implemented because the legacy
+  submit path always sends reduce-only as sell. Paper venue covers it.
+- `regime_rotation` has no realized-vol source yet (venue exposes no bars).
+- Web console polls; WS is not proxied through hypertrade.
+- No live Jev call has been made from this environment.
 
 ## Open questions for the operator
 

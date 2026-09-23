@@ -297,3 +297,91 @@ func TestGateSectionRoundTrips(t *testing.T) {
 		t.Fatalf("gate round-trip lost values: %+v", got.Gate)
 	}
 }
+
+// TestStrategySectionDefaultsAndRoundTrip: a config without [strategy] gets
+// the SPEC defaults (jev decider, manual governor, no configs); an explicit
+// section with [[strategy.configs]] parses params and per-strategy governor
+// overrides, and survives Save/Load.
+func TestStrategySectionDefaultsAndRoundTrip(t *testing.T) {
+	old := filepath.Join(t.TempDir(), "old.toml")
+	if err := os.WriteFile(old, []byte("[markets]\n  visualized = [\"BTC\"]\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(old)
+	if err != nil {
+		t.Fatalf("load old: %v", err)
+	}
+	if !cfg.Strategy.Enabled || cfg.Strategy.Decider.Kind != "jev" || cfg.Strategy.Governor.Mode != "manual" || len(cfg.Strategy.Configs) != 0 {
+		t.Errorf("strategy defaults = %+v", cfg.Strategy)
+	}
+
+	path := filepath.Join(t.TempDir(), "config.toml")
+	body := `
+[markets]
+  visualized = ["BTC"]
+[strategy]
+  enabled = true
+  decisions_dir = "data/decisions"
+[strategy.decider]
+  kind = "fake"
+  model = "jev-latest"
+  base_url = "https://api.typesafe.ai"
+  api_key_env = "TYPESAFE_API_KEY"
+[strategy.governor]
+  mode = "threshold"
+  min_confidence = 0.6
+  max_notional_usd = 1000
+  max_open_intents = 5
+[[strategy.configs]]
+  id = "funding_skew"
+  enabled = false
+  venue = "paper"
+  [strategy.configs.params]
+  size_usd = 250
+  min_p = 0.8
+  side_bias = "both"
+  [strategy.configs.governor]
+  min_confidence = 0.75
+`
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err = Load(path)
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if cfg.Strategy.Decider.Kind != "fake" || cfg.Strategy.Governor.Mode != "threshold" || cfg.Strategy.Governor.MinConfidence != 0.6 {
+		t.Errorf("strategy = %+v", cfg.Strategy)
+	}
+	if len(cfg.Strategy.Configs) != 1 {
+		t.Fatalf("configs = %+v", cfg.Strategy.Configs)
+	}
+	sc := cfg.Strategy.Configs[0]
+	if sc.ID != "funding_skew" || sc.Venue != "paper" || sc.Params.Float("size_usd", 0) != 250 || sc.Params.Float("min_p", 0) != 0.8 || sc.Params.String("side_bias", "") != "both" {
+		t.Errorf("config = %+v", sc)
+	}
+	if sc.Governor.MinConfidence == nil || *sc.Governor.MinConfidence != 0.75 || sc.Governor.Mode != nil {
+		t.Errorf("override = %+v", sc.Governor)
+	}
+
+	saved := filepath.Join(t.TempDir(), "saved.toml")
+	if err := Save(saved, cfg); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	got, err := Load(saved)
+	if err != nil {
+		t.Fatalf("reload: %v", err)
+	}
+	if len(got.Strategy.Configs) != 1 || got.Strategy.Configs[0].Params.Float("size_usd", 0) != 250 || got.Strategy.Configs[0].Governor.MinConfidence == nil {
+		t.Errorf("round trip lost strategy config: %+v", got.Strategy.Configs)
+	}
+	if got.Strategy.Decider.Kind != "fake" || got.Strategy.Governor.Mode != "threshold" {
+		t.Errorf("round trip lost decider/governor: %+v", got.Strategy)
+	}
+
+	bad := filepath.Join(t.TempDir(), "bad.toml")
+	_ = os.WriteFile(bad, []byte("[markets]\n  visualized = [\"BTC\"]\n[strategy.decider]\n  kind = \"gpt\"\n"), 0o600)
+	if _, err := Load(bad); err == nil || !strings.Contains(err.Error(), "decider.kind") {
+		t.Errorf("bad decider kind: err = %v", err)
+	}
+}
