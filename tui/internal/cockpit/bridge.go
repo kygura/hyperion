@@ -26,11 +26,10 @@ type Sender interface {
 	Send(tea.Msg)
 }
 
-// wsFrame mirrors the {"topic":...,"data":...} envelope backend/internal/api/ws.go writes.
-type wsFrame struct {
-	Topic string          `json:"topic"`
-	Data  json.RawMessage `json:"data"`
-}
+// wsFrame is the {"topic":...,"data":...} envelope backend/internal/api/ws.go
+// writes; apiclient.Envelope also accepts the {"type":...} spelling the
+// strategy events use, so both programs share one decoder.
+type wsFrame = apiclient.Envelope
 
 // healthyConnDuration is how long a connection has to stay up before we
 // treat its eventual drop as unrelated to daemon/network health and reset
@@ -153,7 +152,7 @@ func readLoop(ctx context.Context, conn *websocket.Conn, cache *apiclient.Cache,
 		if json.Unmarshal(data, &f) != nil {
 			continue
 		}
-		switch f.Topic {
+		switch f.Kind() {
 		case "bar":
 			var b apiclient.Bar
 			if json.Unmarshal(f.Data, &b) == nil {
@@ -195,6 +194,9 @@ func readLoop(ctx context.Context, conn *websocket.Conn, cache *apiclient.Cache,
 			if json.Unmarshal(f.Data, &s) == nil {
 				p.Send(s)
 			}
+		default:
+			// strategy.* frames (PROTOCOL.md) belong to the operator console;
+			// the cockpit has no panel for them and ignores them.
 		}
 	}
 }

@@ -77,6 +77,7 @@ type Bus struct {
 	positions topic[metrics.Position]
 	journal   topic[JournalEvent]
 	status    topic[StatusEvent]
+	strategy  topic[StrategyEvent]
 }
 
 // New constructs an empty bus.
@@ -113,6 +114,16 @@ type StatusEvent struct {
 	Detail    string
 }
 
+// StrategyEvent is one strategy-runtime event (PROTOCOL.md "WebSocket"):
+// Type is the wire event type ("strategy.decision", "strategy.verdict",
+// "strategy.config", "strategy.governor", "strategy.venue") and Data the
+// JSON-serializable payload. Kept untyped here so the bus stays free of a
+// dependency on the strategy package; the API server forwards Data as-is.
+type StrategyEvent struct {
+	Type string
+	Data any
+}
+
 // --- Publish helpers (producers call these) ---
 
 func (b *Bus) PublishTrade(t metrics.Trade)       { b.trades.publish(t) }
@@ -126,6 +137,7 @@ func (b *Bus) PublishThesis(t metrics.Thesis)     { b.theses.publish(t) }
 func (b *Bus) PublishPosition(p metrics.Position) { b.positions.publish(p) }
 func (b *Bus) PublishJournal(j JournalEvent)      { b.journal.publish(j) }
 func (b *Bus) PublishStatus(s StatusEvent)        { b.status.publish(s) }
+func (b *Bus) PublishStrategy(e StrategyEvent)    { b.strategy.publish(e) }
 
 // --- Subscribe helpers (consumers call these) ---
 
@@ -140,6 +152,7 @@ func (b *Bus) SubscribeTheses(buf int) <-chan metrics.Thesis      { return b.the
 func (b *Bus) SubscribePositions(buf int) <-chan metrics.Position { return b.positions.subscribe(buf) }
 func (b *Bus) SubscribeJournal(buf int) <-chan JournalEvent       { return b.journal.subscribe(buf) }
 func (b *Bus) SubscribeStatus(buf int) <-chan StatusEvent         { return b.status.subscribe(buf) }
+func (b *Bus) SubscribeStrategy(buf int) <-chan StrategyEvent     { return b.strategy.subscribe(buf) }
 
 // Close shuts every topic. Call once on daemon shutdown after producers stop.
 func (b *Bus) Close() {
@@ -154,4 +167,5 @@ func (b *Bus) Close() {
 	b.positions.close()
 	b.journal.close()
 	b.status.close()
+	b.strategy.close()
 }

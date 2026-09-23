@@ -123,6 +123,7 @@ type assetCtxWire struct {
 	OraclePx     string `json:"oraclePx"`
 	Premium      string `json:"premium"`
 	DayNtlVlm    string `json:"dayNtlVlm"`
+	PrevDayPx    string `json:"prevDayPx"`
 }
 
 type metaUniverse struct {
@@ -166,6 +167,7 @@ func (c *Client) MetaAndAssetCtxs(ctx context.Context) (map[string]metrics.Asset
 			OpenInterest: atof(w.OpenInterest),
 			Premium:      atof(w.Premium),
 			DayVolume:    atof(w.DayNtlVlm),
+			PrevDayPrice: atof(w.PrevDayPx),
 			Time:         time.Now(),
 		}
 	}

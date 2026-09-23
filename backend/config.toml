@@ -95,3 +95,56 @@
   addr = "127.0.0.1:8787"
   token = ""
   cors_origins = ["http://localhost:5173"]
+
+[strategy]
+  enabled = true
+  decisions_dir = "./data/decisions"
+  [strategy.decider]
+    kind = "jev"                          # jev | fake
+    model = "jev-latest"
+    base_url = "https://api.typesafe.ai"
+    api_key_env = "TYPESAFE_API_KEY"
+  [strategy.governor]
+    mode = "manual"                       # manual | threshold | auto
+    min_confidence = 0.75
+    max_notional_usd = 1000.0
+    max_open_intents = 5
+  # Monad EVM venue (docs/jev/RESEARCH-monad.md): Uniswap v3 spot swaps.
+  # Off by default. RPC from $MONAD_RPC_URL (else rpc_url, else the public
+  # endpoint); signer only from $MONAD_PRIVATE_KEY, never a Hyperliquid key.
+  # Without a key the venue is read-only (quotes + status, no Place).
+  [strategy.venues.monad]
+    enabled = false
+    network = "mainnet"                   # mainnet (chain 143) | testnet (10143)
+    rpc_url_env = "MONAD_RPC_URL"
+    private_key_env = "MONAD_PRIVATE_KEY"
+    slippage_bps = 50.0
+    max_notional_usd = 250.0              # venue cap; the governor's cap also applies
+    receipt_timeout = "30s"
+    # quoter / router / quote_token default to the network's Uniswap v3
+    # QuoterV2, SwapRouter02 and USDC. Pairs default to MON (WMON) and ETH
+    # (WETH) on the 0.3% pools; override with [[strategy.venues.monad.pairs]]:
+    # [[strategy.venues.monad.pairs]]
+    #   symbol = "MON"
+    #   token = "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A"
+    #   decimals = 18
+    #   fee = 3000
+    #   probe = 1.0
+
+[[strategy.configs]]
+  id = "funding_skew"
+  enabled = false
+  venue = "paper"
+  [strategy.configs.params]
+    size_usd = 250.0
+    min_p = 0.8
+  [strategy.configs.governor]
+    min_confidence = 0.75
+
+[[strategy.configs]]
+  id = "regime_rotation"
+  enabled = false
+  venue = "paper"
+  [strategy.configs.params]
+    nav_usd = 1000.0
+    min_conviction = 1.0

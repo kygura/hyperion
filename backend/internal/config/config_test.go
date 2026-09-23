@@ -297,3 +297,154 @@ func TestGateSectionRoundTrips(t *testing.T) {
 		t.Fatalf("gate round-trip lost values: %+v", got.Gate)
 	}
 }
+
+// TestStrategySectionDefaultsAndRoundTrip: a config without [strategy] gets
+// the SPEC defaults (jev decider, manual governor, no configs); an explicit
+// section with [[strategy.configs]] parses params and per-strategy governor
+// overrides, and survives Save/Load.
+func TestStrategySectionDefaultsAndRoundTrip(t *testing.T) {
+	old := filepath.Join(t.TempDir(), "old.toml")
+	if err := os.WriteFile(old, []byte("[markets]\n  visualized = [\"BTC\"]\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(old)
+	if err != nil {
+		t.Fatalf("load old: %v", err)
+	}
+	if !cfg.Strategy.Enabled || cfg.Strategy.Decider.Kind != "jev" || cfg.Strategy.Governor.Mode != "manual" || len(cfg.Strategy.Configs) != 0 {
+		t.Errorf("strategy defaults = %+v", cfg.Strategy)
+	}
+
+	path := filepath.Join(t.TempDir(), "config.toml")
+	body := `
+[markets]
+  visualized = ["BTC"]
+[strategy]
+  enabled = true
+  decisions_dir = "data/decisions"
+[strategy.decider]
+  kind = "fake"
+  model = "jev-latest"
+  base_url = "https://api.typesafe.ai"
+  api_key_env = "TYPESAFE_API_KEY"
+[strategy.governor]
+  mode = "threshold"
+  min_confidence = 0.6
+  max_notional_usd = 1000
+  max_open_intents = 5
+[[strategy.configs]]
+  id = "funding_skew"
+  enabled = false
+  venue = "paper"
+  [strategy.configs.params]
+  size_usd = 250
+  min_p = 0.8
+  side_bias = "both"
+  [strategy.configs.governor]
+  min_confidence = 0.75
+`
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err = Load(path)
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	if cfg.Strategy.Decider.Kind != "fake" || cfg.Strategy.Governor.Mode != "threshold" || cfg.Strategy.Governor.MinConfidence != 0.6 {
+		t.Errorf("strategy = %+v", cfg.Strategy)
+	}
+	if len(cfg.Strategy.Configs) != 1 {
+		t.Fatalf("configs = %+v", cfg.Strategy.Configs)
+	}
+	sc := cfg.Strategy.Configs[0]
+	if sc.ID != "funding_skew" || sc.Venue != "paper" || sc.Params.Float("size_usd", 0) != 250 || sc.Params.Float("min_p", 0) != 0.8 || sc.Params.String("side_bias", "") != "both" {
+		t.Errorf("config = %+v", sc)
+	}
+	if sc.Governor.MinConfidence == nil || *sc.Governor.MinConfidence != 0.75 || sc.Governor.Mode != nil {
+		t.Errorf("override = %+v", sc.Governor)
+	}
+
+	saved := filepath.Join(t.TempDir(), "saved.toml")
+	if err := Save(saved, cfg); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	got, err := Load(saved)
+	if err != nil {
+		t.Fatalf("reload: %v", err)
+	}
+	if len(got.Strategy.Configs) != 1 || got.Strategy.Configs[0].Params.Float("size_usd", 0) != 250 || got.Strategy.Configs[0].Governor.MinConfidence == nil {
+		t.Errorf("round trip lost strategy config: %+v", got.Strategy.Configs)
+	}
+	if got.Strategy.Decider.Kind != "fake" || got.Strategy.Governor.Mode != "threshold" {
+		t.Errorf("round trip lost decider/governor: %+v", got.Strategy)
+	}
+
+	bad := filepath.Join(t.TempDir(), "bad.toml")
+	_ = os.WriteFile(bad, []byte("[markets]\n  visualized = [\"BTC\"]\n[strategy.decider]\n  kind = \"gpt\"\n"), 0o600)
+	if _, err := Load(bad); err == nil || !strings.Contains(err.Error(), "decider.kind") {
+		t.Errorf("bad decider kind: err = %v", err)
+	}
+}
+
+// TestMonadVenueSection: the venue is off by default with the documented
+// env names; an explicit section with pairs parses and round-trips; the
+// Hyperliquid key variables and malformed values are refused.
+func TestMonadVenueSection(t *testing.T) {
+	d := Default().Strategy.Venues.Monad
+	if d.Enabled || d.Network != "mainnet" || d.RPCURLEnv != "MONAD_RPC_URL" || d.PrivateKeyEnv != "MONAD_PRIVATE_KEY" || d.SlippageBps != 50 || d.ReceiptTimeout.Duration != 30*time.Second {
+		t.Fatalf("monad defaults = %+v", d)
+	}
+
+	path := filepath.Join(t.TempDir(), "config.toml")
+	body := `
+[markets]
+  visualized = ["BTC"]
+[strategy.venues.monad]
+  enabled = true
+  network = "testnet"
+  chain_id = 10143
+  max_notional_usd = 100
+  receipt_timeout = "12s"
+  [[strategy.venues.monad.pairs]]
+    symbol = "MON"
+    token = "0xFb8bf4c1CC7a94c73D209a149eA2AbEa852BC541"
+    decimals = 18
+    fee = 3000
+`
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	m := cfg.Strategy.Venues.Monad
+	if !m.Enabled || m.Network != "testnet" || m.ChainID != 10143 || m.MaxNotionalUSD != 100 || m.ReceiptTimeout.Duration != 12*time.Second || len(m.Pairs) != 1 || m.Pairs[0].Fee != 3000 {
+		t.Fatalf("monad = %+v", m)
+	}
+	if m.PrivateKeyEnv != "MONAD_PRIVATE_KEY" || m.SlippageBps != 50 {
+		t.Errorf("unset fields should keep defaults: %+v", m)
+	}
+	saved := filepath.Join(t.TempDir(), "saved.toml")
+	if err := Save(saved, cfg); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Load(saved)
+	if err != nil || got.Strategy.Venues.Monad.Network != "testnet" || len(got.Strategy.Venues.Monad.Pairs) != 1 {
+		t.Fatalf("round trip = %+v, %v", got.Strategy.Venues.Monad, err)
+	}
+
+	for name, section := range map[string]string{
+		"hl key":   "private_key_env = \"HL_AGENT_KEY\"",
+		"network":  "network = \"devnet\"",
+		"slippage": "slippage_bps = 5000",
+		"router":   "router = \"0x123\"",
+		"fee":      "[[strategy.venues.monad.pairs]]\n  symbol = \"MON\"\n  token = \"0xFb8bf4c1CC7a94c73D209a149eA2AbEa852BC541\"\n  fee = 42",
+	} {
+		bad := filepath.Join(t.TempDir(), "bad.toml")
+		_ = os.WriteFile(bad, []byte("[markets]\n  visualized = [\"BTC\"]\n[strategy.venues.monad]\n  "+section+"\n"), 0o600)
+		if _, err := Load(bad); err == nil || !strings.Contains(err.Error(), "venues.monad") {
+			t.Errorf("%s: err = %v", name, err)
+		}
+	}
+}

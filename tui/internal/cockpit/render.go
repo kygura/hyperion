@@ -6,118 +6,55 @@ package cockpit
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
-	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
+	"github.com/hyperagent/tui/internal/theme"
 )
 
-// The mock cockpit's fixed dark palette (pitch/mock-tui/view.go).
+// The palette and layout primitives live in internal/theme so the operator
+// console and this cockpit share one theme; the unexported names below are
+// the cockpit's historical spellings, kept so its views read unchanged.
 var (
-	cAccent = lipgloss.Color("#2DE0A7")
-	cText   = lipgloss.Color("#C9D4DE")
-	cBright = lipgloss.Color("#EDF3F9")
-	cDim    = lipgloss.Color("#5C6B7A")
-	cBorder = lipgloss.Color("#28323D")
-	cGreen  = lipgloss.Color("#4ADE80")
-	cRed    = lipgloss.Color("#FF6B6B")
-	cAmber  = lipgloss.Color("#F0B35B")
-	cPurple = lipgloss.Color("#B48EF7")
-	cCyan   = lipgloss.Color("#4FC1E9")
+	cAccent = theme.Accent
+	cText   = theme.Text
+	cBright = theme.Bright
+	cDim    = theme.Dim
+	cBorder = theme.Border
+	cGreen  = theme.Green
+	cRed    = theme.Red
+	cAmber  = theme.Amber
+	cPurple = theme.Purple
+	cCyan   = theme.Cyan
 
-	logoStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#06130D")).Background(cAccent).Bold(true)
-	textStyle   = lipgloss.NewStyle().Foreground(cText)
-	brightStyle = lipgloss.NewStyle().Foreground(cBright).Bold(true)
-	dimStyle    = lipgloss.NewStyle().Foreground(cDim)
-	borderStyle = lipgloss.NewStyle().Foreground(cBorder)
-	titleStyle  = lipgloss.NewStyle().Foreground(cAccent).Bold(true)
-	phaseStyle  = lipgloss.NewStyle().Foreground(cAccent)
-	greenStyle  = lipgloss.NewStyle().Foreground(cGreen)
-	redStyle    = lipgloss.NewStyle().Foreground(cRed)
-	amberStyle  = lipgloss.NewStyle().Foreground(cAmber)
-	keyStyle    = lipgloss.NewStyle().Foreground(cAccent).Bold(true)
+	logoStyle   = theme.LogoStyle
+	textStyle   = theme.TextStyle
+	brightStyle = theme.BrightStyle
+	dimStyle    = theme.DimStyle
+	borderStyle = theme.BorderStyle
+	titleStyle  = theme.TitleStyle
+	phaseStyle  = theme.PhaseStyle
+	greenStyle  = theme.GreenStyle
+	redStyle    = theme.RedStyle
+	amberStyle  = theme.AmberStyle
+	keyStyle    = theme.KeyStyle
 
-	tagStyles = map[string]lipgloss.Style{
-		"INGEST":   lipgloss.NewStyle().Foreground(cCyan).Bold(true),
-		"REASON":   lipgloss.NewStyle().Foreground(cPurple).Bold(true),
-		"EXECUTE":  lipgloss.NewStyle().Foreground(cAccent).Bold(true),
-		"FILL":     lipgloss.NewStyle().Foreground(cGreen).Bold(true),
-		"RISK":     lipgloss.NewStyle().Foreground(cAmber).Bold(true),
-		"ERROR":    lipgloss.NewStyle().Foreground(cRed).Bold(true),
-		"OPERATOR": lipgloss.NewStyle().Foreground(cRed).Bold(true),
-	}
+	tagStyles = theme.TagStyles
 )
 
 // box draws a rounded border with an embedded title, exactly h rows and
 // w columns.
 func box(title, rightTitle string, lines []string, w, h int) string {
-	iw := w - 2 // width between the corner glyphs
-	cw := iw - 2
-	ch := h - 2
-
-	t := " " + title + " "
-	r := ""
-	if rightTitle != "" {
-		r = " " + rightTitle + " "
-	}
-	fill := iw - 1 - lipgloss.Width(t) - lipgloss.Width(r) - 1
-	if fill < 0 {
-		fill = 0
-	}
-	var b strings.Builder
-	b.WriteString(borderStyle.Render("╭─") + titleStyle.Render(t) +
-		borderStyle.Render(strings.Repeat("─", fill)) + dimStyle.Render(r) + borderStyle.Render("─╮"))
-
-	for i := 0; i < ch; i++ {
-		line := ""
-		if i < len(lines) {
-			line = lines[i]
-		}
-		pad := cw - lipgloss.Width(line)
-		if pad < 0 {
-			pad = 0
-		}
-		b.WriteString("\n" + borderStyle.Render("│") + " " + line + strings.Repeat(" ", pad) + " " + borderStyle.Render("│"))
-	}
-
-	b.WriteString("\n" + borderStyle.Render("╰"+strings.Repeat("─", iw)+"╯"))
-	return b.String()
+	return theme.Box(title, rightTitle, lines, w, h)
 }
 
 // spread left-aligns l and right-aligns r within width w.
-func spread(l, r string, w int) string {
-	gap := w - lipgloss.Width(l) - lipgloss.Width(r)
-	if gap < 1 {
-		gap = 1
-	}
-	return l + strings.Repeat(" ", gap) + r
-}
+func spread(l, r string, w int) string { return theme.Spread(l, r, w) }
 
-func padR(s string, w int) string {
-	if n := w - lipgloss.Width(s); n > 0 {
-		return s + strings.Repeat(" ", n)
-	}
-	return s
-}
+func padR(s string, w int) string { return theme.PadR(s, w) }
 
-func padL(s string, w int) string {
-	if n := w - lipgloss.Width(s); n > 0 {
-		return strings.Repeat(" ", n) + s
-	}
-	return s
-}
+func padL(s string, w int) string { return theme.PadL(s, w) }
 
 // signed pads a numeric string to w then colors it green/red by sign.
-func signed(s string, v float64, w int) string {
-	if w > 0 {
-		s = padL(s, w)
-	}
-	if v >= 0 {
-		return greenStyle.Render(s)
-	}
-	return redStyle.Render(s)
-}
+func signed(s string, v float64, w int) string { return theme.Signed(s, v, w) }
 
 // cvdStr abbreviates a cumulative-volume-delta value with a K/M/B suffix
 // scaled to its own magnitude, rather than a single fixed divisor — CVD is
@@ -142,58 +79,13 @@ func cvdStr(v float64) string {
 }
 
 // fnum formats with thousands separators.
-func fnum(v float64, dec int) string {
-	s := strconv.FormatFloat(v, 'f', dec, 64)
-	ip, fp := s, ""
-	if i := strings.IndexByte(s, '.'); i >= 0 {
-		ip, fp = s[:i], s[i:]
-	}
-	var b strings.Builder
-	for j, c := range ip {
-		if j > 0 && (len(ip)-j)%3 == 0 {
-			b.WriteByte(',')
-		}
-		b.WriteRune(c)
-	}
-	return b.String() + fp
-}
+func fnum(v float64, dec int) string { return theme.Fnum(v, dec) }
 
-func priceDec(v float64) int {
-	switch {
-	case v < 1:
-		return 4
-	case v < 100:
-		return 2
-	case v < 10000:
-		return 1
-	default:
-		return 0
-	}
-}
+func priceDec(v float64) int { return theme.PriceDec(v) }
 
 // bar renders a filled utilization bar of exactly w cells, ratio clamped
 // to [0, 1].
-func bar(ratio float64, w int) string {
-	if w < 1 {
-		return ""
-	}
-	if ratio < 0 {
-		ratio = 0
-	}
-	if ratio > 1 {
-		ratio = 1
-	}
-	fill := int(ratio*float64(w) + 0.5)
-	if fill > w {
-		fill = w
-	}
-	return phaseStyle.Render(strings.Repeat("█", fill)) + dimStyle.Render(strings.Repeat("─", w-fill))
-}
+func bar(ratio float64, w int) string { return theme.Bar(ratio, w) }
 
 // truncTail truncates s to at most w display cells with a "…" tail.
-func truncTail(s string, w int) string {
-	if w < 1 {
-		return ""
-	}
-	return ansi.Truncate(s, w, "…")
-}
+func truncTail(s string, w int) string { return theme.TruncTail(s, w) }

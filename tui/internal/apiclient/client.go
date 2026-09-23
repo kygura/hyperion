@@ -49,13 +49,14 @@ func (c *Client) do(ctx context.Context, method, path string, body any, out any)
 	if resp.StatusCode >= 300 {
 		var errBody struct {
 			Error string `json:"error"`
+			Field string `json:"field"`
 		}
 		buf, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<16))
 		_ = json.Unmarshal(buf, &errBody)
 		if errBody.Error != "" {
-			return fmt.Errorf("%s", errBody.Error)
+			return &APIError{Status: resp.StatusCode, Message: errBody.Error, Field: errBody.Field}
 		}
-		return fmt.Errorf("request failed: status %d", resp.StatusCode)
+		return &APIError{Status: resp.StatusCode, Message: fmt.Sprintf("request failed: status %d", resp.StatusCode)}
 	}
 	if out == nil {
 		return nil

@@ -74,3 +74,26 @@ func TestBuildExecutor_NoSignerWithoutKey(t *testing.T) {
 		t.Fatal("expected SetMode(autonomous) to fail with no agent key configured")
 	}
 }
+
+// TestBuildMonadVenue: the signer comes from MONAD_PRIVATE_KEY only, the
+// venue reads no Hyperliquid variable, and the governor cap reaches it.
+func TestBuildMonadVenue(t *testing.T) {
+	mc := config.Default().Strategy.Venues.Monad
+	t.Setenv("HL_AGENT_KEY", testAgentKey)
+	t.Setenv("MONAD_PRIVATE_KEY", "")
+	mv, err := buildMonadVenue(mc, func() float64 { return 75 })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if mv.HasSigner() {
+		t.Fatal("monad venue must not pick up a Hyperliquid key")
+	}
+	if mv.NotionalCap() != 75 {
+		t.Errorf("cap = %v, want governor cap 75", mv.NotionalCap())
+	}
+	t.Setenv("MONAD_PRIVATE_KEY", testAgentKey)
+	mv, err = buildMonadVenue(mc, nil)
+	if err != nil || !mv.HasSigner() {
+		t.Fatalf("signer from MONAD_PRIVATE_KEY: %v", err)
+	}
+}
