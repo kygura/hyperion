@@ -54,6 +54,9 @@ type VenueStatus struct {
 	Capabilities []string   `json:"capabilities"`
 	Positions    []Position `json:"positions"`
 	Error        string     `json:"error,omitempty"`
+	// Meta carries optional venue-specific facts (evm: chain_id, network,
+	// head_block, native_balance, address, protocol). Clients may ignore it.
+	Meta map[string]any `json:"meta,omitempty"`
 }
 
 // Order is one execution request in USD notional. ReduceOnly closes or
@@ -79,6 +82,7 @@ type Fill struct {
 	Price   float64   `json:"price"`
 	FeeUSD  float64   `json:"fee_usd"`
 	TS      time.Time `json:"ts"`
+	TxHash  string    `json:"tx_hash,omitempty"` // on-chain venues: the settling transaction
 }
 
 // Venue is the adapter contract.

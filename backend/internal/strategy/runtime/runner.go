@@ -520,9 +520,12 @@ func (r *Runner) execute(ctx context.Context, decisionID string, in strategy.Int
 		r.appendVerdict(decisionID, strategy.Verdict{IntentID: in.ID, Status: strategy.StatusFailed, By: strategy.ByVenue, Reason: err.Error()})
 		return
 	}
+	reason := fmt.Sprintf("%s %s $%.2f @ %.4f", fill.Side, fill.Market, fill.SizeUSD, fill.Price)
+	if fill.TxHash != "" {
+		reason += " tx=" + fill.TxHash
+	}
 	r.appendVerdict(decisionID, strategy.Verdict{
-		IntentID: in.ID, Status: strategy.StatusExecuted, By: strategy.ByVenue,
-		Reason: fmt.Sprintf("%s %s $%.2f @ %.4f", fill.Side, fill.Market, fill.SizeUSD, fill.Price),
+		IntentID: in.ID, Status: strategy.StatusExecuted, By: strategy.ByVenue, Reason: reason,
 	})
 }
 
