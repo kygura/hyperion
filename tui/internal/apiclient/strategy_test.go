@@ -307,6 +307,25 @@ func TestDecodeVenueStatus(t *testing.T) {
 	}
 }
 
+// TestDecodeMonadVenue: PROTOCOL.md's evm VenueStatus (spot capabilities,
+// error, meta) decodes; meta numbers arrive as float64.
+func TestDecodeMonadVenue(t *testing.T) {
+	raw := `{ "id": "monad", "kind": "evm", "chain": "monad", "status": "degraded", "capabilities": ["spot", "execute"],
+	  "positions": [ { "market": "MON", "size_usd": 42.1, "entry": 0, "mark": 0.0263, "upnl_usd": 0 } ],
+	  "error": "native balance: timeout",
+	  "meta": { "network": "mainnet", "chain_id": 143, "head_block": 41234567, "native_balance": 3.2, "native_symbol": "MON", "address": "0xabc", "protocol": "uniswap_v3" } }`
+	v := mustDecode[VenueStatus](t, raw)
+	if v.ID != "monad" || v.Kind != "evm" || v.Chain != "monad" || v.Status != "degraded" || len(v.Capabilities) != 2 || v.Error == "" {
+		t.Errorf("venue = %+v", v)
+	}
+	if v.Meta["chain_id"] != float64(143) || v.Meta["head_block"] != float64(41234567) || v.Meta["protocol"] != "uniswap_v3" {
+		t.Errorf("meta = %+v", v.Meta)
+	}
+	if len(v.Positions) != 1 || v.Positions[0].Market != "MON" || v.Positions[0].Mark != 0.0263 {
+		t.Errorf("positions = %+v", v.Positions)
+	}
+}
+
 func TestDecodeStrategyEvents(t *testing.T) {
 	cases := []struct {
 		name  string

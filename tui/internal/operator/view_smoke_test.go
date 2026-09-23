@@ -92,6 +92,43 @@ func TestViewSmokeVenues(t *testing.T) {
 	}
 }
 
+// TestViewSmokeMonadVenue: an evm venue (spot, meta, error) renders in the
+// VENUES table with its detail line, at both sizes, without row overflow.
+func TestViewSmokeMonadVenue(t *testing.T) {
+	for _, sz := range smokeSizes {
+		f := newFake()
+		f.venues = []apiclient.VenueStatus{{
+			ID: "monad", Kind: "evm", Chain: "monad", Status: "degraded", Capabilities: []string{"spot", "execute"},
+			Positions: []apiclient.VenuePosition{{Market: "MON", SizeUSD: 42.1, Mark: 0.0263}},
+			Error:     "native balance: timeout",
+			Meta:      map[string]any{"network": "mainnet", "chain_id": 143.0, "head_block": 41234567.0, "native_balance": 3.2, "native_symbol": "MON", "address": "0x1234567890abcdef1234567890abcdef12345678", "protocol": "uniswap_v3"},
+		}}
+		m := loadedModel(t, f, sz.w, sz.h)
+		press(t, m, "3")
+		out := m.View().Content
+		for _, want := range []string{"monad", "evm", "degraded", "spot,execute", "chain 143", "block 41,234,567", "MON", "LONG", "native balance: timeout"} {
+			if !strings.Contains(out, want) {
+				t.Errorf("%dx%d monad venue view missing %q", sz.w, sz.h, want)
+			}
+		}
+		if got := rows(out); got != sz.h {
+			t.Errorf("%dx%d rows = %d", sz.w, sz.h, got)
+		}
+	}
+}
+
+// TestStrategiesLastActionFallback: with no decision in memory the
+// STRATEGIES table shows the status's last_action instead of a dash.
+func TestStrategiesLastActionFallback(t *testing.T) {
+	f := newFake()
+	f.decisions = nil
+	f.statuses[0].LastAction = "rebalance ETH +1"
+	m := loadedModel(t, f, 120, 40)
+	if out := m.View().Content; !strings.Contains(out, "rebalance ETH +1") {
+		t.Errorf("strategies view missing last_action fallback:\n%s", out)
+	}
+}
+
 func TestViewSmokeGovernor(t *testing.T) {
 	for _, sz := range smokeSizes {
 		m := loadedModel(t, newFake(), sz.w, sz.h)

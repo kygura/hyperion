@@ -242,6 +242,7 @@ type StrategyStatus struct {
 	Config         StrategyConfig `json:"config"`
 	LastRunAt      Time           `json:"last_run_at"`
 	LastDecisionID string         `json:"last_decision_id"`
+	LastAction     string         `json:"last_action,omitempty"` // "open_short ETH" | "hold"; absent before the first run
 	LastError      string         `json:"last_error"`
 	NextRunAt      Time           `json:"next_run_at"`
 }
@@ -326,6 +327,10 @@ type VenueStatus struct {
 	Status       string          `json:"status"`
 	Capabilities []string        `json:"capabilities"`
 	Positions    []VenuePosition `json:"positions"`
+	Error        string          `json:"error,omitempty"`
+	// Meta is optional venue-specific detail (evm: network, chain_id,
+	// head_block, native_balance, native_symbol, address, protocol).
+	Meta map[string]any `json:"meta,omitempty"`
 }
 
 // APIError is the daemon's {error, field} body with its HTTP status. Its

@@ -113,6 +113,11 @@ func (m *Model) lastIntent(s apiclient.StrategyStatus, withStatus bool) (intent,
 		}
 	}
 	if d == nil {
+		// Decision not in memory (older than the loaded window, or the
+		// daemon restarted with history): the status still carries it.
+		if s.LastAction != "" {
+			return s.LastAction, ""
+		}
 		return "—", ""
 	}
 	if d.Error != "" {
