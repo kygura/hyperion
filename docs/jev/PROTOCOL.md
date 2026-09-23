@@ -48,7 +48,8 @@ objects; clients render `what` when it is an object.
 { "id": "funding_skew", "enabled": false, "venue": "paper", "params": { "size_usd": 250, "min_p": 0.8 }, "governor": { "min_confidence": 0.75 } }
 
 // StrategyStatus = Manifest + Config + runtime
-{ "manifest": Manifest, "config": StrategyConfig, "last_run_at": "…", "last_decision_id": "…", "last_error": "", "next_run_at": "…" }
+{ "manifest": Manifest, "config": StrategyConfig, "last_run_at": "…", "last_decision_id": "…", "last_action": "open_short ETH", "last_error": "", "next_run_at": "…" }
+// last_action: short human summary of the newest intent ("hold" when none), optional
 
 // Intent
 {
@@ -93,6 +94,7 @@ GET    /api/strategy/venues                         → { "venues": [VenueStatus
 GET    /api/strategy/governor                       → GovernorSettings
 PUT    /api/strategy/governor                       ← GovernorSettings → GovernorSettings
 POST   /api/strategy/kill                           → GovernorSettings (killed=true, all configs enabled=false, open proposals rejected)
+// Un-kill: PUT /api/strategy/governor with "killed": false. Strategies stay disabled until re-enabled one by one.
 ```
 
 Errors: `{ "error": "message", "field": "params.size_usd" }` with 400/404/409/503.
