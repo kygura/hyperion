@@ -39,6 +39,41 @@ dry-run decision can be produced end to end with the fake decider.
 | P4 | Research: docs/jev/RESEARCH.md | done |
 | P5 | Integrate, verify (go/bun builds + tests), README updates, commit, PRs | done (kygura/hyperion#19, kygura/hypertrade#2) |
 
+## Phase 2 — Monad venue, web analyst, surface audit
+
+Decisions:
+
+- Monad venue speaks Uniswap v3 (QuoterV2 + SwapRouter02) over `ethclient`;
+  spot only; enforces the governor's global notional cap itself; key only
+  from `MONAD_PRIVATE_KEY`. Perps on Monad (Perpl) need a separate REST/WS
+  adapter (docs/jev/RESEARCH-monad.md).
+- The operator reversed hypertrade's "no LLM calls" rule for one read-only
+  analyst; Jev stays the only model in the trading loop.
+- `VenueStatus` gains optional `error`/`meta`; `Fill` gains optional
+  `tx_hash`, surfaced as `tx=` in executed verdict reasons.
+
+| # | Task | Status |
+|---|------|--------|
+| M0 | Research Monad (chain, gas, RPC quirks, venues) → docs/jev/RESEARCH-monad.md | done (docs only; RPC hosts blocked, nothing checked live) |
+| M1 | `venue/monad`: status, markets, positions, place, cancel, notional cap, embedded ABIs, JSON-RPC stub tests | done |
+| M2 | Config `[strategy.venues.monad]`, wiring in buildStrategyRuntime, regime_rotation venue list, CLI fallback, API venues test | done |
+| M3 | PROTOCOL.md evm VenueStatus + meta; TUI decode test and VENUES detail | done |
+| A0 | Analyst server: providers (anthropic, openai-compatible), tools, system prompt, SSE route, tests | done (hypertrade) |
+| A1 | Analyst UI `/analyst`, nav, DESIGN.md §10.8 | done (hypertrade) |
+| A2 | Hypertrade SPEC/README/.env.example | done |
+| C0 | Surface audit: TUI last_action fallback, evm venue detail; web last_action/meta schema, venue detail, Overview ENGINE card; README marks dashboard legacy | done |
+| D0 | SPEC Phase 2, PROTOCOL, TASKS, READMEs; full checks both repos | done |
+
+Known limits added in phase 2:
+
+- No live Monad call has been made; contract addresses (QuoterV2
+  discrepancy, testnet post-reset) must be checked before enabling.
+- Monad venue is spot only: short intents (negative weights, `open_short`)
+  are refused at Place; `day_change` needs 24h of the venue's own samples.
+- Receipts at `latest` (Proposed) are treated as executed.
+- Analyst: no live provider call verified here (no key); web search
+  availability depends on the provider.
+
 ## Known limits of the scaffold
 
 - Hyperliquid `Place` routes through the existing executor when one is wired;
@@ -50,6 +85,6 @@ dry-run decision can be produced end to end with the fake decider.
 
 ## Open questions for the operator
 
-- Which second venue after Hyperliquid (RESEARCH.md recommends one).
+- Which second venue after Hyperliquid (RESEARCH.md recommends one). Phase 2 added Monad (Uniswap v3 spot); a perps venue on Monad (Perpl) is the open follow-up.
 - Whether to retire the chat cockpit once the operator console covers daily use.
 - Production model pinning: `jev-latest` vs a pinned `jev-1.13.x`.

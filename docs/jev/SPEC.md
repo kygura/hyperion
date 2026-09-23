@@ -1,6 +1,6 @@
 # SPEC — Hyperion v2 prototype: JEV-driven strategy runtime, terminal config, web console
 
-Status: scaffold (this branch). Owner: nicolascerrato17@gmail.com.
+Status: phase 1 scaffold done; phase 2 (Monad venue, web analyst, surface audit) on this branch. Owner: nicolascerrato17@gmail.com.
 
 ## Why
 
@@ -216,3 +216,84 @@ Lipgloss theme as the cockpit:
 - Live Jev call not verified here: no `TYPESAFE_API_KEY` in this session and
   `typesafe.ai` is egress-blocked. The client is tested against the documented
   response shapes; first live run is the operator's.
+
+## Phase 2 — Monad venue, web analyst, surface audit
+
+### Paradigm (unchanged, restated)
+
+The terminal is the configuration and execution interface for strategies run
+programmatically with Jev; it is not a chatbot. The web console is its
+companion (same four surfaces through the `/api/engine` proxy) and is the one
+place a classic LLM appears: a read-only analyst. Jev remains the only model
+inside the trading loop; no LLM output reaches a venue.
+
+### Monad venue (`backend/internal/strategy/venue/monad`)
+
+Research, sources and the unverified list: [RESEARCH-monad.md](./RESEARCH-monad.md).
+Chosen protocol: **Uniswap v3 on Monad** (QuoterV2 prices, SwapRouter02
+`exactInputSingle` swaps), because its ABI is immutable and identical across
+chains, quoting and swapping are plain JSON-RPC calls go-ethereum's
+`ethclient` already speaks, and slippage bounds are native
+(`amountOutMinimum`). Perps on Monad (Perpl) need a REST/WS adapter with
+Ed25519 request signing and are deferred; Kuru's CLOB is the natural second
+protocol inside this venue.
+
+- `Status`: `kind "evm"`, `chain "monad"`; chain id (mismatch → degraded),
+  head block, native MON balance in the optional `meta` object;
+  unreachable RPC → `disconnected`, partial failure → `degraded`.
+- `Markets`: one QuoterV2 quote per configured pair (default MON via WMON and
+  ETH via WETH against USDC, 0.3 % pools). No funding/OI (spot);
+  `day_change` from the venue's own samples once 24h exist.
+- `Positions`: ERC-20 balances × quote, long-only, entry unknown.
+- `Place`: enforces `max_notional_usd` itself (min of the venue cap and the
+  governor's live global cap, because the executor's risk gates never see
+  Monad orders), refuses sells beyond the held balance (spot cannot short;
+  reduce-only clips), fresh quote → `amountOutMinimum` (slippage bps, tightened
+  by `price_limit`), exact ERC-20 approval when short, EIP-1559 tx with a
+  15 % gas buffer (Monad charges the gas limit), receipt wait with timeout,
+  actual output read from the `Transfer` log; executed verdicts carry `tx=`.
+- `Cancel`: not applicable (atomic swaps) → `ErrNotImplemented`.
+- Capabilities: `spot`, plus `execute` with a signer.
+- Config `[strategy.venues.monad]`, `enabled = false` by default. RPC from
+  `MONAD_RPC_URL` (else `rpc_url`, else the network default); signer only
+  from `MONAD_PRIVATE_KEY` (config refuses `HL_AGENT_KEY` / `HL_MASTER_KEY`).
+  `regime_rotation` lists `monad` (long-only weights); `funding_skew` stays
+  perps-only; reference configs default to `paper`.
+- Tests: an `httptest` JSON-RPC stub behind a real `ethclient` covers status
+  (connected, read-only, chain mismatch, RPC failure → degraded, RPC down →
+  disconnected), markets, day change, positions, place (approve + swap signed
+  by the configured key with EIP-1559 fees, slippage floor), notional cap,
+  spot short refusal and reduce-only clip, price limit, receipt timeout.
+- Not verified live: all Monad RPC hosts are egress-blocked from this
+  session and no key exists; see RESEARCH-monad.md "Unverified".
+
+### Web analyst (hypertrade `/analyst`)
+
+`POST /api/analyst/query` streams SSE (`text`, `tool_call`, `tool_result`,
+`citations`, `error`, `done`) from a bounded tool loop (8 rounds, 90 s) over
+read-only tools that reuse hypertrade's own data paths: briefing and history,
+sectors, metric summaries and series, Hyperliquid markets, engine strategies
+and decisions (through the same upstream as `/api/engine`; degrades when
+`ENGINE_URL` is unset), plus Anthropic's server-side web search when the
+provider is anthropic. Providers swap by env (`ANALYST_PROVIDER` anthropic |
+openai-compatible, `ANALYST_MODEL`, `ANALYST_API_KEY`, `ANALYST_BASE_URL`).
+The system prompt carries ROUTINE.md's hard rule and hedge vocabulary
+verbatim. No tool writes; approve/reject/kill/config stay operator actions.
+
+### Surface audit (TUI + web)
+
+- TUI STRATEGIES falls back to the status's `last_action` when the decision
+  is not in memory; VENUES renders evm `meta` (network, chain, head block,
+  balance, signer, protocol) and `error`, and a dash for unknown spot entries.
+- Web: `StrategyStatus.last_action` and `VenueStatus.error/meta` in the zod
+  schemas; Strategies falls back to `last_action`; the governor's venues panel
+  shows evm detail; Overview gains a compact read-only ENGINE card; ANALYST
+  joins the nav.
+- Hyperion README marks `dashboard/` legacy and points to hypertrade.
+
+### Verification bar (phase 2)
+
+Same commands as phase 1 in both repos, green. Live Monad and live LLM calls
+are not verified here (no keys; RPC hosts blocked); the analyst is exercised
+end to end against a local fake Chat Completions server and with a fake
+Anthropic SSE transport.

@@ -8,14 +8,23 @@ Autonomous trading operator on Hyperliquid. Agents state a mandate in plain lang
 
 Hyperion is an early, alpha-stage prototype. The backend is functional — it places real orders on Hyperliquid (mainnet or testnet) through a real signer and risk-gated executor — and the TUI is a working but limited operator cockpit. It currently runs as a single-process, single-operator, single-account tool: one instance per config/`.env`, local NDJSON files for persistence, no containerized deployment, no CI, and no multi-tenant or multi-user model, so it is not scalable as-is. There is no billing or account layer, so it is not monetizable today. The web dashboard is a local client SPA you run yourself against your own backend, not a hosted product. The plan is to build a full end-to-end hosted web application that runs the entire pipeline (ingest → reason → execute → journal) as a multi-user product — that work has not started yet.
 
-## JEV strategy runtime (prototype, in flight)
+## JEV strategy runtime (prototype)
 
-A second reasoning path is being scaffolded: strategies as plug-ins that ask
-[Jev](https://typesafe.ai) (TypeSafe AI's System One decision model) typed
-questions and map the calibrated answers to intents in code, gated by a
-Governor and executed through a chain-agnostic venue interface. The TUI
-becomes the operator console for it; the web console lives in `hypertrade`.
-See `docs/jev/SPEC.md`, `docs/jev/PROTOCOL.md`, and `docs/jev/RESEARCH.md`.
+A second decision path runs beside the legacy reasoner: strategies as plug-ins
+that ask [Jev](https://typesafe.ai) (TypeSafe AI's System One decision model)
+typed questions and map the calibrated answers to intents in code, gated by a
+Governor and executed through a chain-agnostic venue interface (`paper`,
+`hyperliquid`, and, off by default, `monad`: Uniswap v3 spot swaps on Monad
+over JSON-RPC). Jev is the only model inside that loop.
+
+- **Terminal** (`tui/`, default program): the configuration and execution
+  interface for those strategies. Not a chatbot.
+- **Web** ([`hypertrade`](https://github.com/kygura/hypertrade)): the companion
+  console (strategies, decisions, governor, venues through a server-side
+  proxy) plus a read-only LLM analyst over market data and engine decisions.
+
+See `docs/jev/SPEC.md`, `docs/jev/PROTOCOL.md`, `docs/jev/RESEARCH.md`,
+`docs/jev/RESEARCH-monad.md` and `TASKS.md`.
 
 ## Architecture
 
@@ -23,8 +32,8 @@ See `docs/jev/SPEC.md`, `docs/jev/PROTOCOL.md`, and `docs/jev/RESEARCH.md`.
 
 - **Backend daemon** (`:8787`) — Market ingestion, position tracking, order execution, risk gates, event bus. Go, single module (`github.com/hyperagent/hyperagent`).
 - **MCP server** — `./hyperagent mcp` exposes Hyperliquid markets and trading as MCP tools over stdio. Claude (or any MCP client) reads data and places orders through the same risk gates as the daemon.
-- **TUI cockpit** — Operator terminal UI (separate Go module, `tui/`). Real-time feeds, watchlist, position view, decision journal, chat.
-- **Web dashboard** — Browser UI (`dashboard/`, React + Vite). Standalone market/portfolio views plus a live agent console that talks to the daemon over HTTP/WS.
+- **TUI operator console** — Terminal UI (separate Go module, `tui/`). Default program: STRATEGIES · DECISIONS · VENUES · GOVERNOR for the JEV strategy runtime. `--cockpit` runs the legacy chat cockpit (real-time feeds, watchlist, positions, journal, chat).
+- **Web companion** — [`hypertrade`](https://github.com/kygura/hypertrade) (React + Hono on Vercel) is the web app for this core. The in-repo `dashboard/` (React + Vite) is **legacy**: kept runnable, not extended.
 - **Reasoning orchestration** — Harness-first (Claude Code, Codex, `pi` CLIs, run as subprocesses with an env allowlist). Direct API (Claude, OpenAI, Deepseek) fallback. Thesis formation and execution policy are independently configurable roles.
 - **Append-only journal** — Every candidate, thesis, and fill recorded as NDJSON. Proof layer for reputation.
 
@@ -32,8 +41,8 @@ See `docs/jev/SPEC.md`, `docs/jev/PROTOCOL.md`, and `docs/jev/RESEARCH.md`.
 
 ```
 backend/        Core daemon (Go). HTTP+WS on :8787, MCP server, execution, risk gates, journal.
-tui/            Cockpit UI (Go + Bubble Tea/Lipgloss v2). Live feeds, position tracking, chat.
-dashboard/      Web UI (React 19 + Vite + Tailwind). Market view, portfolio, agent console.
+tui/            Operator console for the JEV strategy runtime (Go + Bubble Tea/Lipgloss v2); --cockpit for the legacy chat UI.
+dashboard/      Legacy web UI (React 19 + Vite + Tailwind), not extended; hypertrade is the companion web app.
 docs/           Architecture, API reference, quickstart, design notes.
 pitch/          Landing page, pitch deck, YC application, media.
 SPEC.md         Spec for the change currently in flight.
@@ -63,6 +72,9 @@ HL_MASTER_KEY=0x...       # master account private key — only needed for `appr
 ANTHROPIC_API_KEY=...     # only if using the direct-API Anthropic reasoner provider
 OPENAI_API_KEY=...        # only if using the direct-API OpenAI reasoner provider
 DEEPSEEK_API_KEY=...      # only if using the direct-API Deepseek reasoner provider
+TYPESAFE_API_KEY=...      # Jev decider for the strategy runtime ([strategy.decider] kind = "jev")
+MONAD_RPC_URL=https://... # optional: Monad JSON-RPC for [strategy.venues.monad] (defaults to the public endpoint)
+MONAD_PRIVATE_KEY=0x...   # optional: Monad venue signer — a dedicated key, never an HL key; unset = read-only venue
 ```
 
 `backend/.env` is loaded ad hoc on startup (a plain `KEY=VALUE` parser); real environment variables always win over the file.
@@ -88,21 +100,28 @@ Server runs on `http://127.0.0.1:8787` (HTTP + WS). Binding to a non-loopback ad
 
 Run backend tests: `cd backend && go test ./...` (33 test files, including a byte-exact EIP-712 signing check against the Hyperliquid reference vectors).
 
-### 2. TUI cockpit
+### 2. TUI (operator console, legacy cockpit)
 
 ```bash
 cd tui
 go build -o hyperagent-tui ./src
-./hyperagent-tui -core-url http://127.0.0.1:8787
+./hyperagent-tui -core-url http://127.0.0.1:8787            # operator console (default)
+./hyperagent-tui -core-url http://127.0.0.1:8787 --cockpit  # legacy chat cockpit
 ```
 
-Requires the backend daemon already running with `[api] enabled = true` — the TUI fails fast with an error if it can't reach `/api/settings` on startup. Flags: `-core-url` (default `http://127.0.0.1:8787`), `-token` (default `$HYPERAGENT_TOKEN`, needed only if the daemon has an API token configured). Minimum terminal size: 96×28.
+Requires the backend daemon already running with `[api] enabled = true`. Flags: `-core-url` (default `http://127.0.0.1:8787`), `-token` (default `$HYPERAGENT_TOKEN`, needed only if the daemon has an API token configured), `--cockpit`.
 
-One screen, five panels — MANDATE · MARKET PICTURE · EXECUTION · THESES · DECISION JOURNAL — plus a chat bar. `/` opens the chat bar and swaps DECISION JOURNAL + THESES for an AGENT reply pane, `m` toggles propose/autonomous mode, `q` (or `ctrl+c`) quits. Slash commands inside chat: `/help`, `/scan`, `/watch`, `/track`, `/tf`, `/mode`, `/clear`.
+**Operator console** (default): four tabs over `/api/strategy/*` — STRATEGIES (toggle `e`, param form `enter`, dry run `r`, last action per strategy), DECISIONS (Jev answers with probability bars, intents and verdicts; `a`/`x` approve/reject proposals), VENUES (status, capabilities, positions; evm venues also show chain, head block, balance and signer), GOVERNOR (mode, limits, kill switch with typed confirmation). Keys `1`–`4` switch tabs.
+
+**Legacy cockpit** (`--cockpit`): fails fast if it can't reach `/api/settings`; minimum terminal size 96×28. One screen, five panels — MANDATE · MARKET PICTURE · EXECUTION · THESES · DECISION JOURNAL — plus a chat bar. `/` opens the chat bar and swaps DECISION JOURNAL + THESES for an AGENT reply pane, `m` toggles propose/autonomous mode, `q` (or `ctrl+c`) quits. Slash commands inside chat: `/help`, `/scan`, `/watch`, `/track`, `/tf`, `/mode`, `/clear`.
 
 Run TUI tests: `cd tui && go test ./...`.
 
-### 3. Web dashboard (optional)
+### 3. Web dashboard (legacy, optional)
+
+`dashboard/` is kept runnable but is no longer extended; the companion web app
+for the strategy runtime is [`hypertrade`](https://github.com/kygura/hypertrade)
+(set its `ENGINE_URL`/`ENGINE_TOKEN` to this daemon).
 
 ```bash
 cd dashboard

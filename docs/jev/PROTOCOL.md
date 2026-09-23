@@ -129,3 +129,7 @@ Errors: `{ "error": "message", "field": "params.size_usd" }` with 400/404/409/50
 `/api/engine/<rest>` ⇄ `${ENGINE_URL}/api/strategy/<rest>`, same methods and
 bodies, session-cookie protected on the hypertrade side. 503
 `{ "error": "engine not configured" }` when `ENGINE_URL` is unset.
+
+The hypertrade analyst (`POST /api/analyst/query`, phase 2) reads the same
+upstream with GET only (`configs`, `governor`, `decisions`); it never calls
+the approve, reject, kill or config endpoints.
