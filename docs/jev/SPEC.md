@@ -118,12 +118,18 @@ response `{model, answers, usage}`. Three question types:
 | score  | ordered list of 2–10 level texts  | `score` (float, may sit between levels), `probabilities{"0":p,...}`, `legend`, `confidence` |
 | noul   | none                              | `noul` ∈ [0,1]                                  |
 
-Context window 32k tokens; strategies must keep `State` compact (numbers and
-short labels, not raw order books). Timeout 5 s, one retry on 5xx/timeout,
-never on 4xx. `fake` decider returns scripted answers for tests and for the
-paper venue when no key is configured. Alternative transports (Vercel AI
-Gateway `typesafe-ai/jev`, OpenRouter `typesafe/jev-1.13`) are a `base_url`
-+ model change, not new code.
+Limits (per RESEARCH.md): 64k tokens per request, 32k for state plus the
+longest question, 1,200 requests per minute. Jev is text-trained and weak on
+arithmetic, so strategies compute z-scores and buckets in Go and send each
+number with a label; `State` stays compact (no raw order books). Timeout 5 s,
+one retry honouring `Retry-After` on 408/429/529/5xx/timeout, never on other
+4xx. Pin a versioned model (`jev-1.13.0`) in production; the response echoes
+the resolved version. `fake` decider returns scripted answers for tests and
+for the paper venue when no key is configured. Vercel AI Gateway
+(`https://ai-gateway.vercel.sh/typesafe`, model `typesafe-ai/jev`), OpenRouter
+(`/api/v1/systemone`, model `typesafe/jev-1.13`) and LiteLLM pass-through are
+`base_url` + model swaps; Cloudflare Workers AI and Vercel's native
+`experimental_evaluate` use different envelopes and would need adapters.
 
 ### Reference strategies
 
